@@ -45,7 +45,7 @@
 /****************************************************************************/
 
 #define CGRA_COLS       4
-#define IN_VAR_DEPTH    9
+#define IN_VAR_DEPTH    9 // Numero de filas de la matriz
 #define OUT_VAR_DEPTH   9
 
 
@@ -111,14 +111,58 @@ extern kcom_kernel_t transformer_kernel = {
 /**                                                                        **/
 /****************************************************************************/
 
+static int16_t blockedA[SEQ_LEN*INPUT_SIZE] = { {1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4},{ 5,5,5,5, 6,6,6,6, 7,7,7,7, 8,8,8,8}, {9,9,9,9, 10,10,10,10, 11,11,11,11} };
+static int16_t blockedB[INPUT_SIZE*OUTPUT_SIZE] = { {1,1,1,1,1, 1,1,1,1,1, 1, 2,2,2,2,2}, {2,2,2,2,2, 2, 3,3,3,3,3, 3,3,3,3,3}, {3, 4,4,4,4,4, 4,4,4,4,4, 4} };
+
+#define ROWS_A     11
+#define COLS_A      4
+#define ROWS_B      4
+#define COLS_B      11
+
 void config()
 {
-    //TODO
-    for(int16_t i = 0; i < IN_VAR_DEPTH; i++) {
-        cgra_input[0][i] = In_Img[i*3];
-        cgra_input[1][i] = In_Img[i*3 + 1];
-        cgra_input[2][i] = In_Img[i*3 + 2];
+    //Para cada bloque
+    //Ojo!!! This only works if the output matrix is squared, aka, the number of rows is equal to the number of columns
+    int numBlocks = (ROWS_A*COLS_A) / (BLOCK_SIZE*BLOCK_SIZE);
+    for(int block = 0; block < numBlocks; block++){
+        int contA = 0, contB = 0;
+        int tam_block = (block == numBlocks - 1) ? ((ROWS_A*COLS_A) % (BLOCK_SIZE*BLOCK_SIZE)) : BLOCK_SIZE;
+
+        for(int16_t i = 0; i < tam_block; i++){
+            if (i == 0 || i >= tam_block*2/numBlocks) {
+                for(int n = 0; n < NUM_COLS_CGRA; n++){
+                    cgra_input[n][i] = blockedA[block][contA*NColsA + i + n];
+                }
+                contA++;
+                
+            } else {
+                for(int n = 0; n < NUM_COLS_CGRA; n++){
+                    cgra_input[n][i] = blockedB[block][contB + n];
+                }
+                contB++;
+            }
+        }
     }
+
+    /*
+    cgra_input[0][0] = blockA[contA*NColsA + i];
+    cgra_input[1][0] = blockA[contA*NColsA + i + 1];
+    ...
+    cgra_input[3][0] = blockA[contA*NColsA + i + 3];
+    contA++;
+    cgra_input[0][1] = blockB[contB];
+    cgra_input[1][1] = blockB[contB + 1];
+    ...
+    cgra_input[3][1] = blockB[contB + 3];
+    contB++;
+    cgra_input[0][2] = blockB[contB++];
+    cgra_input[0][3] = blockB[contB++];
+    cgra_input[0][4] = blockB[contB++];
+    cgra_input[0][5] = blockA[contA++*NColsA + i];
+    cgra_input[0][6] = blockA[contA++*NColsA + i];
+    cgra_input[0][7] = blockA[contA++*NColsA + i];
+    */
+    
 }
 
 void software(void)
