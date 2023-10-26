@@ -1,14 +1,14 @@
-#define SEQ_LEN     11
+#define SEQ_LEN     4
 #define INPUT_SIZE  4
-#define OUTPUT_SIZE 11
+#define OUTPUT_SIZE 4
 #define BLOCK_SIZE  4
 #define NUM_FRACTION_BITS 12
 
 // MatrixA dims 11x4
 // MatrixB dims 4x11
 
-static int16_t MatrixA[SEQ_LEN*INPUT_SIZE] = { 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4, 5,5,5,5, 6,6,6,6, 7,7,7,7, 8,8,8,8, 9,9,9,9, 10,10,10,10, 11,11,11,11 };
-static int16_t MatrixB[INPUT_SIZE*OUTPUT_SIZE] = { 1,1,1,1,1, 1,1,1,1,1, 1, 2,2,2,2,2, 2,2,2,2,2, 2, 3,3,3,3,3, 3,3,3,3,3, 3, 4,4,4,4,4, 4,4,4,4,4, 4 };
+static int16_t MatrixA[SEQ_LEN*INPUT_SIZE] = { 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4};//, 5,5,5,5, 6,6,6,6, 7,7,7,7, 8,8,8,8, 9,9,9,9, 10,10,10,10, 11,11,11,11 };
+static int16_t MatrixB[INPUT_SIZE*OUTPUT_SIZE] = { 1,1,1,1,1, 1,1,1,1,1, 1, 2,2,2,2,2};//, 2,2,2,2,2, 2, 3,3,3,3,3, 3,3,3,3,3, 3, 4,4,4,4,4, 4,4,4,4,4, 4 };
 
 
 void transformer ( int16_t * output )
