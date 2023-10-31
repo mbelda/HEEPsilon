@@ -188,11 +188,21 @@ void software(void)
 uint32_t check(void)
 {
     uint32_t errors = 0;
+    //This gives the result matrix transposed 'cause the RC compute their transposed position
+    /*
     int cont = 0;
     for(int16_t i = 0; i < CGRA_COLS; i++) {
         for(int16_t j=0; j< CGRA_COLS; j++, cont++){
             outCGRA[cont] = cgra_output[i][j];
             PRINTF("cgra[%d,%d]=%d\n", i, j, cgra_output[i][j]);
+        }
+    }
+    */
+
+    int cont = 0;
+    for(int16_t i = 0; i < CGRA_COLS; i++) {
+        for(int16_t j=0; j< CGRA_COLS; j++, cont++){
+            outCGRA[cont] = cgra_output[j][i];
         }
     }
 
