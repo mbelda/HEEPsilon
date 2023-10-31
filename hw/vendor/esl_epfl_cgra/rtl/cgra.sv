@@ -72,12 +72,34 @@ module cgra
 
   assign data_wdata_o = rcs_wdata_s;
 
+  /* BUG
   always_comb
   begin
     for (int l=0; l<N_COL; l++) begin
       // Merge rows branch request
       rcs_br_req_row_s[l] = {rcs_br_req[3][l], rcs_br_req[2][l], rcs_br_req[1][l], rcs_br_req[0][l]};
       rcs_br_req_row_merged_s[l] = rcs_br_req[3][l] | rcs_br_req[2][l] | rcs_br_req[1][l] | rcs_br_req[0][l];
+      // branch cols branch request for multi-cols kernels
+      rcs_br_req_col_merged_s[l] = rcs_br_req_row_merged_s & col_acc_map_i[l];
+      // Capture execution end signal
+      rcs_exec_end_col_merged[l] = (rcs_ex_end[3][l] | rcs_ex_end[2][l] | rcs_ex_end[1][l] | rcs_ex_end[0][l]) & ~rcs_br_req_o[l];
+      // RCs stall capture
+      rc_stall_col[l]  = rcs_stall_s[3][l] | rcs_stall_s[2][l] | rcs_stall_s[1][l] | rcs_stall_s[0][l];
+    end
+  end
+  */
+
+  always_comb
+  begin
+    for (int l=0; l<N_COL; l++) begin
+      // Merge rows branch request
+      rcs_br_req_row_s[l] = {rcs_br_req[3][l], rcs_br_req[2][l], rcs_br_req[1][l], rcs_br_req[0][l]};
+      rcs_br_req_row_merged_s[l] = rcs_br_req[3][l] | rcs_br_req[2][l] | rcs_br_req[1][l] | rcs_br_req[0][l];
+    end
+  end
+  always_comb
+  begin
+    for (int l=0; l<N_COL; l++) begin
       // branch cols branch request for multi-cols kernels
       rcs_br_req_col_merged_s[l] = rcs_br_req_row_merged_s & col_acc_map_i[l];
       // Capture execution end signal

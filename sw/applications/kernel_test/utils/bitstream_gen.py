@@ -429,7 +429,7 @@ usi_translated = translate_usi_asm(usi_ASM_timed)                               
 epfl_ASM = transpose_grid(usi_translated, cgra_n_col) # if cgra_n_col == 4 else usi_translated            # Transpose the confiuration of the PEs if format_line else under 16 PEs we have a format_col
 start_add = kernel_start                                                                   # Save current start address
 k = len(epfl_ASM[0])                                                                        # Used for multi-column kernels
-ker_conf_words[KERNEL_ID],nbr_col = set_ker_conf_word(epfl_ASM,cgra_n_col)                # Set the configuartion word of the kernel
+ker_conf_words[KERNEL_ID],nbr_col = set_ker_conf_word(epfl_ASM,cgra_n_col)                # Set the configuration word of the kernel
 kernel_start = kernel_start + k*nbr_col                                                   # Update start address for next kernel
 KERNEL_ID += 1                                                                            # Update ID for next kernel
 rcs_instructions = create_rcs_instructions(start_add,rcs_instructions,epfl_ASM,k,nbr_col)   # Convert it to rcs_instruction to be read by inst_encoder.py

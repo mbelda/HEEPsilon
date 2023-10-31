@@ -1,17 +1,15 @@
-#define ROWS_A       3
-#define COLS_A       3
-#define ROWS_B       3
-#define COLS_B       3
-#define BLOCK_SIZE   3
+#define ROWS_A       4
+#define COLS_A       4
+#define ROWS_B       4
+#define COLS_B       4
 #define NUM_FRACTION_BITS 12
-#define NUM_BLOCKS 1
 
 // MatrixA dims 11x4
 // MatrixB dims 4x11
 
 //3x3
-static int16_t MatrixA[ROWS_A*COLS_A] = { 1,2,3, 4,5,6, 7,8,9};
-static int16_t MatrixB[ROWS_B*COLS_B] = { 10,10,10, 20,20,20, 30,30,30};
+static int16_t MatrixA[ROWS_A*COLS_A] = {1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16};
+static int16_t MatrixB[ROWS_B*COLS_B] = {1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16};
 
 //4x4
 //static int16_t MatrixA[ROWS_A*COLS_A] = { 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4};//, 5,5,5,5, 6,6,6,6, 7,7,7,7, 8,8,8,8, 9,9,9,9, 10,10,10,10, 11,11,11,11 };
@@ -45,7 +43,7 @@ void transformer (int16_t * output ){
       for(int k = 0; k < COLS_A; k++){
         sum += MatrixA[row*COLS_A + k] * MatrixB[k*COLS_B + col];
       }
-      output[row*COLS_B + col] = (int16_t)(sum >> NUM_FRACTION_BITS);
+      output[row*COLS_B + col] = (int16_t)(sum);
     }
   }
 }

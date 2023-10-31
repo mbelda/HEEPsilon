@@ -426,7 +426,7 @@ void kcom_printKernelStats( kcom_stats_t *stats  )
 
 void kcom_printSummary( kcom_stats_t *stats  )
 {
-    PRINTF("E\t%d\n", stats->errors );
+    PRINTF("Errors\t%d\n", stats->errors );
 }
 
 
