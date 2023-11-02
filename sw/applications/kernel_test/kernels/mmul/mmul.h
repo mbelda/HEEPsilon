@@ -4,7 +4,7 @@
 **                            *******************                          **
 **                                                                         **
 ** project  : HEEPsilon                                                  **
-** filename : transformer.h                                                   **
+** filename : mmul.h                                                   **
 ** version  : 1                                                            **
 ** date     : 2023-10-25                                                    **
 **                                                                         **
@@ -20,14 +20,14 @@
 /***************************************************************************/
 
 /**
-* @file   transformer.h
+* @file   mmul.h
 * @date   2023-10-25
 * @brief  A description of the kernel...
 *
 */
 
-#ifndef _TRANSFORMER_H_
-#define _TRANSFORMER_H_
+#ifndef _MMUL_H_
+#define _MMUL_H_
 
 /****************************************************************************/
 /**                                                                        **/
@@ -44,7 +44,7 @@
 /**                                                                        **/
 /****************************************************************************/
 
-extern kcom_kernel_t transformer_kernel;
+extern kcom_kernel_t mmul_kernel;
 
 #endif // _REVERSEBITS_H_
 /****************************************************************************/

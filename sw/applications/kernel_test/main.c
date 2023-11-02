@@ -44,7 +44,7 @@
 #include "kernels/sha/sha.h"
 #include "kernels/strsearch/strsearch.h"
 #include "kernels/sqrt/sqrt.h"
-#include "kernels/transformer/transformer.h"
+#include "kernels/mmul/mmul.h"
 
 /****************************************************************************/
 /**                                                                        **/
@@ -86,7 +86,7 @@ static kcom_kernel_t *kernels[] = {
         // &sha_kernel,
         // &sha2_kernel,
         // Add all other kernels here
-        &transformer_kernel,
+        &mmul_kernel,
     };
 
 static kcom_perf_t  kperf;
