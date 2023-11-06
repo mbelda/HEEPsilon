@@ -1,74 +1,139 @@
-#include <stdio.h>
+/*
+                              *******************
+******************************* C SOURCE FILE *******************************
+**                            *******************                          **
+**                                                                         **
+** project  : CGRA-X-HEEP                                                  **
+** filename : main.c                                                       **
+** version  : 1                                                            **
+** date     : 05/04/23                                                     **
+**                                                                         **
+*****************************************************************************
+**                                                                         **
+** Copyright (c) EPFL                                                      **
+** All rights reserved.                                                    **
+**                                                                         **
+*****************************************************************************
+*/
+
+/***************************************************************************/
+/***************************************************************************/
+
+/**
+* @file   main.c
+* @date   05/04/23
+* @brief  An application to run a number of kernels under a same given
+* structure.
+*
+*/
+
+#define _KERNELS_C
+
+/****************************************************************************/
+/**                                                                        **/
+/*                             MODULES USED                                 */
+/**                                                                        **/
+/****************************************************************************/
+
 #include <stdlib.h>
 
+#include "transformer.h"
+#include "cgra_bitstream.h"
+#include "cgra_x_heep.h"
+
+
+// For GPIO managing
+#include "gpio.h"
+#include "pad_control.h"
+#include "pad_control_regs.h"
+
+// For interrupt handling
 #include "csr.h"
-#include "hart.h"
 #include "handler.h"
-#include "core_v_mini_mcu.h"
 #include "rv_plic.h"
 #include "rv_plic_regs.h"
-#include "cgra_x_heep.h"
-#include "cgra.h"
-#include "cgra_bitstream.h"
+#include "hart.h"
 
-#define DEBUG
+// For the timer
+#include "rv_timer.h"
+#include "soc_ctrl.h"
+#include "core_v_mini_mcu.h"
+/****************************************************************************/
+/**                                                                        **/
+/*                        DEFINITIONS AND MACROS                            */
+/**                                                                        **/
+/****************************************************************************/
 
-// Use PRINTF instead of PRINTF to remove print by default
-#ifdef DEBUG
-  #define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
-#else
-  #define PRINTF(...)
-#endif
+/****************************************************************************/
+/**                                                                        **/
+/*                        TYPEDEFS AND STRUCTURES                           */
+/**                                                                        **/
+/****************************************************************************/
 
-#define ROWS_A 16
-#define COLS_A 16
-#define ROWS_B 16
-#define COLS_B 16
-#define BLOCK_SIZE 4
+/****************************************************************************/
+/**                                                                        **/
+/*                      PROTOTYPES OF LOCAL FUNCTIONS                       */
+/**                                                                        **/
+/****************************************************************************/
 
-static int32_t cgra_input[CGRA_N_COLS][CGRA_N_SLOTS][BLOCK_SIZE*2]     __attribute__ ((aligned (4)));
-static int32_t cgra_output[CGRA_N_COLS][CGRA_N_SLOTS][BLOCK_SIZE*BLOCK_SIZE]   __attribute__ ((aligned (4)));
-int32_t cgra_res[CGRA_N_COLS][CGRA_N_ROWS][BLOCK_SIZE*BLOCK_SIZE] = {0};
+void mmulSoftware();
+void fillMatrixInputs();
+void handler_irq_ext(uint32_t id);
 
-static int16_t outCGRA[BLOCK_SIZE*BLOCK_SIZE];
+/****************************************************************************/
+/**                                                                        **/
+/*                           EXPORTED VARIABLES                             */
+/**                                                                        **/
+/****************************************************************************/
 
-int8_t cgra_intr_flag;
+/****************************************************************************/
+/**                                                                        **/
+/*                            GLOBAL VARIABLES                              */
+/**                                                                        **/
+/****************************************************************************/
 
-// Interrupt controller variables
-void handler_irq_ext(uint32_t id) {
-  if( id == CGRA_INTR) {
-    cgra_intr_flag = 1;
-  }
-}
+static kcom_perf_t  kperf;
+static kcom_stats_t stats;
+static rv_timer_t          timer;
+
+// Plic controller variables
+volatile bool               cgra_intr_flag;
+
+static cgra_t               cgra;
+static uint8_t              cgra_slot;
+
+static int32_t cgra_input[CGRA_N_COLS][ROWS_A+ROWS_B]    __attribute__ ((aligned (4)));
+static int32_t cgra_output[CGRA_N_COLS][ROWS_A*COLS_B]   __attribute__ ((aligned (4)));
+
+static int16_t outSW[ROWS_A*COLS_B];
+static int16_t outCGRA[ROWS_A*COLS_B];
 
 static int16_t matrixA[ROWS_A*COLS_A];
 static int16_t matrixB[ROWS_B*COLS_B];
 
+/****************************************************************************/
+/**                                                                        **/
+/*                           EXPORTED FUNCTIONS                             */
+/**                                                                        **/
+/****************************************************************************/
 
-int main(void) {
+/****************************************************************************/
+/**                                                                        **/
+/*                            LOCAL FUNCTIONS                               */
+/**                                                                        **/
+/****************************************************************************/
 
-  // Fill matrix inputs
-  for(int i = 0; i < ROWS_A; i++){
-    for(int j=0;j < COLS_A; j++){
-      matrixA[i*COLS_A+j] = i*COLS_A+j;
-    }
-  }
-
-  for(int i = 0; i < ROWS_B; i++){
-    for(int j=0;j < COLS_B; j++){
-      matrixB[i*COLS_B+j] = i*COLS_B+j;
-    }
-  }
-
-  // CGRA initial config
-  PRINTF("Init CGRA context memory...\n");
-  cgra_cmem_init(cgra_imem_bitstream, cgra_kmem_bitstream);
-  PRINTF("\rdone\n");
+void main()
+{
+  fillMatrixInputs();
 
   // Init the PLIC
   plic_Init();
   plic_irq_set_priority(CGRA_INTR, 1);
   plic_irq_set_enabled(CGRA_INTR, kPlicToggleEnabled);
+
+  // Init timer
+  timerInit();
 
   // Enable interrupt on processor side
   // Enable global interrupt for machine-level interrupts
@@ -78,103 +143,147 @@ int main(void) {
   CSR_SET_BITS(CSR_REG_MIE, mask);
   cgra_intr_flag = 0;
 
-  cgra_t cgra;
+  // Load kernel
+  //timeStart( &(kperf.time.load) );
+  cgra_cmem_init(cgra_imem_bitstream, cgra_kmem_bitstream);
+
   cgra.base_addr = mmio_region_from_addr((uintptr_t)CGRA_PERIPH_START_ADDRESS);
-  
-  // Select request slot of CGRA (2 slots)
-  uint32_t cgra_slot = cgra_get_slot(&cgra);
+  // Select request slot of CGRA
+  cgra_slot = cgra_get_slot(&cgra);
   cgra_perf_cnt_enable(&cgra, 1);
-  int8_t column_idx;
+  // Set CGRA kernel L/S pointers
+  for(int8_t col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+    cgra_set_write_ptr( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
+  }
+  //timeStop( &(kperf.time.load) );
 
-  // The input data is going to change depending on each iteration of the for loop of the matrix multiplication
-  int nBlockA = 0, nBlockB = 0;
-  for (size_t rA = 0; rA < ROWS_A; rA+=BLOCK_SIZE){
-    for (size_t cA = 0; cA < COLS_A; cA+=BLOCK_SIZE){
-      // Multiply the block --> CGRA
-      int cont = 0;
-      // Matrix A
-      for (size_t i=0; i < BLOCK_SIZE; i++, cont++){
-        cgra_input[0][cgra_slot][cont] = matrixA[(rA+i)*COLS_A+cA];
-        cgra_input[1][cgra_slot][cont] = matrixA[(rA+i)*COLS_A+cA+1];
-        cgra_input[2][cgra_slot][cont] = matrixA[(rA+i)*COLS_A+cA+2];
-        cgra_input[3][cgra_slot][cont] = matrixA[(rA+i)*COLS_A+cA+3];
-      }
-      // For each block on A on column i, I need to multiply it to the entire row i of B
-      // rB = cA
-      for(int cB = 0; cB < COLS_B; cB+=BLOCK_SIZE){
+ 
+  // Reset the CGRA performance counters
+  //cgra_perf_cnt_reset( &cgra );
 
-        // Matrix B (rB = cA, cB = rA)
-        for (size_t i=0; i < BLOCK_SIZE; i++, cont++){
-          cgra_input[0][cgra_slot][cont] = matrixB[(cA+i)*COLS_B+cB];
-          cgra_input[1][cgra_slot][cont] = matrixB[(cA+i)*COLS_B+cB+1];
-          cgra_input[2][cgra_slot][cont] = matrixB[(cA+i)*COLS_B+cB+2];
-          cgra_input[3][cgra_slot][cont] = matrixB[(cA+i)*COLS_B+cB+3];
-        }
-
-        // It returns the values ordered by columns, so the matrix is transposed
-        // Set CGRA kernel pointers
-        column_idx = 0;
-        cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[0][cgra_slot], column_idx);
-        cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_res[0][cgra_slot], column_idx);
-        // Set CGRA kernel pointers column 1
-        column_idx = 1;
-        cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[1][cgra_slot], column_idx);
-        cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_res[1][cgra_slot], column_idx);
-        // Set CGRA kernel pointers column 2
-        column_idx = 2;
-        cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[2][cgra_slot], column_idx);
-        cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_res[2][cgra_slot], column_idx);
-        // Set CGRA kernel pointers column 3
-        column_idx = 3;
-        cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[3][cgra_slot], column_idx);
-        cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_res[3][cgra_slot], column_idx);
-
-        // Launch CGRA kernel
-        cgra_set_kernel(&cgra, cgra_slot, CGRA_FUNC_TEST);
-
-        // Wait CGRA is done
-        cgra_intr_flag=0;
-        while(cgra_intr_flag==0) {
-          wait_for_interrupt();
-        }
-      }
-
+  // CGRA input values
+  //printf("Input values\n");
+  int cont = 0;
+  for (int i=0; i < ROWS_A; i++,cont++){
+    for (int j=0; j < COLS_A; j++){
+      cgra_input[j][cont] = matrixA[i*COLS_A+j];
+    }
+  }
+  for (int i=0; i < ROWS_B; i++,cont++){
+    for (int j=0; j < COLS_B; j++){
+      cgra_input[j][cont] = matrixB[i*COLS_B+j];
     }
   }
 
+  // Software 
+  //timeStart(   &(kperf.time.sw) );
+  mmulSoftware();
+  //timeStop(    &(kperf.time.sw) );
 
-  // Last, performance
+  // CGRA Execution
+  //kcom_perfRecordIntrSet( &(kperf.time.cgra) );
+  //printf("CGRA multiplication\n");
+  cgra_intr_flag = 0;
+  //timeStart( &(kperf.time.cgra) );
+  cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
+  // Wait CGRA is done
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
+  }
+  cgra_intr_flag = 0;
+  //timeStop( &(kperf.time.sw) );
+  //printf("Done\n");
 
-  printf("CGRA mmul finished\n");
+  // Move CGRA output
+  cont = 0;
+  for(int16_t i = 0; i < CGRA_N_ROWS; i++) {
+    for(int16_t j=0; j < CGRA_N_COLS; j++, cont++){
+      //printf("%d ", cgra_output[i][j]);
+      outCGRA[cont] = cgra_output[j][i];
+    }
+  }
 
+  int errors=0;
+  for( uint16_t i = 0; i < ROWS_A*COLS_B; i++ ){
+    if(outSW[i]!=outCGRA[i]){
+      errors++;
+      printf("[%d] %d != %d\n", i, outSW[i],outCGRA[i] );
+    }
+  }
+  printf("Errors: %d\n", errors);
   // Performance counter display
+  /*
   printf("CGRA kernel executed: %d\n", cgra_perf_cnt_get_kernel(&cgra));
-  column_idx = 0;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 1;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 2;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 3;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  cgra_perf_cnt_reset(&cgra);
-  printf("CGRA kernel executed (after counter reset): %d\n", cgra_perf_cnt_get_kernel(&cgra));
-  column_idx = 0;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 1;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 2;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 3;
-  PRINTF("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  PRINTF("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-
+  for(int column_idx = 0; column_idx < CGRA_N_COLS; column_idx++){
+    printf("CGRA column %d active cycles: %d\n", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+    printf("CGRA column %d stall cycles : %d\n", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  }
+  */
+  
   return EXIT_SUCCESS;
 }
+
+// Fill matrix inputs
+void fillMatrixInputs(){
+  for(int i = 0; i < ROWS_A; i++){
+    for(int j=0; j < COLS_A; j++){
+      matrixA[i*COLS_A+j] = i*COLS_A+j+1;
+    }
+  }
+
+  for(int i = 0; i < ROWS_B; i++){
+    for(int j=0;j < COLS_B; j++){
+      matrixB[i*COLS_B+j] = i*COLS_B+j+1;
+    }
+  }
+}
+
+// Software matrix multiplication
+void mmulSoftware(){
+  for(int i = 0; i < ROWS_A; i++){
+    for(int j=0;j < COLS_B; j++){
+      for(int k=0; k < COLS_A; k++){
+        outSW[i*COLS_B+j] += matrixA[i*COLS_A+k]*matrixB[k*COLS_B+j];
+      }
+    }
+  }
+}
+
+void timerInit()
+{
+    soc_ctrl_t soc_ctrl;
+    soc_ctrl.base_addr  = mmio_region_from_addr((uintptr_t)SOC_CTRL_START_ADDRESS);
+    uint32_t freq_hz  = soc_ctrl_get_frequency(&soc_ctrl);
+
+    mmio_region_t timer_0_reg = mmio_region_from_addr(RV_TIMER_AO_START_ADDRESS);
+
+    rv_timer_init( timer_0_reg, (rv_timer_config_t) { .hart_count = 2, .comparator_count = 1 }, &timer );
+
+    rv_timer_tick_params_t tick_params;
+
+    // The same frequency is provaided to get one tick per cycle.
+    rv_timer_approximate_tick_params( freq_hz, freq_hz, &tick_params );
+    rv_timer_set_tick_params(&timer, HART_ID, tick_params);
+
+    // Juan: see if i cannot remove this!
+    rv_timer_irq_enable(&timer, HART_ID, 0, kRvTimerEnabled);
+    rv_timer_arm(&timer, HART_ID, 0, 1);
+
+    rv_timer_counter_set_enabled(&timer, HART_ID, kRvTimerEnabled);
+
+}
+
+
+// Interrupt controller variables
+void handler_irq_ext(uint32_t id) {
+  if( id == CGRA_INTR) {
+    cgra_intr_flag = 1;
+  }
+}
+
+/****************************************************************************/
+/**                                                                        **/
+/*                                 EOF                                      */
+/**                                                                        **/
+/****************************************************************************/
