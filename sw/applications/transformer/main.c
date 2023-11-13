@@ -142,69 +142,13 @@ static int numIterations = ROWS_A/CGRA_N_COLS*CGRA_N_COLS;
 
 void main()
 {
-  //assert(CGRA_N_COLS >= 3);
-  //printf("Fill matrix\n");
+  // TODO: Caso en el que la matriz sea tan pequeña que no haya ni un bloque
   fillMatrixInputs();
 
   // Reset the CGRA performance counters
   //cgra_perf_cnt_reset( &cgra );
 
   initCGRA();
-  /*
-  int nBlocksCGRA = CGRA_N_ROWS*CGRA_N_COLS/BLOCK_SIZE;
-  int tamBlockCGRA = COLS_B/nBlocksCGRA;
-  for (int rB=0; rB < ROWS_B; rB+=BLOCK_SIZE){
-    for(int subColB = 0; subColB < BLOCK_SIZE; subColB++){
-      for(int bCGRA = 0; bCGRA < nBlocksCGRA; bCGRA++){
-        int cBIni = bCGRA*tamBlockCGRA+subColB;
-        int cBEnd = (bCGRA+1)*tamBlockCGRA;
-        int cont = 0;
-        int cB=cBIni;
-        while(cB < cBEnd){
-          for(int subRowB = 0; subRowB < BLOCK_SIZE; subRowB++){
-            for(int j=0; j < CGRA_N_COLS; j++, cB+=BLOCK_SIZE){
-              cgra_input[j][cont] = matrixB[(rB+subRowB)*COLS_B+cB];
-            }
-            cont++;
-          }
-        }
-
-        int cA = rB;
-        int subRowA = subColB;
-        for(int rA = subRowA; rA < ROWS_A; rA+=BLOCK_SIZE){
-          int subColA = 0;
-          int j=0;
-          while ((j < CGRA_N_COLS) && (subColA < BLOCK_SIZE)){
-            cgra_input[j][cont] = matrixA[rA*COLS_A+(cA+subColA)];
-            j++;
-            subColA++;
-          }
-          // Add zeros to complete the batch
-          while (j < CGRA_N_COLS){
-            cgra_input[j][cont] = 0;
-            j++;
-          }
-        }
-
-        // CGRA Execution
-        cgra_intr_flag = 0;
-        cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
-        // Wait CGRA is done
-        while(cgra_intr_flag==0) {
-          wait_for_interrupt();
-        }
-        cgra_intr_flag = 0;
-
-        // Move CGRA output
-        cont = 0;
-        for(int rA = subRowA, i=0; rA < ROWS_A; rA+=BLOCK_SIZE,i++){ // For each rA I have an output
-          for(int16_t j = 0; j < CGRA_N_COLS; j++, cont++){
-            matrixC[rA*OUTPUT_COLS + cBIni+cont] += (int16_t) cgra_output[j][i];
-          }
-        }
-      }
-    }
-  }*/
 
   //printf("\rA: %dx%d, B: %dx%d, cgra_input: %dx%d, cgra_output: %dx%d\n", ROWS_A, COLS_A, ROWS_B, COLS_B, CGRA_N_COLS, CGRA_COL_INPUT_SIZE, CGRA_N_COLS, CGRA_COL_OUTPUT_SIZE);
   
@@ -227,22 +171,18 @@ void main()
 
       cgraIteration = 0;
 
-      //Control del bucle
-      //printf("\rcgraIn[0][%d] = %d\n", cont, &cgraIteration);
-      //printf("\rcgraIn[1][%d] = %d\n", cont, 0);
-      //printf("\rcgraIn[2][%d] = %d\n", cont, numIterations);
+      // Loop control
       cgra_input[0][cont] = &cgraIteration;
       cgra_input[1][cont] = 0;
       cgra_input[2][cont] = numIterations;
       for(int a = 3; a < CGRA_N_COLS; a++){ // Zeros for the rest fo the columns
         cgra_input[a][cont] = 0;
-        //printf("\rcgraIn[%d][%d] = %d\n", a, cont, 0);
       }
       cont++;
 
       int cA = rB;
       for(int rA = 0; rA+CGRA_N_COLS <= ROWS_A; rA+=CGRA_N_COLS){
-        for(int offset = 0; offset < CGRA_N_COLS; offset++){ //Cargo de nuevo los valores de A pero desplazados una fila
+        for(int offset = 0; offset < CGRA_N_COLS; offset++){ // Load A valuesa again shifted one row
           for(int subColA = 0; subColA < BLOCK_SIZE; subColA++){
             int offsetAux = offset;
             for(int j=0; j < CGRA_N_COLS; j++,offsetAux++){
@@ -252,16 +192,11 @@ void main()
             cont++;
           }
 
-          //CGRA hace swd
-          // Control del bucle
-          
-          //printf("\rcgraIn[0][%d] = %d\n", cont, &cgraIteration);
-          //printf("\rcgraIn[1][%d] = %d\n", cont, 0);
-          //printf("\rcgraIn[2][%d] = %d\n", cont, numIterations);
+          // Loop control
           cgra_input[0][cont] = &cgraIteration;
           cgra_input[1][cont] = 0;
           cgra_input[2][cont] = numIterations;
-          for(int a = 3; a < CGRA_N_COLS; a++){ // Zeros for the rest fo the columns
+          for(int a = 3; a < CGRA_N_COLS; a++){ // Zeros for the rest of the columns
             cgra_input[a][cont] = 0;
           }
           cont++;
@@ -271,7 +206,7 @@ void main()
       // CGRA Execution
       cgra_intr_flag = 0;
       cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
-      // Wait CGRA is done
+      // Wait until CGRA is done
       while(cgra_intr_flag==0) {
         wait_for_interrupt();
       }
@@ -288,12 +223,11 @@ void main()
         }
       }   
 
-      // Set CGRA kernel L/S pointers
+      // Set CGRA kernel L/S pointers for the next iteration
       for(int8_t col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
         cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
         cgra_set_write_ptr( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
       }
-      
     }
   }  
 
@@ -306,8 +240,8 @@ void main()
 void checkErrors(){
   // Software 
   mmulSoftware();
-  printf("\rSW vs CGRA\n");
-  int errors=0;
+
+  int errors = 0;
   for( uint16_t i = 0; i < ROWS_C*COLS_C; i++ ){
     if(outSW[i]!=matrixC[i]){
       errors++; 
