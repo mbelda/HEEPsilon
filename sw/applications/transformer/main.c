@@ -115,7 +115,7 @@ static uint8_t              cgra_slot;
 #define INPUT_SIZE_NUMBER_ITERATIONS_OF_B COLS_B/(CGRA_N_COLS*CGRA_N_ROWS)*ROWS_B/BLOCK_SIZE
 
 #define CGRA_COL_INPUT_SIZE INPUT_SIZE_FOR_B+INPUT_SIZE_FOR_A+INPUT_SIZE_FOR_ITER
-#define CGRA_COL_OUTPUT_SIZE CGRA_N_ROWS*INPUT_SIZE_FOR_ITER 
+#define CGRA_COL_OUTPUT_SIZE CGRA_N_ROWS*ROWS_A 
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
 static int32_t cgra_output[CGRA_N_COLS][CGRA_COL_OUTPUT_SIZE]   __attribute__ ((aligned (4)));
 
@@ -207,7 +207,7 @@ void main()
   }*/
 
   //printf("\rA: %dx%d, B: %dx%d, cgra_input: %dx%d, cgra_output: %dx%d\n", ROWS_A, COLS_A, ROWS_B, COLS_B, CGRA_N_COLS, CGRA_COL_INPUT_SIZE, CGRA_N_COLS, CGRA_COL_OUTPUT_SIZE);
-
+  
   int CGRA_block_B = CGRA_N_COLS*CGRA_N_ROWS;
   int nBlocksCGRA = CGRA_N_ROWS*CGRA_N_COLS/BLOCK_SIZE;
   int tamBlockCGRA = COLS_B/nBlocksCGRA;
@@ -268,15 +268,6 @@ void main()
         }
       }
 
-      for(int i=12; i < CGRA_COL_INPUT_SIZE; i++){
-        for(int j=0; j < CGRA_N_COLS; j++){
-          //if(j==0) printf("\r");
-          //printf("cIn[%d][%d] = %d  ", j,i, cgra_input[j][i]);
-        }
-        //printf("\n");
-      }
-
-      //printf("\rCGRA execution\n"); // Problem core dumped. Probably when it tries to access an address
       // CGRA Execution
       cgra_intr_flag = 0;
       cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
@@ -286,26 +277,16 @@ void main()
       }
       cgra_intr_flag = 0;
 
-      //printf("\rMove output\n");
       // Move CGRA output
-      int colC = cB;
-      for(int nIt = 0; nIt < ROWS_A/CGRA_N_COLS; nIt++){
-        for(int offset = 0; offset < CGRA_N_COLS; offset++){
-          for(int i = 0; i < CGRA_N_ROWS; i++){
-            for(int16_t j = 0; j < CGRA_N_COLS; j++, colC++){
-              int rowC = (j+offset)%CGRA_N_COLS + nIt*CGRA_N_COLS;
-              printf("\rmC[%d][%d] = cOut[%d][%d]\n", rowC, colC, j, i);
-              matrixC[rowC*COLS_C + colC] += (int16_t) cgra_output[j][i];
-            }
+      for(int it = 0; it < numIterations; it++){
+        for(int i=0; i < CGRA_N_ROWS; i++){
+          for(int j=0; j < CGRA_N_COLS; j++){
+            int colC = cB + i*CGRA_N_COLS + j;
+            int rowC = (it + j)%CGRA_N_ROWS;
+            matrixC[rowC*COLS_C + colC] += cgra_output[j][it*CGRA_N_ROWS + i];
           }
         }
-      }
-
-      // cgra_output[0][0] = matrixC[0][0]     cgra_output[1][0] = matrixC[1][1]     cgra_output[2][0] = matrixC[2][2]     cgra_output[3][0] = matrixC[3][3]
-      // cgra_output[0][1] = matrixC[1][4]     cgra_output[1][1] = matrixC[2][5]     cgra_output[2][1] = matrixC[3][6]     cgra_output[3][1] = matrixC[0][7]
-      // cgra_output[0][2] = matrixC[2][8]     cgra_output[1][2] = matrixC[3][9]     cgra_output[2][2] = matrixC[0][10]    cgra_output[3][2] = matrixC[1][11]
-      // cgra_output[0][3] = matrixC[3][12]    cgra_output[1][3] = matrixC[0][13]    cgra_output[2][3] = matrixC[1][14]    cgra_output[3][3] = matrixC[2][15]
-      
+      }   
 
       // Set CGRA kernel L/S pointers
       for(int8_t col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
@@ -329,12 +310,40 @@ void checkErrors(){
   int errors=0;
   for( uint16_t i = 0; i < ROWS_C*COLS_C; i++ ){
     if(outSW[i]!=matrixC[i]){
-      errors++;
+      errors++; 
       printf("\rC[%d][%d] %d != %d\n", i/COLS_C, i%COLS_C, outSW[i],matrixC[i] );
     }
   }
 
   printf("\rErrors: %d\n", errors);
+  /*
+  printf("\rSW\n");
+  printf("\r");
+  for(int i=0; i < ROWS_C; i++){
+    for(int j=0; j < COLS_C; j++){
+      printf("%.4d  ", outSW[i*COLS_C+j]);
+    }
+    printf("\n\r");
+  }
+  */
+  /*
+  printf("\rOut CGRA\n");
+  printf("\r");
+  for(int i=0; i < ROWS_C; i++){
+    for(int j=0; j < COLS_C; j++){
+      printf("%.4d  ", matrixC[i*COLS_C+j]);
+    }
+    printf("\n\r");
+  }*/
+  /*
+  printf("\rCGRA\n");
+  printf("\r");
+  for(int i=0; i < CGRA_COL_OUTPUT_SIZE; i++){
+    for(int j=0; j < CGRA_N_COLS; j++){
+      printf("%.4d  ", cgra_output[j][i]);
+    }
+    printf("\n\r");
+  }*/
 }
 
 void initCGRA(){
