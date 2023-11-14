@@ -155,13 +155,13 @@ void main()
   int CGRA_block_B = CGRA_N_COLS*CGRA_N_ROWS;
   int nBlocksCGRA = CGRA_N_ROWS*CGRA_N_COLS/BLOCK_SIZE;
   int tamBlockCGRA = COLS_B/nBlocksCGRA;
-  for (int rB=0; rB < ROWS_B; rB+=BLOCK_SIZE){ // TODO: Gestionar no multiplos (ROWS_B no multiplo de BLOCK_SIZE)
-    for(int cB = 0; cB+CGRA_block_B <= COLS_B; cB+=CGRA_block_B){ //TODO: gestionar no multiplos (COLS_B no multiplo de CGRA_block_B)
+  for (int rB = 0; rB < ROWS_B; rB += BLOCK_SIZE){ // TODO: Gestionar no multiplos (ROWS_B no multiplo de BLOCK_SIZE)
+    for (int cB = 0; cB + CGRA_block_B <= COLS_B; cB += CGRA_block_B){ //TODO: gestionar no multiplos (COLS_B no multiplo de CGRA_block_B)
       int cont = 0;
-      for(int subRowB = 0; subRowB < BLOCK_SIZE; subRowB++){
+      for (int subRowB = 0; subRowB < BLOCK_SIZE; subRowB++){
         int cBAux=cB;
-        while(cBAux < cB+CGRA_block_B){
-          for(int j=0; j < CGRA_N_COLS; j++, cBAux++){
+        while(cBAux < cB + CGRA_block_B){
+          for(int j = 0; j < CGRA_N_COLS; j++, cBAux++){
             //printf("\rcgraIn[%d][%d] = B[%d][%d]\n", j, cont, rB+subRowB, cBAux);
             cgra_input[j][cont] = matrixB[(rB+subRowB)*COLS_B+cBAux];
           }
@@ -175,14 +175,14 @@ void main()
       cgra_input[0][cont] = &cgraIteration;
       cgra_input[1][cont] = 0;
       cgra_input[2][cont] = numIterations;
-      for(int a = 3; a < CGRA_N_COLS; a++){ // Zeros for the rest fo the columns
+      for(int a = 3; a < CGRA_N_COLS; a++){ // Zeros for the rest of the columns
         cgra_input[a][cont] = 0;
       }
       cont++;
 
       int cA = rB;
       for(int rA = 0; rA+CGRA_N_COLS <= ROWS_A; rA+=CGRA_N_COLS){
-        for(int offset = 0; offset < CGRA_N_COLS; offset++){ // Load A valuesa again shifted one row
+        for(int offset = 0; offset < CGRA_N_COLS; offset++){ // Load A values again but shifted one row
           for(int subColA = 0; subColA < BLOCK_SIZE; subColA++){
             int offsetAux = offset;
             for(int j=0; j < CGRA_N_COLS; j++,offsetAux++){
@@ -213,15 +213,22 @@ void main()
       cgra_intr_flag = 0;
 
       // Move CGRA output
-      for(int it = 0; it < numIterations; it++){
-        for(int i=0; i < CGRA_N_ROWS; i++){
-          for(int j=0; j < CGRA_N_COLS; j++){
-            int colC = cB + i*CGRA_N_COLS + j;
-            int rowC = (it + j)%CGRA_N_ROWS;
-            matrixC[rowC*COLS_C + colC] += cgra_output[j][it*CGRA_N_ROWS + i];
+      //for(int blockA = 0; blockA <= ROWS_A/CGRA_N_ROWS; blockA++){
+      //  int contAux = 0;
+      //  for(int offset = 0; offset < CGRA_N_COLS; offset++){
+        int contAux = 0;
+        for(int it = 0; it < ROWS_A; it++){
+          int blockA = it/CGRA_N_ROWS;  
+          for(int i=0; i < CGRA_N_ROWS; i++, contAux++){
+            for(int j=0; j < CGRA_N_COLS; j++){
+              int colC = cB + i*CGRA_N_ROWS + j;
+              int rowC = (it + j)%CGRA_N_COLS + blockA*CGRA_N_COLS; 
+              //printf("\rmC[%d][%d] += cOut[%d][%d] = %d\n", rowC, colC, j, blockA*CGRA_N_ROWS + i, cgra_output[j][blockA*CGRA_N_ROWS + i]);
+              matrixC[rowC*COLS_C + colC] += cgra_output[j][contAux];
+            }
           }
-        }
-      }   
+        }   
+      //}
 
       // Set CGRA kernel L/S pointers for the next iteration
       for(int8_t col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
@@ -245,7 +252,7 @@ void checkErrors(){
   for( uint16_t i = 0; i < ROWS_C*COLS_C; i++ ){
     if(outSW[i]!=matrixC[i]){
       errors++; 
-      printf("\rC[%d][%d] %d != %d\n", i/COLS_C, i%COLS_C, outSW[i],matrixC[i] );
+      //printf("\rC[%d][%d] %d != %d\n", i/COLS_C, i%COLS_C, outSW[i],matrixC[i] );
     }
   }
 
@@ -253,27 +260,27 @@ void checkErrors(){
   /*
   printf("\rSW\n");
   printf("\r");
-  for(int i=0; i < ROWS_C; i++){
-    for(int j=0; j < COLS_C; j++){
+  for (int i = 0; i < ROWS_C; i++){
+    for (int j = 0; j < COLS_C; j++){
       printf("%.4d  ", outSW[i*COLS_C+j]);
     }
     printf("\n\r");
-  }
-  */
-  /*
-  printf("\rOut CGRA\n");
+  }*/
+  
+  printf("\rMatrixC\n");
   printf("\r");
-  for(int i=0; i < ROWS_C; i++){
-    for(int j=0; j < COLS_C; j++){
+  for (int i = 0; i < ROWS_C; i++){
+    for (int j = 0; j < COLS_C; j++){
       printf("%.4d  ", matrixC[i*COLS_C+j]);
     }
     printf("\n\r");
-  }*/
+  }
+
   /*
   printf("\rCGRA\n");
   printf("\r");
-  for(int i=0; i < CGRA_COL_OUTPUT_SIZE; i++){
-    for(int j=0; j < CGRA_N_COLS; j++){
+  for (int i = 0; i < CGRA_COL_OUTPUT_SIZE; i++){
+    for (int j = 0; j < CGRA_N_COLS; j++){
       printf("%.4d  ", cgra_output[j][i]);
     }
     printf("\n\r");
