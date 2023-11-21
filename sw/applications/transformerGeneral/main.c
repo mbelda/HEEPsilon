@@ -79,6 +79,7 @@
 void mmulSoftware();
 void fillMatrixInputs();
 void handler_irq_ext(uint32_t id);
+void processExtraRowsCols(int rB, int cB);
 
 /****************************************************************************/
 /**                                                                        **/
@@ -121,9 +122,9 @@ static int32_t cgra_output[CGRA_N_COLS][CGRA_COL_OUTPUT_SIZE]   __attribute__ ((
 
 static int16_t outSW[ROWS_C*COLS_C];
 
-static int16_t matrixA[ROWS_A*COLS_A];
-static int16_t matrixB[ROWS_B*COLS_B];
-static int16_t matrixC[ROWS_C*COLS_C] = {0};
+int16_t matrixA[ROWS_A*COLS_A];
+int16_t matrixB[ROWS_B*COLS_B];
+int16_t matrixC[ROWS_C*COLS_C] = {0};
 
 volatile int cgraIteration;
 static int numIterations = ROWS_A/CGRA_N_COLS*CGRA_N_COLS;
@@ -142,6 +143,7 @@ static int numIterations = ROWS_A/CGRA_N_COLS*CGRA_N_COLS;
 
 void main()
 {
+  printf("\rFilling inputs\n");
   // TODO: Caso en el que la matriz sea tan pequeña que no haya ni un bloque
   fillMatrixInputs();
 
@@ -150,8 +152,8 @@ void main()
 
   initCGRA();
 
-  //printf("\rA: %dx%d, B: %dx%d, cgra_input: %dx%d, cgra_output: %dx%d\n", ROWS_A, COLS_A, ROWS_B, COLS_B, CGRA_N_COLS, CGRA_COL_INPUT_SIZE, CGRA_N_COLS, CGRA_COL_OUTPUT_SIZE);
-  
+  printf("\rA: %dx%d, B: %dx%d\ncIn: %dx%d, cOut: %dx%d\n", ROWS_A, COLS_A, ROWS_B, COLS_B, CGRA_N_COLS, CGRA_COL_INPUT_SIZE, CGRA_N_COLS, CGRA_COL_OUTPUT_SIZE);
+
   int CGRA_block_B = CGRA_N_COLS*CGRA_N_ROWS;
   int nBlocksCGRA = CGRA_N_ROWS*CGRA_N_COLS/BLOCK_SIZE;
   int tamBlockCGRA = COLS_B/nBlocksCGRA;
@@ -168,6 +170,7 @@ void main()
           cont++;
         }
       }
+      //printf("\rB input done\n");
 
       cgraIteration = 0;
 
@@ -202,36 +205,44 @@ void main()
           cont++;
         }
       }
+      //printf("\rA input done\n");
 
       // CGRA Execution
       cgra_intr_flag = 0;
       cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
-      // Wait until CGRA is done
+      // Wait until CGRA is done, while waiting process extra columns and rows
+      int processed = 0;
       while(cgra_intr_flag==0) {
-        wait_for_interrupt();
+        if (!processed){
+          processExtraRowsCols(rB, cB);
+          processed = 1;
+        }
+        //wait_for_interrupt();
+      }
+      //printf("\rCGRA exec ended\n");
+      if (!processed){
+        //printf("\rNo time\n");
+        processExtraRowsCols(rB, cB);
       }
       cgra_intr_flag = 0;
 
+      //printf("\rEnd CGRA execution\n");
       // Move CGRA output
-      //for(int blockA = 0; blockA <= ROWS_A/CGRA_N_ROWS; blockA++){
-      //  int contAux = 0;
-      //  for(int offset = 0; offset < CGRA_N_COLS; offset++){
-        int contAux = 0;
-        for(int it = 0; it < ROWS_A; it++){
-          int blockA = it/CGRA_N_ROWS;  
-          for(int i=0; i < CGRA_N_ROWS; i++, contAux++){
-            for(int j=0; j < CGRA_N_COLS; j++){
-              int colC = cB + i*CGRA_N_ROWS + j;
-              int rowC = (it + j)%CGRA_N_COLS + blockA*CGRA_N_COLS; 
-              //printf("\rmC[%d][%d] += cOut[%d][%d] = %d\n", rowC, colC, j, blockA*CGRA_N_ROWS + i, cgra_output[j][blockA*CGRA_N_ROWS + i]);
-              matrixC[rowC*COLS_C + colC] += cgra_output[j][contAux];
-            }
+      int contAux = 0;
+      for(int it = 0; it < ROWS_A; it++){
+        int blockA = it/CGRA_N_COLS;  
+        for(int i=0; i < CGRA_N_ROWS; i++, contAux++){
+          for(int j=0; j < CGRA_N_COLS; j++){
+            int colC = cB + i*CGRA_N_ROWS + j;
+            int rowC = (it + j)%CGRA_N_COLS + blockA*CGRA_N_COLS; 
+            //printf("\rmC[%d][%d] += cOut[%d][%d] = %d\n", rowC, colC, j, blockA*CGRA_N_ROWS + i, cgra_output[j][blockA*CGRA_N_ROWS + i]);
+            matrixC[rowC*COLS_C + colC] += cgra_output[j][contAux];
           }
-        }   
-      //}
+        }
+      }   
 
       // Set CGRA kernel L/S pointers for the next iteration
-      for(int8_t col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+      for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
         cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
         cgra_set_write_ptr( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
       }
@@ -244,12 +255,23 @@ void main()
   return 0;
 }
 
+void processExtraRowsCols(int rB, int cB){
+  // Process extra rows for A
+  for(int rA = ROWS_A/CGRA_N_COLS*CGRA_N_COLS; rA < ROWS_A; rA++){
+    for(int c = cB; c < cB + CGRA_N_COLS*CGRA_N_ROWS; c++){
+      for(int b = 0; b < BLOCK_SIZE; b++){
+        matrixC[rA*COLS_C + c] += matrixA[rA*COLS_A + rB + b] * matrixB[(b+rB)*COLS_B + c];
+      }
+    } 
+  }
+}
+
 void checkErrors(){
   // Software 
   mmulSoftware();
 
   int errors = 0;
-  for( uint16_t i = 0; i < ROWS_C*COLS_C; i++ ){
+  for(int i = 0; i < ROWS_C*COLS_C; i++ ){
     if(outSW[i]!=matrixC[i]){
       errors++; 
       //printf("\rC[%d][%d] %d != %d\n", i/COLS_C, i%COLS_C, outSW[i],matrixC[i] );
@@ -265,23 +287,13 @@ void checkErrors(){
       printf("%.4d  ", outSW[i*COLS_C+j]);
     }
     printf("\n\r");
-  }*/
+  }
   
   printf("\rMatrixC\n");
   printf("\r");
   for (int i = 0; i < ROWS_C; i++){
     for (int j = 0; j < COLS_C; j++){
       printf("%.4d  ", matrixC[i*COLS_C+j]);
-    }
-    printf("\n\r");
-  }
-
-  /*
-  printf("\rCGRA\n");
-  printf("\r");
-  for (int i = 0; i < CGRA_COL_OUTPUT_SIZE; i++){
-    for (int j = 0; j < CGRA_N_COLS; j++){
-      printf("%.4d  ", cgra_output[j][i]);
     }
     printf("\n\r");
   }*/
@@ -314,7 +326,7 @@ void initCGRA(){
   cgra_perf_cnt_enable(&cgra, 1);
 
   // Set CGRA kernel L/S pointers
-  for(int8_t col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
     cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
     cgra_set_write_ptr( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
   }
@@ -324,13 +336,13 @@ void initCGRA(){
 void fillMatrixInputs(){
   for(int i = 0; i < ROWS_A; i++){
     for(int j=0; j < COLS_A; j++){
-      matrixA[i*COLS_A+j] = i*COLS_A+j+1;
+      matrixA[i*COLS_A+j] = (i*COLS_A+j+1)%100;
     }
   }
 
   for(int i = 0; i < ROWS_B; i++){
     for(int j=0;j < COLS_B; j++){
-      matrixB[i*COLS_B+j] = i*COLS_B+j+1;
+      matrixB[i*COLS_B+j] = (i*COLS_B+j+1)%100;
     }
   }
 }

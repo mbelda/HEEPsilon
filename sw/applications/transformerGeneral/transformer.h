@@ -6,10 +6,10 @@
 
 #define ITERATIONS_PER_KERNEL 1
 
-#define ROWS_A 8   // Multiplo de CGRA_N_ROWS (4)
-#define COLS_A 3    // Multiplo de BLOCK_SIZE (3)
-#define ROWS_B 3
-#define COLS_B 16   // Multiplo de CGRA_N_COLS*CGRA_N_ROWS (16)
+#define ROWS_A 81   // Multiplo de CGRA_N_ROWS (4)
+#define COLS_A 6    // Multiplo de BLOCK_SIZE (3)
+#define ROWS_B 6
+#define COLS_B 32   // Multiplo de CGRA_N_COLS*CGRA_N_ROWS (16)
 #define ROWS_C ROWS_A
 #define COLS_C COLS_B
 #define BLOCK_SIZE 3
