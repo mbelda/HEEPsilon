@@ -1,21 +1,5 @@
-#ifndef _STIMULI_H_
-#define _STIMULI_H_
-
 #include <stdint.h>
 #include "cgra.h"
-
-#define ITERATIONS_PER_KERNEL 1
-
-#define ROWS_A 81   // Multiplo de CGRA_N_ROWS (4)
-#define COLS_A 6    // Multiplo de BLOCK_SIZE (3)
-#define ROWS_B 6
-#define COLS_B 32   // Multiplo de CGRA_N_COLS*CGRA_N_ROWS (16)
-#define ROWS_C ROWS_A
-#define COLS_C COLS_B
-#define BLOCK_SIZE 3
-
-
-#define HART_ID 0
 
 typedef uint32_t    kcom_time_t;
 typedef kcom_time_t kcom_param_t;
@@ -38,8 +22,9 @@ typedef struct
     kcom_time_diff_t    sw;
     kcom_time_diff_t    cgra;
     kcom_time_diff_t    load;
-    kcom_time_diff_t    conf;
-    kcom_time_diff_t    dead;
+    kcom_time_diff_t    input;
+    kcom_time_diff_t    output;
+    kcom_time_diff_t    reprogramCols;
 } kcom_timing_t;
 
 typedef struct
@@ -66,4 +51,11 @@ typedef struct
    uint8_t      *name;
 } kcom_stats_t;
 
-#endif // _STIMULI_H_
+#define HART_ID 0
+
+void timerInit();
+uint64_t getTime_cy( );
+void timeStop( kcom_time_diff_t *perf );
+void timeStart( kcom_time_diff_t *perf );
+void kcom_perfRecordStop( kcom_time_diff_t *perf );
+void kcom_perfRecordStart( kcom_time_diff_t *perf );

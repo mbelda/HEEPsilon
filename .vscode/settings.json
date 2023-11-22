@@ -4,6 +4,7 @@
         "function.h": "c",
         "stdint.h": "c",
         "cgra_bitstream.h": "c",
-        "transformer.h": "c"
+        "transformer.h": "c",
+        "core_v_mini_mcu.h": "c"
     }
 }
