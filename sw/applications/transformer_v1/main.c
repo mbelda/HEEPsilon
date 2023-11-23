@@ -285,21 +285,26 @@ void checkErrors(){
 
 void initCGRA(){
   // Init the PLIC
+  kcom_perfRecordStart(   &(kperf.time.plic) );
   plic_Init();
   plic_irq_set_priority(CGRA_INTR, 1);
   plic_irq_set_enabled(CGRA_INTR, kPlicToggleEnabled);
+  kcom_perfRecordStop(   &(kperf.time.plic) );
 
   // Enable interrupt on processor side
+  kcom_perfRecordStart(   &(kperf.time.interrupt) );
   // Enable global interrupt for machine-level interrupts
   CSR_SET_BITS(CSR_REG_MSTATUS, 0x8);
   // Set mie.MEIE bit to one to enable machine-level external interrupts
   const uint32_t mask = 1 << 11;//IRQ_EXT_ENABLE_OFFSET;
   CSR_SET_BITS(CSR_REG_MIE, mask);
   cgra_intr_flag = 0;
+  kcom_perfRecordStop(   &(kperf.time.interrupt) );
 
   // Load kernel
-
+  kcom_perfRecordStart(   &(kperf.time.bitstream) );
   cgra_cmem_init(cgra_imem_bitstream, cgra_kmem_bitstream);
+  kcom_perfRecordStop(   &(kperf.time.bitstream) );
 
   cgra.base_addr = mmio_region_from_addr((uintptr_t)CGRA_PERIPH_START_ADDRESS);
   // Select request slot of CGRA
@@ -351,6 +356,7 @@ showPerformance( kcom_perf_t* kperf){
   printf("\r-----------------------------\n");
   printf("\rSw: %d\n", kperf->time.sw.spent_cy);
   printf("\rLoad: %d\n", kperf->time.load.spent_cy);
+  printf("\r    Plic: %dn\r    Interrupt: %d\n\r    Bitstream: %d\n", kperf->time.plic.spent_cy, kperf->time.interrupt.spent_cy, kperf->time.bitstream.spent_cy);
   printf("\rReprogram cols: %d\n", kperf->time.reprogramCols.spent_cy);
   printf("\rInput: %d\n", kperf->time.input.spent_cy);
   printf("\rOutput: %d\n", kperf->time.output.spent_cy);
@@ -359,8 +365,8 @@ showPerformance( kcom_perf_t* kperf){
   int32_t overhead = kperf->time.input.spent_cy + kperf->time.output.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
   printf("\rOverhead: %d\n", overhead);
   printf("\rTotal cgra: %d\n", overhead + kperf->time.cgra.spent_cy);
-  float speedup = ((float) kperf->time.sw.spent_cy) / ((float) (overhead + kperf->time.cgra.spent_cy));
-  printf("\rSpeedup: %.3f\n", speedup);  
+  //float speedup = ((float) kperf->time.sw.spent_cy) / ((float) (overhead + kperf->time.cgra.spent_cy));
+  //printf("\rSpeedup: %f\n", speedup);  
 }
 
 

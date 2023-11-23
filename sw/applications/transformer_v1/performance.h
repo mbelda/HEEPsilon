@@ -25,6 +25,9 @@ typedef struct
     kcom_time_diff_t    input;
     kcom_time_diff_t    output;
     kcom_time_diff_t    reprogramCols;
+    kcom_time_diff_t    plic;
+    kcom_time_diff_t    interrupt;
+    kcom_time_diff_t    bitstream;
 } kcom_timing_t;
 
 typedef struct
