@@ -4,10 +4,9 @@
 #include <stdint.h>
 #include "cgra.h"
 
-// 121x4x121 -> 120x3x120 (x6x)
-// 121x121x4 -> 120x120x12 
+ 
 
-#define ROWS_A 121    // Multiplo de CGRA_N_ROWS (4)
+#define ROWS_A 120    // Multiplo de CGRA_N_ROWS (4)
 #define COLS_A 3    // Multiplo de BLOCK_SIZE (3)
 #define ROWS_B 3
 #define COLS_B 120   // Multiplo de CGRA_N_COLS*(CGRA_N_ROWS-1) (12)
