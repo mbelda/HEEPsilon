@@ -76,6 +76,7 @@ void kcom_perfRecordStart( kcom_time_diff_t *perf );
 void kcom_perfRecordStop( kcom_time_diff_t *perf );
 void fillOutputZeroes();
 void processExtraACols(int cB);
+void processExtraBCols(int rB);
 
 /****************************************************************************/
 /**                                                                        **/
@@ -138,7 +139,6 @@ void main()
   // Init timer
   timerInit();
 
-  //printf("\rColOutSize: %d\n", CGRA_COL_OUTPUT_SIZE);
   // Enable and reset the CGRA performance counters
   cgra_perf_cnt_enable(&cgra, 1);
   cgra_perf_cnt_reset( &cgra );
@@ -170,6 +170,7 @@ void main()
     kcom_perfRecordStop( &(kperf.time.input2) );
     int processedExtraACols[numIterations] = {0};
     int iteration = 0;
+    int processedExtraBCols = 0;
     for (int cB = 0; cB + CGRA_block_B <= COLS_B; cB += CGRA_block_B){ //TODO: gestionar no multiplos (COLS_B no multiplo de CGRA_block_B)
       kcom_perfRecordStart( &(kperf.time.input3) );
       int cont[4] = {1,1,1,1};
@@ -206,18 +207,24 @@ void main()
       cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
       // Wait until CGRA is done, while waiting process extra columns and rows
       int processedExtraARows = 0;
+      
       while(cgra_intr_flag==0) {
         if (!processedExtraARows){
           processExtraARows(rB, cB);
           //printf("\rExtra rows\n");
           processedExtraARows = 1;
         }
-        if (!processedExtraACols[iteration]){
+        if (!processedExtraBCols){
+          processExtraBCols(rB);
+          //printf("\rExtra cols (%d,%d)\n", rB, cB);
+          processedExtraBCols = 1;
+        }
+        /*if (!processedExtraACols[iteration]){
           processExtraACols(cB);
           printf("\rExtra cols\n");
           processedExtraACols[iteration] = 1;
           iteration++;
-        }
+        }*/
         //wait_for_interrupt();
       }
       kcom_perfRecordStop(   &(kperf.time.cgra) );
@@ -225,15 +232,13 @@ void main()
       if (!processedExtraARows){
         processExtraARows(rB, cB);
       }
-      for(int i = 0; i < numIterations; i++){
+      
+      /*for(int i = 0; i < numIterations; i++){
         if(processedExtraACols[i] == 0){
           processExtraACols(cB);
           processedExtraACols[i] = 1;
         }
-      }
-      if (!processedExtraACols){
-        processExtraACols(cB);
-      }
+      }*/
       cgra_intr_flag = 0;
 
       kcom_perfRecordStart( &(kperf.time.output) );
@@ -252,6 +257,9 @@ void main()
         }
       }
       kcom_perfRecordStop( &(kperf.time.output) );
+      if (!processedExtraBCols){
+        processExtraBCols(rB);
+      }
     }
   }  
 
@@ -263,12 +271,25 @@ void main()
   return 0;
 }
 
+/*
 void processExtraACols(int cB){
   for(int cA = COLS_A-COLS_A%BLOCK_SIZE; cA < COLS_A; cA++){
     for(int rA = 0; rA  < ROWS_A; rA++){
       for(int c=cB; c < cB + CGRA_N_COLS*(CGRA_N_ROWS-1); c++){
         int rB=cA;
         matrixC[rA*COLS_C+c] += matrixA[rA*COLS_A+cA]*matrixB[rB*COLS_B+c];
+      }
+    }
+  }
+}
+*/
+
+void processExtraBCols(int rB){
+  for(int colB = COLS_B-COLS_B%(CGRA_N_COLS*(CGRA_N_ROWS-1)); colB < COLS_B; colB++){
+    for(int rA = 0; rA < ROWS_A; rA++){
+      for(int rowB = rB; rowB < rB + BLOCK_SIZE; rowB++){
+        int cA = rowB;
+        matrixC[rA*COLS_C+colB] += matrixA[rA*COLS_A+cA]*matrixB[rowB*COLS_B+colB];
       }
     }
   }
