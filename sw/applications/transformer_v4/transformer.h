@@ -7,10 +7,10 @@
 // 121x4x121
 // 121x121x4
 
-#define ROWS_A 9   
-#define COLS_A 6    // Multiplo de BLOCK_SIZE (3)
-#define ROWS_B 6
-#define COLS_B 35
+#define ROWS_A 4   
+#define COLS_A 3  
+#define COLS_B 12 
+#define ROWS_B COLS_A
 #define ROWS_C ROWS_A
 #define COLS_C COLS_B
 #define BLOCK_SIZE 3

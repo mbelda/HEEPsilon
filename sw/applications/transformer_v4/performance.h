@@ -22,9 +22,7 @@ typedef struct
     kcom_time_diff_t    sw;
     kcom_time_diff_t    cgra;
     kcom_time_diff_t    load;
-    kcom_time_diff_t    input1;
-    kcom_time_diff_t    input2;
-    kcom_time_diff_t    input3;
+    kcom_time_diff_t    input;
     kcom_time_diff_t    output;
     kcom_time_diff_t    reprogramCols;
     kcom_time_diff_t    bitstream;

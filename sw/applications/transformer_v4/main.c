@@ -3,10 +3,10 @@
 ******************************* C SOURCE FILE *******************************
 **                            *******************                          **
 **                                                                         **
-** project  : CGRA-X-HEEP                                                  **
+** project  : HEEPsilon                                                    **
 ** filename : main.c                                                       **
 ** version  : 1                                                            **
-** date     : 05/04/23                                                     **
+** date     : 01/10/23                                                     **
 **                                                                         **
 *****************************************************************************
 **                                                                         **
@@ -21,13 +21,10 @@
 
 /**
 * @file   main.c
-* @date   05/04/23
-* @brief  An application to run a number of kernels under a same given
-* structure.
+* @date   01/10/23
+* @brief  An application to run a matrix multiplication.
 *
 */
-
-#define _KERNELS_C
 
 /****************************************************************************/
 /**                                                                        **/
@@ -56,11 +53,9 @@
 /**                                                                        **/
 /****************************************************************************/
 
-/****************************************************************************/
-/**                                                                        **/
-/*                        TYPEDEFS AND STRUCTURES                           */
-/**                                                                        **/
-/****************************************************************************/
+// Sizes of the input and ouput buffers of the CGRA
+#define CGRA_COL_INPUT_SIZE 6 // Since the matrixes are loaded with LWI this does not depend on their size
+#define CGRA_COL_OUTPUT_SIZE CGRA_N_COLS*(CGRA_N_ROWS-1)*(ROWS_A/CGRA_N_COLS)
 
 /****************************************************************************/
 /**                                                                        **/
@@ -68,21 +63,24 @@
 /**                                                                        **/
 /****************************************************************************/
 
-void mmulSoftware();
+// Matrix multiplication using the standard three loops
+void mmulSoftware(int32_t * output);
+// Fill input matrixes with numbers
 void fillMatrixInputs();
-void handler_irq_ext(uint32_t id);
-void processExtraRowsCols(int rB, int cB);
-void kcom_perfRecordStart( kcom_time_diff_t *perf );
-void kcom_perfRecordStop( kcom_time_diff_t *perf );
+// Fill output buffers with zeroes
 void fillOutputZeroes();
-void processExtraACols(int cB);
+// Handler for the CGRA interruption
+void handler_irq_ext(uint32_t id);
+// Record the cycle number at the start
+void kcom_perfRecordStart( kcom_time_diff_t *perf );
+// Record the cycle number and compute the total cycles
+void kcom_perfRecordStop( kcom_time_diff_t *perf );
+// Process extra A rows
+void processExtraARows(int rB, int cB);
+// Process extra A cols
+void processExtraACols();
+// Process extra B cols
 void processExtraBCols(int rB);
-
-/****************************************************************************/
-/**                                                                        **/
-/*                           EXPORTED VARIABLES                             */
-/**                                                                        **/
-/****************************************************************************/
 
 /****************************************************************************/
 /**                                                                        **/
@@ -90,36 +88,25 @@ void processExtraBCols(int rB);
 /**                                                                        **/
 /****************************************************************************/
 
+// Performance variable
 static kcom_perf_t  kperf;
 
 // Plic controller variables
 volatile bool               cgra_intr_flag;
 
+// CGRA variables
 static cgra_t               cgra;
 static uint8_t              cgra_slot;
 
-#define CGRA_COL_INPUT_SIZE 6
-#define CGRA_COL_OUTPUT_SIZE CGRA_N_COLS*(CGRA_N_ROWS-1)*(ROWS_A/CGRA_N_COLS)
+// CGRA input and output buffers
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
 static int32_t cgra_output[CGRA_N_COLS][CGRA_COL_OUTPUT_SIZE]   __attribute__ ((aligned (4)));
 
-int32_t outSW[ROWS_C*COLS_C];
-
+// Input and output matrixes
 int32_t matrixA[ROWS_A*COLS_A];
 int32_t matrixB[ROWS_B*COLS_B];
 int32_t matrixC[ROWS_C*COLS_C];
-
-
-volatile int cgraIteration;
-#define numIterations  ROWS_A/CGRA_N_COLS
-
-int8_t offsetVec[CGRA_N_COLS] = {0,1,2,3}; // Depends on the cgra_n_cols. Modified MANUALLY!!
-
-/****************************************************************************/
-/**                                                                        **/
-/*                           EXPORTED FUNCTIONS                             */
-/**                                                                        **/
-/****************************************************************************/
+int32_t outSW[ROWS_C*COLS_C];
 
 /****************************************************************************/
 /**                                                                        **/
@@ -129,161 +116,150 @@ int8_t offsetVec[CGRA_N_COLS] = {0,1,2,3}; // Depends on the cgra_n_cols. Modifi
 
 void main()
 {
-  // TODO: Caso en el que la matriz sea tan pequeña que no haya ni un bloque
   fillMatrixInputs();
   fillOutputZeroes();
-  // Software 
-  kcom_perfRecordStart(   &(kperf.time.sw) );
-  mmulSoftware();
-  kcom_perfRecordStop(   &(kperf.time.sw) );
-  // Init timer
-  timerInit();
 
-  // Enable and reset the CGRA performance counters
-  cgra_perf_cnt_enable(&cgra, 1);
-  cgra_perf_cnt_reset( &cgra );
+  if(ROWS_A < CGRA_N_COLS || COLS_A < BLOCK_SIZE || COLS_B < (CGRA_N_ROWS-1)*CGRA_N_COLS){
+    mmulSoftware(matrixC);
+  } else {
+    // Init timer
+    timerInit();
 
-  kcom_perfRecordStart( &(kperf.time.load) );
-  initCGRA();
-  kcom_perfRecordStop( &(kperf.time.load) );
+    // Enable and reset the CGRA performance counters
+    cgra_perf_cnt_enable(&cgra, 1);
+    cgra_perf_cnt_reset( &cgra );
 
-  kcom_perfRecordStart( &(kperf.time.input1) );
+    // Initialize the CGRA
+    kcom_perfRecordStart(&(kperf.time.load));
+    initCGRA();
+    kcom_perfRecordStop(&(kperf.time.load));
 
-  // Load 4*4*COLS_A
-  for(int j = 0; j < CGRA_N_COLS; j++){
-    cgra_input[j][2] = 4*4*COLS_A;
-  }
-  // Load nIterations
-  cgra_input[1][3] = numIterations;
-
-  kcom_perfRecordStop( &(kperf.time.input1) );
-
-  int CGRA_block_B = CGRA_N_COLS*(CGRA_N_ROWS-1);
-  for (int rB = 0; rB < ROWS_B-ROWS_B%BLOCK_SIZE; rB += BLOCK_SIZE){ // TODO: Gestionar no multiplos (ROWS_B no multiplo de BLOCK_SIZE)
-    kcom_perfRecordStart( &(kperf.time.input2) );
-    int cA = rB;
-    int32_t addrA = (int32_t) (matrixA + cA);
-    // Load &A + {0,1,2,3}*COLS_A
+    // Prepare the input vector for the CGRA
+    kcom_perfRecordStart(&(kperf.time.input));
+    // Load 4*4*COLS_A
     for(int j = 0; j < CGRA_N_COLS; j++){
-      cgra_input[j][0] = (int32_t) (addrA) + j*COLS_A*4;
+      cgra_input[j][2] = 4*4*COLS_A;
     }
-    kcom_perfRecordStop( &(kperf.time.input2) );
-    int processedExtraACols[numIterations] = {0};
-    int iteration = 0;
-    int processedExtraBCols = 0;
-    for (int cB = 0; cB + CGRA_block_B <= COLS_B; cB += CGRA_block_B){ //TODO: gestionar no multiplos (COLS_B no multiplo de CGRA_block_B)
-      kcom_perfRecordStart( &(kperf.time.input3) );
-      int cont[4] = {1,1,1,1};
+    // Load the number of iterations of the rows_A loop
+    cgra_input[1][3] = ROWS_A/CGRA_N_COLS;
+    kcom_perfRecordStop(&(kperf.time.input));
 
-      int subRowB = 0;
+    // Divide the rows of B in blocks
+    for (int rB = 0; rB < ROWS_B-ROWS_B%BLOCK_SIZE; rB += BLOCK_SIZE){ 
+      // Prepare the input vector for the CGRA
+      kcom_perfRecordStart(&(kperf.time.input));
+      int cA = rB;
+      int32_t addrA = (int32_t) (matrixA + cA);
+      // Load &A + {0,1,2,3}*COLS_A
       for(int j = 0; j < CGRA_N_COLS; j++){
-        cgra_input[j][cont[j]] = &(matrixB[(rB+subRowB)*COLS_B+cB+j]);
-        cont[j] += 2;
+        cgra_input[j][0] = (int32_t) (addrA) + j*COLS_A*4;
       }
-      subRowB++;
-      cont[1]+=1;
+      kcom_perfRecordStop(&(kperf.time.input));
 
-      // Load the rest of B
-      while(subRowB < BLOCK_SIZE){
+      int processedExtraBCols = 0;
+      // Divide the cols of B in blocks
+      for (int cB = 0; cB + CGRA_N_COLS*(CGRA_N_ROWS-1) <= COLS_B; cB += CGRA_N_COLS*(CGRA_N_ROWS-1)){
+        // Prepare the input vector for the CGRA
+        kcom_perfRecordStart( &(kperf.time.input) );
+        int cont[4] = {1,1,1,1};
+        int subRowB = 0;
         for(int j = 0; j < CGRA_N_COLS; j++){
           cgra_input[j][cont[j]] = &(matrixB[(rB+subRowB)*COLS_B+cB+j]);
-          cont[j] += 1;
+          cont[j] += 2;
         }
         subRowB++;
-      }
-      kcom_perfRecordStop( &(kperf.time.input3) );
+        cont[1]+=1;
+        // Load the rest of B
+        while(subRowB < BLOCK_SIZE){
+          for(int j = 0; j < CGRA_N_COLS; j++){
+            cgra_input[j][cont[j]] = &(matrixB[(rB+subRowB)*COLS_B+cB+j]);
+            cont[j] += 1;
+          }
+          subRowB++;
+        }
+        kcom_perfRecordStop( &(kperf.time.input) );
 
-      kcom_perfRecordStart( &(kperf.time.reprogramCols) );
-      // Set CGRA kernel L/S pointers
-      for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
-        cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
-        cgra_set_write_ptr( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
-      }
-      kcom_perfRecordStop( &(kperf.time.reprogramCols) );
+        // Set CGRA kernel L/S pointers
+        kcom_perfRecordStart( &(kperf.time.reprogramCols) );
+        for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+          cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+          cgra_set_write_ptr( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
+        }
+        kcom_perfRecordStop( &(kperf.time.reprogramCols) );
 
-      // CGRA Execution
-      kcom_perfRecordStart(   &(kperf.time.cgra) );
-      cgra_intr_flag = 0;
-      cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
-      // Wait until CGRA is done, while waiting process extra columns and rows
-      int processedExtraARows = 0;
-      
-      while(cgra_intr_flag==0) {
+        // CGRA Execution
+        kcom_perfRecordStart(   &(kperf.time.cgra) );
+        cgra_intr_flag = 0;
+        cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
+        // Wait until CGRA is done, while waiting process extra columns and rows
+        int processedExtraARows = 0;
+        while(cgra_intr_flag==0) {
+          if (!processedExtraARows){
+            processExtraARows(rB, cB);
+            processedExtraARows = 1;
+          }
+          if (!processedExtraBCols){
+            processExtraBCols(rB);
+            processedExtraBCols = 1;
+          }
+          //wait_for_interrupt();
+        }
+        kcom_perfRecordStop(   &(kperf.time.cgra) );
+
+        // Ensure the extra rows have been processed
         if (!processedExtraARows){
           processExtraARows(rB, cB);
-          //printf("\rExtra rows\n");
-          processedExtraARows = 1;
         }
-        if (!processedExtraBCols){
-          processExtraBCols(rB);
-          //printf("\rExtra cols (%d,%d)\n", rB, cB);
-          processedExtraBCols = 1;
-        }
-        /*if (!processedExtraACols[iteration]){
-          processExtraACols(cB);
-          printf("\rExtra cols\n");
-          processedExtraACols[iteration] = 1;
-          iteration++;
-        }*/
-        //wait_for_interrupt();
-      }
-      kcom_perfRecordStop(   &(kperf.time.cgra) );
 
-      if (!processedExtraARows){
-        processExtraARows(rB, cB);
-      }
-      
-      /*for(int i = 0; i < numIterations; i++){
-        if(processedExtraACols[i] == 0){
-          processExtraACols(cB);
-          processedExtraACols[i] = 1;
-        }
-      }*/
-      cgra_intr_flag = 0;
-
-      kcom_perfRecordStart( &(kperf.time.output) );
-      // Move CGRA output
-      int contAux = 0;
-      for(int it = 0; it < ROWS_A-ROWS_A%CGRA_N_COLS; it++){
-        int blockA = it/CGRA_N_COLS;  
-        for(int i=0; i < CGRA_N_ROWS-1; i++, contAux++){
-          for(int j=0; j < CGRA_N_COLS; j++){
-            int colC = cB + i*CGRA_N_ROWS + j;
-            int rowC = (it + j)%CGRA_N_COLS + blockA*CGRA_N_COLS; 
-            //printf("\rC[%d][%d] += cOut[%d][%d] = %d\n", rowC, colC, j, contAux, cgra_output[j][contAux]);
-            matrixC[rowC*COLS_C + colC] += cgra_output[j][contAux];
-            //printf("\rC[%d][%d]\n", rowC, colC);
+        // Move CGRA output
+        kcom_perfRecordStart( &(kperf.time.output) );
+        int contAux = 0;
+        for(int it = 0; it < ROWS_A-ROWS_A%CGRA_N_COLS; it++){
+          int blockA = it/CGRA_N_COLS;  
+          for(int i=0; i < CGRA_N_ROWS-1; i++, contAux++){
+            for(int j=0; j < CGRA_N_COLS; j++){
+              int colC = cB + i*CGRA_N_ROWS + j;
+              int rowC = (it + j)%CGRA_N_COLS + blockA*CGRA_N_COLS; 
+              matrixC[rowC*COLS_C + colC] += cgra_output[j][contAux];
+            }
           }
         }
+        kcom_perfRecordStop( &(kperf.time.output) );
+
+        // Ensure the extra cols have been processed
+        if (!processedExtraBCols){
+          processExtraBCols(rB);
+        }
       }
-      kcom_perfRecordStop( &(kperf.time.output) );
-      if (!processedExtraBCols){
-        processExtraBCols(rB);
-      }
-    }
-  }  
+    } 
+    // Process the extra cols of A
+    processExtraACols();
+  }
+  
+  // Software 
+  kcom_perfRecordStart(&(kperf.time.sw));
+  mmulSoftware(outSW);
+  kcom_perfRecordStop(&(kperf.time.sw));
 
   checkErrors();
-
-  //showPerformance( &kperf);
+  showPerformance(&kperf);
   
-  //return EXIT_SUCCESS;
-  return 0;
+  return EXIT_SUCCESS;
 }
 
-/*
-void processExtraACols(int cB){
-  for(int cA = COLS_A-COLS_A%BLOCK_SIZE; cA < COLS_A; cA++){
-    for(int rA = 0; rA  < ROWS_A; rA++){
-      for(int c=cB; c < cB + CGRA_N_COLS*(CGRA_N_ROWS-1); c++){
-        int rB=cA;
-        matrixC[rA*COLS_C+c] += matrixA[rA*COLS_A+cA]*matrixB[rB*COLS_B+c];
+// Process the extra A cols
+void processExtraACols(){
+  for(int colA = COLS_A-COLS_A%BLOCK_SIZE; colA < COLS_A; colA++){
+    for(int colB=0; colB < COLS_B; colB++){
+      for(int rowA = 0; rowA  < ROWS_A; rowA++){
+        int rowB=colA;
+        matrixC[rowA*COLS_C+colB] += matrixA[rowA*COLS_A+colA]*matrixB[rowB*COLS_B+colB];
       }
     }
   }
 }
-*/
 
+// Process the extra B cols
 void processExtraBCols(int rB){
   for(int colB = COLS_B-COLS_B%(CGRA_N_COLS*(CGRA_N_ROWS-1)); colB < COLS_B; colB++){
     for(int rA = 0; rA < ROWS_A; rA++){
@@ -295,9 +271,8 @@ void processExtraBCols(int rB){
   }
 }
 
-
+// Process the extra A rows
 void processExtraARows(int rB, int cB){
-  // Process extra rows for A
   int cA = rB;
   int nBlocksA = ROWS_A/CGRA_N_COLS;
   for(int rA = nBlocksA*CGRA_N_COLS; rA < ROWS_A; rA++){
@@ -305,44 +280,23 @@ void processExtraARows(int rB, int cB){
       for(int subColA = 0; subColA < BLOCK_SIZE; subColA++){
         int subRowB = subColA; 
         matrixC[rA*COLS_C + c] += matrixA[rA*COLS_A + cA + subColA] * matrixB[(subRowB+rB)*COLS_B + c];
-        //printf("\r%d = C[%d][%d] += A[%d][%d] x B[%d][%d] = %d\n", matrixC[rA*COLS_C + c], rA, c, rA, cA+subColA, subRowB+rB, c, matrixA[rA*COLS_A + cA + subColA] * matrixB[(subRowB+rB)*COLS_B + c]);
       }
     } 
   }
 }
 
+// Check if the SW and CGRA executions give the same result
 void checkErrors(){
-  
   int errors = 0;
   for(int i = 0; i < ROWS_C*COLS_C; i++ ){
     if(outSW[i]!=matrixC[i]){
-      errors++; 
-      //printf("\rC[%d][%d] %d != %d\n", i/COLS_C, i%COLS_C, outSW[i],matrixC[i] );
+      errors++;
     }
   }
-  
   printf("\rErrors: %d\n", errors);
-  
-  
-  /*printf("\rSW\n");
-  for(int i=0; i < ROWS_C; i++){
-    printf("\r");
-    for(int j=0; j < COLS_C; j++){
-      printf("%d ", outSW[i*COLS_C+j]);
-    }
-    printf("\n");
-  }*/
-  /*
-  printf("\rC\n");
-  for(int i=ROWS_C-1; i < ROWS_C; i++){
-    printf("\r");
-    for(int j=0; j < COLS_C; j++){
-      printf("%d ", matrixC[i*COLS_C+j]);
-    }
-    printf("\n");
-  }*/
 }
 
+// Initialize the CGRA
 void initCGRA(){
   // Init the PLIC
   plic_Init();
@@ -365,7 +319,6 @@ void initCGRA(){
   cgra.base_addr = mmio_region_from_addr((uintptr_t)CGRA_PERIPH_START_ADDRESS);
   // Select request slot of CGRA
   cgra_slot = cgra_get_slot(&cgra);
-
 }
 
 // Fill matrix inputs
@@ -384,16 +337,15 @@ void fillMatrixInputs(){
 }
 
 // Software matrix multiplication
-void mmulSoftware(){
+void mmulSoftware(int32_t * out){
   for(int i = 0; i < ROWS_A; i++){
     for(int j=0;j < COLS_B; j++){
       for(int k=0; k < COLS_A; k++){
-        outSW[i*COLS_C+j] += matrixA[i*COLS_A+k]*matrixB[k*COLS_B+j];
+        out[i*COLS_C+j] += matrixA[i*COLS_A+k]*matrixB[k*COLS_B+j];
       }
     }
   }
 }
-
 
 // Interrupt controller variables
 void handler_irq_ext(uint32_t id) {
@@ -402,6 +354,7 @@ void handler_irq_ext(uint32_t id) {
   }
 }
 
+// Display the performance values
 showPerformance( kcom_perf_t* kperf){
   printf("\rA:%dx%d, B:%dx%d\n", ROWS_A, COLS_A, ROWS_B, COLS_B);
   printf("\r-----------------------------\n");
@@ -409,25 +362,20 @@ showPerformance( kcom_perf_t* kperf){
   printf("\rLoad: %d\n", kperf->time.load.spent_cy);
   printf("\r    Bitstream: %d\n", kperf->time.bitstream.spent_cy);
   printf("\rReprogram cols: %d\n", kperf->time.reprogramCols.spent_cy);
-  printf("\rInput: %d\n", kperf->time.input1.spent_cy+kperf->time.input2.spent_cy+kperf->time.input3.spent_cy);
+  printf("\rInput: %d\n", kperf->time.input.spent_cy);
   printf("\rOutput: %d\n", kperf->time.output.spent_cy);
   printf("\rCgra: %d\n", kperf->time.cgra.spent_cy);
   printf("\r-----------------------------\n");
-  int32_t overhead = kperf->time.input1.spent_cy+kperf->time.input2.spent_cy+kperf->time.input3.spent_cy + kperf->time.output.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
+  int32_t overhead = kperf->time.input.spent_cy + kperf->time.output.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
   printf("\rOverhead: %d\n", overhead);
-  printf("\rTotal cgra: %d\n", overhead + kperf->time.cgra.spent_cy);
-  //float speedup = ((float) kperf->time.sw.spent_cy) / ((float) (overhead + kperf->time.cgra.spent_cy));
-  //printf("\rSpeedup: %f\n", speedup);  
+  printf("\rTotal cgra: %d\n", overhead + kperf->time.cgra.spent_cy); 
 }
 
+// Fill output buffers with zeroes
 void fillOutputZeroes(){
   for(int i = 0; i < ROWS_C; i++){
     for(int j=0; j < COLS_C; j++){
       matrixC[i*COLS_C+j] = 0;
-    }
-  }
-  for(int i = 0; i < ROWS_C; i++){
-    for(int j=0; j < COLS_C; j++){
       outSW[i*COLS_C+j] = 0;
     }
   }

@@ -26,7 +26,7 @@ void timeStart( kcom_time_diff_t *perf )
 void timeStop( kcom_time_diff_t *perf )
 {
     perf->end_cy = getTime_cy();
-    perf->spent_cy = perf->end_cy - perf->start_cy;
+    perf->spent_cy += perf->end_cy - perf->start_cy;
 }
 
 uint64_t getTime_cy( )
