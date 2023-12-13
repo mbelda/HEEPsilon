@@ -5,6 +5,7 @@
         "stdint.h": "c",
         "cgra_bitstream.h": "c",
         "transformer.h": "c",
-        "core_v_mini_mcu.h": "c"
+        "core_v_mini_mcu.h": "c",
+        "stdlib.h": "c"
     }
 }
