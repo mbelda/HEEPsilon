@@ -9,8 +9,9 @@ void computeSoftmax(int32_t* input, size_t seq_len) {
     size_t width = seq_len;
     float input_float = 0.0f;
     for (int i = 0; i < seq_len; i++) {
+        // Look for the biggest value of the row
         int32_t max_val = input[i * seq_len];
-        for (int j = 1; j < width; j++) {
+        for (int j = 1; j < width; j++) { // Assuming its squared (width = seq_len)
             if (input[i * seq_len + j] > max_val) {
                 max_val = input[i * seq_len + j];
             }
@@ -18,6 +19,7 @@ void computeSoftmax(int32_t* input, size_t seq_len) {
         for (int j = 0; j < width; j++) {
             input[i * seq_len + j] = (int32_t) fmax(input[i * seq_len + j] - max_val, -32767);
         }
+        // Sum all values on the row
         int32_t sum = 0;
         for (int j = 0; j < width; j++) {
             input_float = (float) input[i * seq_len + j] / (float) (1 << NUM_FRACTION_BITS);

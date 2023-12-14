@@ -21,19 +21,19 @@
 #include "cgra_x_heep.h"
 #include "cgra.h"
 
-// For the timer
+// For the timers   
 #include "rv_timer.h"
 #include "soc_ctrl.h"
 #include "core_v_mini_mcu.h"
 
-#define HART_ID                         0
+#define HART_ID 0
 
 // CGRA variables
-static cgra_t               cgra;
-static uint8_t              cgra_slot;
+static cgra_t cgra;
+static uint8_t cgra_slot;
 
 // Timer
-static rv_timer_t          timer;
+static rv_timer_t timer;
 static uint32_t freq_hz;
 
 float error_check(const quant_bit_width* groundTruth, const quant_bit_width* output, size_t length){
@@ -163,9 +163,11 @@ void timerInit()
 }
 
 int main() {
+    printf("\rIni timer\n");
     // CGRA
     // Init timer
     timerInit();
+    printf("\rIni cgra\n");
     // Enable and reset the CGRA performance counters
     cgra_perf_cnt_enable(&cgra, 1);
     cgra_perf_cnt_reset( &cgra );
@@ -180,12 +182,15 @@ int main() {
     quant_bit_width* qkv = out + 2048;
     quant_bit_width* input_normalized = out + 4096;
     int32_t distances[2];
+    printf("\rfft\n");
     stft_rearrange(rawInputSignal, stftVec, 80, 5);
+    printf("\rInfer\n");
     transformerInference(stftVec, out, input_normalized, qkv, intermediate);
+    printf("\rProto\n");
     prototype_distances(prototypes, out, distances, D_MODEL, 2);
-    printf("Distances : \n");
+    printf("Distances:\n");
     for (int i = 0; i< 2; i++)
-        printf("From the prototype of class %d = %d\n", i, distances[i]);
+        printf("Class %d = %d\n", i, distances[i]);
     return 0;
 }
 

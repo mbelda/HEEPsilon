@@ -91,15 +91,15 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
         }
         multihead_transpose(output, intermediate, seq_len, transformerBlock->head_hidden_size_, transformerBlock->num_heads_);
 
-        computeDense(transformerBlock->condense[l], seq_len, intermediate, output, cgra, cgra_slot);
+        computeDense(transformerBlock->condense[l], seq_len +3, intermediate, output, cgra, cgra_slot);
 
         add(input, output, seq_len, transformerBlock->input_dim_ );
 
         normalize(&transformerBlock->transformer_layer_1_addNorm[l], input, input_normalized);
-        computeDense(transformerBlock->feedForward0[l], seq_len, input_normalized, intermediate, cgra, cgra_slot);
+        computeDense(transformerBlock->feedForward0[l], seq_len +3, input_normalized, intermediate, cgra, cgra_slot);
         activation(transformerBlock->feedForward0[l], seq_len * transformerBlock->ff_size_, intermediate, intermediate);
 
-        computeDense(transformerBlock->feedForward1[l], seq_len, intermediate, output, cgra, cgra_slot);
+        computeDense(transformerBlock->feedForward1[l], seq_len +3, intermediate, output, cgra, cgra_slot);
         add(input, output, seq_len, transformerBlock->input_dim_ );
     }
 

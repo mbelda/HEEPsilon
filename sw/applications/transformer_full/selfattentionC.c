@@ -34,15 +34,21 @@ void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, i
     self_attn->value_layer_out = qkv + 2 * self_attn->pre_seq_len * self_attn->head_hidden_size;
     self_attn->key_transposed_layer_out = qkv + 3 * self_attn->pre_seq_len * self_attn->head_hidden_size;
 
-    computeDense(self_attn->query_layer, self_attn->pre_seq_len, input, self_attn->query_layer_out, cgra, cgra_slot);
-    computeDense(self_attn->key_layer, self_attn->pre_seq_len, input, self_attn->key_layer_out, cgra, cgra_slot);
-    computeDense(self_attn->value_layer, self_attn->pre_seq_len, input, self_attn->value_layer_out, cgra, cgra_slot);
+    // This 3 mmul need to think they have 124 rows instead of 121
+    // TODO: Check that the outputs have enough space for the extra 3 rows
+    computeDense(self_attn->query_layer, self_attn->pre_seq_len +3, input, self_attn->query_layer_out, cgra, cgra_slot);
+    computeDense(self_attn->key_layer, self_attn->pre_seq_len +3, input, self_attn->key_layer_out, cgra, cgra_slot);
+    computeDense(self_attn->value_layer, self_attn->pre_seq_len +3, input, self_attn->value_layer_out, cgra, cgra_slot);
 
-    transpose_quant(self_attn->key_layer_out, self_attn->key_transposed_layer_out, self_attn->pre_seq_len, self_attn->head_hidden_size);
+    transpose_quant(self_attn->key_layer_out, self_attn->key_transposed_layer_out, self_attn->pre_seq_len +3, self_attn->head_hidden_size);
     MatMul_scale(self_attn->key_transposed_layer_out, 1, self_attn->pre_seq_len * self_attn->head_hidden_size);
 
-    MatMul_multiply(self_attn->pre_seq_len, self_attn->query_layer_out, self_attn->key_transposed_layer_out, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len, cgra, cgra_slot);
+    MatMul_multiply(self_attn->pre_seq_len +3, self_attn->query_layer_out, self_attn->key_transposed_layer_out, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len +3, cgra, cgra_slot);
+    // 124x124 -> 124x121 Llevar les columnes extra de deveres
+    transpose_quant(intermediate, auxIntermediate, self_attn->pre_seq_len +3, self_attn->pre_seq_len +3); // 124x124
+    transpose_quant(auxIntermediate, intermediate, self_attn->pre_seq_len, self_attn->pre_seq_len +3); // 121x124
+    // Now intermediate is 124x121
     computeSoftmax(intermediate, self_attn->pre_seq_len);
     
-    MatMul_multiply(self_attn->pre_seq_len, intermediate, self_attn->value_layer_out, output, self_attn->pre_seq_len, self_attn->head_hidden_size, cgra, cgra_slot);
+    MatMul_multiply(self_attn->pre_seq_len +3, intermediate, self_attn->value_layer_out, output, self_attn->pre_seq_len, self_attn->head_hidden_size, cgra, cgra_slot);
 }

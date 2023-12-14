@@ -128,6 +128,10 @@ void main()
     mmulSoftware(matrixC);
     kcom_perfRecordStop(&(kperf.time.sw));
   } else {
+
+    // Add padding if needed
+    
+
     // Initialize the CGRA
     kcom_perfRecordStart(&(kperf.time.load));
     initCGRA();
