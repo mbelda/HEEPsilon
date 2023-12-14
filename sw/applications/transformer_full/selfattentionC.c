@@ -45,6 +45,7 @@ void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, i
 
     MatMul_multiply(self_attn->pre_seq_len +3, self_attn->query_layer_out, self_attn->key_transposed_layer_out, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len +3, cgra, cgra_slot);
     // 124x124 -> 124x121 Llevar les columnes extra de deveres
+    int32_t* auxIntermediate = intermediate + 124*124;
     transpose_quant(intermediate, auxIntermediate, self_attn->pre_seq_len +3, self_attn->pre_seq_len +3); // 124x124
     transpose_quant(auxIntermediate, intermediate, self_attn->pre_seq_len, self_attn->pre_seq_len +3); // 121x124
     // Now intermediate is 124x121
