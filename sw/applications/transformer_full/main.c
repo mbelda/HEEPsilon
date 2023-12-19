@@ -26,6 +26,9 @@
 #include "soc_ctrl.h"
 #include "core_v_mini_mcu.h"
 
+// FFT
+#include "stftVec.h"
+
 #define HART_ID 0
 
 // CGRA variables
@@ -175,15 +178,15 @@ int main() {
     initCGRA();
 
     // Transformer
-    quant_bit_width* stftVec = raw_signal;
+    //quant_bit_width* stftVec = raw_signal;
     quant_bit_width* rawInputSignal = raw_signal + 160*15;
     quant_bit_width* out = raw_signal + 160*15*20;
     quant_bit_width* intermediate = raw_signal + 16*1024;
     quant_bit_width* qkv = out + 2048;
     quant_bit_width* input_normalized = out + 4096;
     int32_t distances[2];
-    printf("\rfft\n");
-    stft_rearrange(rawInputSignal, stftVec, 80, 5);
+    //printf("\rfft\n");
+    //stft_rearrange(rawInputSignal, stftVec, 80, 5);
     printf("\rInfer\n");
     transformerInference(stftVec, out, input_normalized, qkv, intermediate);
     printf("\rProto\n");

@@ -74,6 +74,7 @@ void destroyTransformerBlock(TransformerBlock* transformerBlock) {
 void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant_bit_width * input,
                        quant_bit_width * input_normalized, quant_bit_width * output,
                        quant_bit_width* intermediate, quant_bit_width* qkv, cgra_t * cgra, uint8_t cgra_slot) {
+    printf("\rStep 1\n");
     normalize(&transformerBlock->addNorm, input, input);
     computeDense(transformerBlock->patchEmbedding, seq_len, input, output, cgra, cgra_slot);
     normalize(&transformerBlock->addNorm2, output, output);
@@ -82,6 +83,7 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
     seq_len++;
     posEmbedding(transformerBlock->token, input);
 
+    printf("\rStep 2\n");
     for (int l = 0; l < 4; l++) {
         normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized);
         for (int n = 0; n < NUM_HEAD; n++) {
@@ -89,6 +91,7 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
                                        output + n * (seq_len * transformerBlock->head_hidden_size_), qkv, intermediate, cgra, cgra_slot);
 //            destroy_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n]);
         }
+        printf("\rStep 3\n");
         multihead_transpose(output, intermediate, seq_len, transformerBlock->head_hidden_size_, transformerBlock->num_heads_);
 
         computeDense(transformerBlock->condense[l], seq_len +3, intermediate, output, cgra, cgra_slot);
@@ -103,6 +106,7 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
         add(input, output, seq_len, transformerBlock->input_dim_ );
     }
 
+    printf("\rStep 4\n");
     normalize(&transformerBlock->mlp_head_norm, input, input_normalized);
     computeDense(transformerBlock->mlp_head_linear, 1, input_normalized, output, cgra, cgra_slot);
 }

@@ -1,0 +1,15 @@
+#-----------------------------------------------------------
+# Vivado v2022.1 (64-bit)
+# SW Build 3526262 on Mon Apr 18 15:47:01 MDT 2022
+# IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
+# Start of session at: Fri Dec 15 15:45:07 2023
+# Process ID: 113980
+# Current directory: /home/mbelda/epfl/my_cgra/HEEPsilon
+# Command line: vivado
+# Log file: /home/mbelda/epfl/my_cgra/HEEPsilon/vivado.log
+# Journal file: /home/mbelda/epfl/my_cgra/HEEPsilon/vivado.jou
+# Running On: mbelda, OS: Linux, CPU Frequency: 2000.000 MHz, CPU Physical cores: 4, Host memory: 16453 MB
+#-----------------------------------------------------------
+start_gui
+open_project /home/mbelda/epfl/my_cgra/HEEPsilon/build/eslepfl_systems_cgra-x-heep_0/pynq-z2-vivado/eslepfl_systems_cgra-x-heep_0.xpr
+open_run impl_1
