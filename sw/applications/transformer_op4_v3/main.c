@@ -129,9 +129,6 @@ void main()
     kcom_perfRecordStop(&(kperf.time.sw));
   } else {
 
-    // Add padding if needed
-    
-
     // Initialize the CGRA
     kcom_perfRecordStart(&(kperf.time.load));
     initCGRA();
@@ -183,9 +180,10 @@ void main()
     kcom_perfRecordStart(&(kperf.time.sw));
     mmulSoftware(outSW);
     kcom_perfRecordStop(&(kperf.time.sw));
+
+    checkErrors();
   }
 
-  checkErrors();
   showPerformance(&kperf, 0);
   
   return EXIT_SUCCESS;
@@ -202,22 +200,6 @@ void checkErrors(){
   printf("\rErrors: %d\n", errors);
 
   if(errors>0){
-    // Open a file for writing
-    /*FILE *file = fopen("output.txt", "w");
-
-    // Check if the file was opened successfully
-    if (file == NULL) {
-        printf("Error opening file.\n");
-        return 1; // Exit with an error code
-    }
-    // Write array elements to the file
-    for(int i = 0; i < ROWS_C; i++){
-      fprintf(file, "[ ");
-      for(int j=0; j < COLS_C; j++){
-        fprintf(file, "%d ", matrixC[i*COLS_C+j]);
-      }
-      fprintf(file, "]\n");
-    }*/
     printMatrix(matrixC, ROWS_C, COLS_C);
   }
 }
