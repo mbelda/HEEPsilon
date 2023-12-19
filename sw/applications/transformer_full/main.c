@@ -125,6 +125,7 @@ void initCGRA(){
   plic_Init();
   plic_irq_set_priority(CGRA_INTR, 1);
   plic_irq_set_enabled(CGRA_INTR, kPlicToggleEnabled);
+  plic_assign_external_irq_handler( CGRA_INTR, (void *) &handler_irq_cgra);
 
   // Enable interrupt on processor side
   // Enable global interrupt for machine-level interrupts
