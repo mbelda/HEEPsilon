@@ -39,6 +39,9 @@ static uint8_t cgra_slot;
 static rv_timer_t timer;
 static uint32_t freq_hz;
 
+// Plic controller variables
+volatile bool cgra_intr_flag;
+
 float error_check(const quant_bit_width* groundTruth, const quant_bit_width* output, size_t length){
     long error = 0;
     for (int i=0; i<length; i++){

@@ -44,9 +44,6 @@
 /**                                                                        **/
 /****************************************************************************/
 
-// Plic controller variables
-volatile bool               cgra_intr_flag;
-
 // CGRA input and output buffers
 static int32_t cgra_input[CGRA_N_COLS][4]    __attribute__ ((aligned (4)));
 
