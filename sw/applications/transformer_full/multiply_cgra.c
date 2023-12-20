@@ -62,7 +62,7 @@ void multiply_cgra(int32_t * matrixC, int32_t * matrixA, int rowsA, int colsA, i
   int COLS_C = colsB;
   int COLS_A = colsA; 
 
-  if(ROWS_C < CGRA_N_COLS || COLS_C < CGRA_N_ROWS){
+  if(ROWS_C % CGRA_N_COLS != 0 || COLS_C % CGRA_N_ROWS != 0){
     mmulSoftware(matrixC, matrixA, rowsA, colsA, matrixB, colsB);
   } else {
     // Prepare the input vector for the CGRA
