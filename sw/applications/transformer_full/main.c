@@ -168,11 +168,11 @@ void timerInit()
 }
 
 int main() {
-    printf("\rIni timer\n");
+    kcom_timing_t perf;
+    kcom_perfRecordStart(&(perf.init));
     // CGRA
     // Init timer
     timerInit();
-    printf("\rIni cgra\n");
     // Enable and reset the CGRA performance counters
     cgra_perf_cnt_enable(&cgra, 1);
     cgra_perf_cnt_reset( &cgra );
@@ -187,12 +187,16 @@ int main() {
     quant_bit_width* qkv = out + 2048;
     quant_bit_width* input_normalized = out + 4096;
     int32_t distances[2];
-    //printf("\rfft\n");
+    kcom_perfRecordStop(&(perf.init));
+    //kcom_perfRecordStart(&(perf.stft));    
     //stft_rearrange(rawInputSignal, stftVec, 80, 5);
-    printf("\rInfer\n");
+    //kcom_perfRecordStop(&(perf.stft));    
+    kcom_perfRecordStart(&(perf.infer));
     transformerInference(stftVec, out, input_normalized, qkv, intermediate);
-    printf("\rProto\n");
+    kcom_perfRecordStop(&(perf.infer));
+    kcom_perfRecordStart(&(perf.proto));
     prototype_distances(prototypes, out, distances, D_MODEL, 2);
+    kcom_perfRecordStop(&(perf.proto));
     printf("Distances:\n");
     for (int i = 0; i< 2; i++)
         printf("Class %d = %d\n", i, distances[i]);
