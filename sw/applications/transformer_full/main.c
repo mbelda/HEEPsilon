@@ -20,6 +20,7 @@
 #include "cgra_bitstream.h"
 #include "cgra_x_heep.h"
 #include "cgra.h"
+#include "multiply_cgra.h"
 
 // For the timers   
 #include "rv_timer.h"
@@ -38,9 +39,6 @@ static uint8_t cgra_slot;
 // Timer
 static rv_timer_t timer;
 static uint32_t freq_hz;
-
-// Plic controller variables
-volatile bool cgra_intr_flag;
 
 float error_check(const quant_bit_width* groundTruth, const quant_bit_width* output, size_t length){
     long error = 0;
@@ -120,12 +118,6 @@ void stft_rearrange(quant_bit_width* rawInputSignal, quant_bit_width* stftVec, s
             }
         }
     }
-}
-
-// Interrupt controller variables
-void handler_irq_cgra(uint32_t id) {
-  cgra_intr_flag = 1;
-  
 }
 
 // Initialize the CGRA
