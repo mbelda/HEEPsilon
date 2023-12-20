@@ -119,6 +119,12 @@ void stft_rearrange(quant_bit_width* rawInputSignal, quant_bit_width* stftVec, s
     }
 }
 
+// Interrupt controller variables
+void handler_irq_cgra(uint32_t id) {
+  cgra_intr_flag = 1;
+  
+}
+
 // Initialize the CGRA
 void initCGRA(){
   // Init the PLIC

@@ -113,12 +113,6 @@ void mmulSoftware(int32_t * out, int32_t * matrixA, int rowsA, int colsA, int32_
   }
 }
 
-// Interrupt controller variables
-void handler_irq_cgra(uint32_t id) {
-  cgra_intr_flag = 1;
-  
-}
-
 /****************************************************************************/
 /**                                                                        **/
 /*                                 EOF                                      */
