@@ -46,6 +46,7 @@
 
 // CGRA input and output buffers
 static int32_t cgra_input[CGRA_N_COLS][4]    __attribute__ ((aligned (4)));
+static int32_t cgra_output[CGRA_N_COLS][1]    __attribute__ ((aligned (4)));
 
 // Plic controller variables
 volatile bool cgra_intr_flag;
@@ -90,6 +91,7 @@ void multiply_cgra(int32_t * matrixC, int32_t * matrixA, int rowsA, int colsA, i
     // Set CGRA kernel L/S pointers
     for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
       cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+      cgra_set_write_ptr ( &cgra, cgra_slot, (uint32_t) cgra_output[col_idx], col_idx );
     }
 
     // CGRA Execution
