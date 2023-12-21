@@ -21,6 +21,7 @@
 #include "cgra_x_heep.h"
 #include "cgra.h"
 #include "multiply_cgra.h"
+#include "performance.h"
 
 // For the timers   
 #include "rv_timer.h"
