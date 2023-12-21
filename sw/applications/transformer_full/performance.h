@@ -52,7 +52,6 @@ typedef struct
 
 #define HART_ID 0
 
-void timerInit();
 uint64_t getTime_cy( );
 void timeStop( kcom_time_diff_t *perf );
 void timeStart( kcom_time_diff_t *perf );
