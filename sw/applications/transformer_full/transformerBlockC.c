@@ -73,12 +73,12 @@ void destroyTransformerBlock(TransformerBlock* transformerBlock) {
 }
 
 void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant_bit_width * input,
-                       quant_bit_width * input_normalized, quant_bit_width * output,
+                       quant_bit_width * input_normalized, quant_bit_width * outFirst, quant_bit_width * output,
                        quant_bit_width* intermediate, quant_bit_width* qkv, cgra_t * cgra, uint8_t cgra_slot) {
 
     normalize(&transformerBlock->addNorm, input, input);
-    computeDense(transformerBlock->patchEmbedding, seq_len, input, output, cgra, cgra_slot); // 120x400x16
-    normalize(&transformerBlock->addNorm2, output, output);
+    computeDense(transformerBlock->patchEmbedding, seq_len, input, outFirst, cgra, cgra_slot); // 120x400x16
+    normalize(&transformerBlock->addNorm2, outFirst, output);
 
     clsConcatenate(transformerBlock->token, output, input);
     seq_len++;

@@ -6,7 +6,7 @@
 #include <math.h>
 #include "transformer.h"
 #include "data_cpp/signal.cpp"
-#include "data_cpp/signal_fft.cpp"
+//#include "data_cpp/signal_fft.cpp"
 #include "SYLT-FFT/fft.h"
 #include "weightsAndBiasesC.h"
 #include "transformerBlockC.h"
@@ -62,7 +62,7 @@ void prototype_distances(quant_bit_width* prototypeVec, const quant_bit_width* m
     }
 }
 
-void transformerInference(quant_bit_width * transformerInput, quant_bit_width * transformerOutput, quant_bit_width* input_normalized, quant_bit_width* qkv, quant_bit_width* intermediate){
+void transformerInference(quant_bit_width * transformerInput, quant_bit_width * transformerOutputFirst, quant_bit_width * transformerOutput, quant_bit_width* input_normalized, quant_bit_width* qkv, quant_bit_width* intermediate){
     quant_bit_width * weightVec[NUM_LAYERS*(3*NUM_HEAD+5)+5];
     quant_bit_width * biasVec[NUM_LAYERS*(3*NUM_HEAD+5)+5];
     getWeights(weightVec);
@@ -70,7 +70,7 @@ void transformerInference(quant_bit_width * transformerInput, quant_bit_width * 
     quant_bit_width * clsTokenVector = getClassToken();
     quant_bit_width * posMatrix = getPosEmbedding();
     TransformerBlock* selfatten = createTransformerBlock(D_SEQ, D_MODEL, D_Q, NUM_HEAD, D_FF, weightVec, biasVec, clsTokenVector, posMatrix);
-    computeFixedPoint(selfatten, D_SEQ, transformerInput, input_normalized, transformerOutput, intermediate, qkv, &cgra, cgra_slot);
+    computeFixedPoint(selfatten, D_SEQ, transformerInput, input_normalized, transformerOutputFirst, transformerOutput, intermediate, qkv, &cgra, cgra_slot);
 }
 
 quant_bit_width compute_log_amp(int32_t real, int32_t imag){
@@ -85,6 +85,7 @@ quant_bit_width compute_log_amp(int32_t real, int32_t imag){
     return stft_int;
 }
 
+/*
 void initialize_stft(fft_complex_t* data, const quant_bit_width * raw_input_signal){
     // Initialize each element of the data array
     for (int i = 0; i < 256; i++) {
@@ -96,7 +97,9 @@ void initialize_stft(fft_complex_t* data, const quant_bit_width * raw_input_sign
         data[i].i = 0;
     }
 }
+*/
 
+/*
 void stft_rearrange(quant_bit_width* rawInputSignal, quant_bit_width* stftVec, size_t patchHeight, size_t patchWidth){
     fft_complex_t data[512];
     int overlap = 64;
@@ -119,7 +122,7 @@ void stft_rearrange(quant_bit_width* rawInputSignal, quant_bit_width* stftVec, s
             }
         }
     }
-}
+}*/
 
 // Initialize the CGRA
 void initCGRA(){
@@ -182,21 +185,30 @@ int main() {
 
     // Transformer
     //quant_bit_width* stftVec = raw_signal;
-    quant_bit_width* rawInputSignal = raw_signal + 160*15;
-    quant_bit_width* out = raw_signal + 160*15*20;
-    quant_bit_width* intermediate = raw_signal + 16*1024;
-    quant_bit_width* qkv = out + 2048;
-    quant_bit_width* input_normalized = out + 4096;
+    //quant_bit_width* rawInputSignal = raw_signal + 160*15;
+    quant_bit_width* out_first = stftVec + 160*400; // Output start where the input ends
+    quant_bit_width* output = stftVec + 20450; // Buffer to use for the output
+    // Out_first only has 120*16 elements
+    
+    // Order
+    // Input 121x16
+    // Input_norm 121x16
+    // Qkv uses 121x4x4
+    // Bigger intermediate is 121x121
+
+    quant_bit_width* intermediate = stftVec + 5808;
+    quant_bit_width* qkv = stftVec + 3872;
+    quant_bit_width* input_normalized = stftVec + 1936;
     int32_t distances[2];
     kcom_perfRecordStop(&(perf.init));
     //kcom_perfRecordStart(&(perf.stft));    
     //stft_rearrange(rawInputSignal, stftVec, 80, 5);
     //kcom_perfRecordStop(&(perf.stft));    
     kcom_perfRecordStart(&(perf.infer));
-    transformerInference(stftVec, out, input_normalized, qkv, intermediate);
+    transformerInference(stftVec, out_first, output,  input_normalized, qkv, intermediate);
     kcom_perfRecordStop(&(perf.infer));
     kcom_perfRecordStart(&(perf.proto));
-    prototype_distances(prototypes, out, distances, D_MODEL, 2);
+    prototype_distances(prototypes, output, distances, D_MODEL, 2);
     kcom_perfRecordStop(&(perf.proto));
     printf("Distances:\n");
     for (int i = 0; i< 2; i++)
