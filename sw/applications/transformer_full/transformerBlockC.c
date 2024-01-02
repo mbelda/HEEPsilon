@@ -75,7 +75,7 @@ void destroyTransformerBlock(TransformerBlock* transformerBlock) {
 void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant_bit_width * input,
                        quant_bit_width * input_normalized, quant_bit_width * outFirst, quant_bit_width * output,
                        quant_bit_width* intermediate, quant_bit_width* qkv, cgra_t * cgra, uint8_t cgra_slot) {
-
+    printf("Step 1");
     normalize(&transformerBlock->addNorm, input, input);
     computeDense(transformerBlock->patchEmbedding, seq_len, input, outFirst, cgra, cgra_slot); // 120x400x16
     normalize(&transformerBlock->addNorm2, outFirst, output);
@@ -84,14 +84,16 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
     seq_len++;
     posEmbedding(transformerBlock->token, input);
 
+    printf("Step 2");
     for (int l = 0; l < 4; l++) {
         normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized);
         for (int n = 0; n < NUM_HEAD; n++) {
+            printf("Step 3");
             compute_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n], input_normalized,
                                        output + n * (seq_len * transformerBlock->head_hidden_size_), qkv, intermediate, cgra, cgra_slot);
 //            destroy_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n]);
         }
-
+        printf("Step 4");
         multihead_transpose(output, intermediate, seq_len, transformerBlock->head_hidden_size_, transformerBlock->num_heads_);
 
         computeDense(transformerBlock->condense[l], seq_len +3, intermediate, output, cgra, cgra_slot); // 121x16x16
@@ -105,7 +107,7 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
         computeDense(transformerBlock->feedForward1[l], seq_len +3, intermediate, output, cgra, cgra_slot); // 121x4x16
         add(input, output, seq_len, transformerBlock->input_dim_ );
     }
-
+    printf("Step 5");
     normalize(&transformerBlock->mlp_head_norm, input, input_normalized);
     computeDense(transformerBlock->mlp_head_linear, 1, input_normalized, output, cgra, cgra_slot); // 1x16x16
 }
