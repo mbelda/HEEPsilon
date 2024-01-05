@@ -99,7 +99,7 @@ void multiply_cgra(int32_t * matrixC, int32_t * matrixA, int rowsA, int colsA, i
     cgra_set_kernel( &cgra, cgra_slot, 1 );
     // Wait until CGRA is done
     while(cgra_intr_flag==0) {
-      //wait_for_interrupt();
+      wait_for_interrupt();
     }
   }
 }
