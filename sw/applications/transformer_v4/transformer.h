@@ -4,6 +4,15 @@
 #include <stdint.h>
 #include "cgra.h"
 
-// 121x4x121 
-// 121x121x4
+// C multiple of 4x4
 
+#define ROWS_A 16
+#define COLS_A 5
+#define COLS_B 16
+#define ROWS_B COLS_A
+#define ROWS_C ROWS_A
+#define COLS_C COLS_B
+
+#define BLOCK_SIZE 4
+
+#endif // _STIMULI_H_
