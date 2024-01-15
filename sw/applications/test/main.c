@@ -141,14 +141,14 @@ int main() {
     //kcom_perfRecordStart(&(perf.infer));
     transformerInference(stftVec, output, input_normalized, qkv, intermediate, (void *) &kperf);
     //kcom_perfRecordStop(&(perf.infer));
-    /*
-    kcom_perfRecordStart(&(perf.proto));
+    
+    kcom_perfRecordStart(&(kperf.time.proto));
     prototype_distances(prototypes, output, distances, D_MODEL, 2);
-    kcom_perfRecordStop(&(perf.proto));
+    kcom_perfRecordStop(&(kperf.time.proto));
     printf("Distances:\n");
     for (int i = 0; i< 2; i++)
         printf("Class %d = %d\n", i, distances[i]);
-    */
+    
     printf("\rEND\n");
     return 0;
 }

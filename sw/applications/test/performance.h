@@ -4,20 +4,20 @@
 typedef long int    kcom_time_t;
 typedef kcom_time_t kcom_param_t;
 
-typedef struct
+typedef struct kcom_col_perf
 {
     uint32_t cyc_act;
     uint32_t cyc_stl;
 } kcom_col_perf_t;
 
-typedef struct
+typedef struct kcom_time_diff
 {
     kcom_time_t start_cy;
     kcom_time_t end_cy;
     kcom_time_t spent_cy;
 } kcom_time_diff_t;
 
-typedef struct
+typedef struct kcom_timing
 {
     kcom_time_diff_t    sw;
     kcom_time_diff_t    cgra;
@@ -26,9 +26,10 @@ typedef struct
     kcom_time_diff_t    output;
     kcom_time_diff_t    reprogramCols;
     kcom_time_diff_t    bitstream;
+    kcom_time_diff_t    proto;
 } kcom_timing_t;
 
-typedef struct
+typedef struct kcom_perf
 {
     kcom_col_perf_t    cols[CGRA_N_COLS];
     kcom_col_perf_t    cols_max;
@@ -36,7 +37,7 @@ typedef struct
     kcom_timing_t      time;
 } kcom_perf_t;
 
-typedef struct
+typedef struct kcom_run
 {
     kcom_param_t sw;
     kcom_param_t conf;
@@ -44,7 +45,7 @@ typedef struct
     kcom_param_t repo;
 } kcom_run_t;
 
-typedef struct
+typedef struct kcom_stats
 {
    kcom_run_t   avg;
    uint32_t     n;
