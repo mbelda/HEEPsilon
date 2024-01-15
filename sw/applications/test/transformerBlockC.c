@@ -76,9 +76,40 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
                        quant_bit_width * input_normalized, quant_bit_width * output,
                        quant_bit_width* intermediate, quant_bit_width* qkv, void * kperf) {
 
-    //12x16x12
-    printf("\rMultiply_cgra\n");
-    multiply_cgra((kcom_perf_t *) kperf, input, 12, 16, input, 16, 12, output, 12, 12); 
-    printf("\rEnd multiply_cgra\n");
+    printf("Step 1");
+    normalize(&transformerBlock->addNorm, input, input);
+    computeDense(transformerBlock->patchEmbedding, seq_len, input, output, kperf); // 120x400x16
+    normalize(&transformerBlock->addNorm2, output, output);
+
+    clsConcatenate(transformerBlock->token, output, input);
+    seq_len++;
+    posEmbedding(transformerBlock->token, input);
+
+    printf("Step 2");
+    for (int l = 0; l < 4; l++) {
+        normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized);
+        for (int n = 0; n < NUM_HEAD; n++) {
+            printf("Step 3");
+            compute_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n], input_normalized,
+                                       output + n * (seq_len * transformerBlock->head_hidden_size_), qkv, intermediate, kperf);
+//            destroy_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n]);
+        }
+        printf("Step 4");
+        multihead_transpose(output, intermediate, seq_len, transformerBlock->head_hidden_size_, transformerBlock->num_heads_);
+
+        computeDense(transformerBlock->condense[l], seq_len +3, intermediate, output, kperf); // 121x16x16
+
+        add(input, output, seq_len, transformerBlock->input_dim_ );
+
+        normalize(&transformerBlock->transformer_layer_1_addNorm[l], input, input_normalized);
+        computeDense(transformerBlock->feedForward0[l], seq_len +3, input_normalized, intermediate, kperf); // 121x16x4
+        activation(transformerBlock->feedForward0[l], seq_len * transformerBlock->ff_size_, intermediate, intermediate);
+
+        computeDense(transformerBlock->feedForward1[l], seq_len +3, intermediate, output, kperf); // 121x4x16
+        add(input, output, seq_len, transformerBlock->input_dim_ );
+    }
+    printf("Step 5");
+    normalize(&transformerBlock->mlp_head_norm, input, input_normalized);
+    computeDense(transformerBlock->mlp_head_linear, 1, input_normalized, output, kperf); // 1x16x16
 }
 

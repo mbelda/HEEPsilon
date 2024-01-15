@@ -28,9 +28,9 @@ void MatMul_multiply_blocks(size_t seq_len, quant_bit_width* input, quant_bit_wi
 }
 
 void MatMul_multiply(size_t seq_len, quant_bit_width* input, quant_bit_width* weight,
-                           quant_bit_width* output, size_t input_size, size_t output_size, cgra_t * cgra, uint8_t cgra_slot ) {
+                           quant_bit_width* output, size_t input_size, size_t output_size, void * kperf ) {
     printf("\rMul %dx%dx%d\n", seq_len, input_size, output_size);
-    multiply_cgra(output, input, seq_len, input_size, weight, output_size, cgra, cgra_slot);
+    multiply_cgra(kperf, input, seq_len, input_size, weight, output_size, output);
 }
 
 void MatMul_scale(quant_bit_width* input, int shift_scale, size_t mat_size) {

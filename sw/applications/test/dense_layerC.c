@@ -42,10 +42,10 @@ void addbias(Dense* dense, size_t seq_len, int32_t* output) {
     }
 }
 
-void computeDense(Dense* dense, size_t seq_len, int32_t* input, int32_t* output, cgra_t* cgra, uint8_t cgra_slot) {
+void computeDense(Dense* dense, size_t seq_len, int32_t* input, int32_t* output, void * kperf) {
     //multiplyweight(dense, seq_len, input, output);
     printf("\rMul %dx%dx%d\n", seq_len, dense->input_size_, dense->output_size_);
-    //multiply_cgra(output, input, seq_len, dense->input_size_, dense->weight, dense->output_size_, cgra, cgra_slot);
+    multiply_cgra(kperf, input, seq_len, dense->input_size_, dense->weight, dense->output_size_, output);
     if (dense->bias != NULL) {
         addbias(dense, seq_len, output);
     }

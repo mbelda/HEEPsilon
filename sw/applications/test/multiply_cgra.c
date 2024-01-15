@@ -94,9 +94,12 @@ static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((a
 /**                                                                        **/
 /****************************************************************************/
 
-void multiply_cgra(kcom_perf_t * kperf, int * matrixA, int ROWS_A, int COLS_A, int * matrixB, int ROWS_B, int COLS_B, int * matrixC, int ROWS_C, int COLS_C)
+void multiply_cgra(void * kperf_void, int * matrixA, int ROWS_A, int COLS_A, int * matrixB, int COLS_B, int * matrixC)
 {
-
+  kcom_perf_t * kperf = (kcom_perf_t *) kperf_void;
+  int ROWS_B = COLS_A;
+  int ROWS_C = ROWS_A;
+  int COLS_C = COLS_B;
   // Prepare the input vector for the CGRA
   kcom_perfRecordStart(&(kperf->time.input));
   // Col 0: &B[0][0], nItLoopColsC, &A[0][0], &C[0][3]

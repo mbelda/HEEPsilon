@@ -30,6 +30,6 @@ typedef struct {
 
 void create_SingleHeadSelfAttn(SingleHeadSelfAttn*, size_t pre_seq_len, size_t input_dim, size_t head_hidden_size, int32_t** weightVector);
 void destroy_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn);
-void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, int32_t* output, int32_t* qkv, int32_t* intermediate, cgra_t * cgra, uint8_t cgra_slot);
+void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, int32_t* output, int32_t* qkv, int32_t* intermediate, void * kperf);
 
 #endif //FVLLMONTITRANSFORMER_SELFATTENTIONC_H
