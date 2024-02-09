@@ -37,7 +37,7 @@ void removeExtraCols(int32_t* input, size_t rows, int cols) {
     }
 }
 
-void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, int32_t* output, int32_t* qkv, int32_t* intermediate, void * kperf) {
+void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, int32_t* output, int32_t* qkv, int32_t* intermediate) {
     self_attn->query_layer_out = qkv;
     self_attn->key_layer_out = qkv + self_attn->pre_seq_len * self_attn->head_hidden_size;
     self_attn->value_layer_out = qkv + 2 * self_attn->pre_seq_len * self_attn->head_hidden_size;
@@ -45,15 +45,15 @@ void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, i
 
     // This 3 mmul need to think they have 124 rows instead of 121
     // TODO: Check that the outputs have enough space for the extra 3 rows
-    computeDense(self_attn->query_layer, self_attn->pre_seq_len +3, input, self_attn->query_layer_out, kperf); // 121x16x4
-    computeDense(self_attn->key_layer, self_attn->pre_seq_len +3, input, self_attn->key_layer_out, kperf); // 121x16x4
-    computeDense(self_attn->value_layer, self_attn->pre_seq_len +3, input, self_attn->value_layer_out, kperf); // 121x16x4
+    computeDense(self_attn->query_layer, self_attn->pre_seq_len +3, input, self_attn->query_layer_out); // 121x16x4
+    computeDense(self_attn->key_layer, self_attn->pre_seq_len +3, input, self_attn->key_layer_out); // 121x16x4
+    computeDense(self_attn->value_layer, self_attn->pre_seq_len +3, input, self_attn->value_layer_out); // 121x16x4
 
     transpose_quant(self_attn->key_layer_out, self_attn->key_transposed_layer_out, self_attn->pre_seq_len +3, self_attn->head_hidden_size);
     MatMul_scale(self_attn->key_transposed_layer_out, 1, (self_attn->pre_seq_len +3) * self_attn->head_hidden_size);
 
     // 121x4x121
-    MatMul_multiply(self_attn->pre_seq_len +3, self_attn->query_layer_out, self_attn->key_transposed_layer_out, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len +3, kperf);
+    MatMul_multiply(self_attn->pre_seq_len +3, self_attn->query_layer_out, self_attn->key_transposed_layer_out, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len +3);
     
     printf("\rRemove cols\n");
     // 121x124 -> 121x121 Remove extra cols
@@ -64,5 +64,5 @@ void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, i
     computeSoftmax(intermediate, self_attn->pre_seq_len);
     
     // 121x121x4
-    MatMul_multiply(self_attn->pre_seq_len +3, intermediate, self_attn->value_layer_out, output, self_attn->pre_seq_len, self_attn->head_hidden_size, kperf);
+    MatMul_multiply(self_attn->pre_seq_len +3, intermediate, self_attn->value_layer_out, output, self_attn->pre_seq_len, self_attn->head_hidden_size);
 }
