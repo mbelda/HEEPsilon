@@ -70,7 +70,7 @@ void fillMatrixInputs();
 // Fill output buffers with zeroes
 void fillOutputZeroes();
 // Handler for the CGRA interruption
-void handler_irq_ext(uint32_t id);
+void handler_irq_cgra(uint32_t id);
 // Record the cycle number at the start
 void kcom_perfRecordStart( kcom_time_diff_t *perf );
 // Record the cycle number and compute the total cycles
@@ -304,6 +304,7 @@ void initCGRA(){
   plic_Init();
   plic_irq_set_priority(CGRA_INTR, 1);
   plic_irq_set_enabled(CGRA_INTR, kPlicToggleEnabled);
+  plic_assign_external_irq_handler( CGRA_INTR, (void *) &handler_irq_cgra);
 
   // Enable interrupt on processor side
   // Enable global interrupt for machine-level interrupts
@@ -348,10 +349,10 @@ void mmulSoftware(int32_t * out){
 }
 
 // Interrupt controller variables
-void handler_irq_ext(uint32_t id) {
-  if( id == CGRA_INTR) {
-    cgra_intr_flag = 1;
-  }
+void handler_irq_cgra(uint32_t id) {
+  
+  cgra_intr_flag = 1;
+  
 }
 
 // Display the performance values
@@ -366,7 +367,7 @@ showPerformance( kcom_perf_t* kperf){
   printf("\rCgra: %d\n", kperf->time.cgra.spent_cy);
   printf("\r-----------------------------\n");
   */
-  int32_t overhead = kperf->time.input.spent_cy + kperf->time.output.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
+  kcom_time_t overhead = kperf->time.input.spent_cy + kperf->time.output.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
   //printf("\rOverhead: %d\n", overhead);
   printf("\rTotal cgra: %d\n", overhead + kperf->time.cgra.spent_cy); 
 }

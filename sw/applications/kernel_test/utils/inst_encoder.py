@@ -183,7 +183,7 @@ else:
 DIMENSION = sys.argv[2] # e.g. "3x3"
 
 # Get the dimension-dependant data folder
-DATA_DIR = KER_PATH + "/" + DIMENSION + "/"
+DATA_DIR = KER_PATH  + DIMENSION + "/"
 
 # Obtain the number of columns and row independently
 CGRA_N_COL, CGRA_N_ROW = [int(s) for s in DIMENSION if s.isdigit() ]
