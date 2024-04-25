@@ -8,6 +8,8 @@
         "core_v_mini_mcu.h": "c",
         "stdlib.h": "c",
         "cgra.h": "c",
-        "performance.h": "c"
+        "performance.h": "c",
+        "multiply_cgra.h": "c",
+        "array_output.h": "c"
     }
 }
