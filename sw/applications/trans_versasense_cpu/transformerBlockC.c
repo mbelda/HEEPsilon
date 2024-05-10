@@ -88,7 +88,7 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
     for (int l = 0; l < 4; l++) {
         normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized); // 13x16
         for (int n = 0; n < NUM_HEAD; n++) {
-            // printf("\rl%d: Step 3\n", l);
+            //printf("\rl%d: Step 3\n", l);
             compute_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n], input_normalized,
                                        output + n * (seq_len * transformerBlock->head_hidden_size_), qkv, intermediate, aux_padding);
 //            destroy_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n]);
@@ -96,16 +96,16 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
         //printf("\rl%d: Step 4\n", l);
         multihead_transpose(output, intermediate, seq_len, transformerBlock->head_hidden_size_, transformerBlock->num_heads_);
 
-        int padding = 3;
-        computeDense(transformerBlock->condense[l], seq_len + padding, intermediate, output); // 13x16x16
+
+        computeDense(transformerBlock->condense[l], seq_len, intermediate, output); // 13x16x16
 
         add(input, output, seq_len, transformerBlock->input_dim_ ); // 13x16
 
         normalize(&transformerBlock->transformer_layer_1_addNorm[l], input, input_normalized); // 13x16
-        computeDense(transformerBlock->feedForward0[l], seq_len + padding, input_normalized, intermediate); // 13x16x4
+        computeDense(transformerBlock->feedForward0[l], seq_len, input_normalized, intermediate); // 13x16x4
         activation(transformerBlock->feedForward0[l], seq_len * transformerBlock->ff_size_, intermediate, intermediate); // 13x4
 
-        computeDense(transformerBlock->feedForward1[l], seq_len + padding, intermediate, output); // 13x4x16
+        computeDense(transformerBlock->feedForward1[l], seq_len, intermediate, output); // 13x4x16
         add(input, output, seq_len, transformerBlock->input_dim_ ); // 13x16
     }
     //printf("\rStep 5\n");

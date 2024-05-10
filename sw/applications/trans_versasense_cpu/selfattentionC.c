@@ -72,28 +72,17 @@ void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int32_t* input, i
     self_attn->value_layer_out = qkv + 2 * self_attn->pre_seq_len * self_attn->head_hidden_size;
     self_attn->key_transposed_layer_out = qkv + 3 * self_attn->pre_seq_len * self_attn->head_hidden_size;
 
-    // This 3 mmul need to think they have 16 rows instead of 13
-    int padding = 3;
-    // TODO: Check that the outputs have enough space for the extra padding rows and cols
-    computeDense(self_attn->query_layer, self_attn->pre_seq_len + padding, input, self_attn->query_layer_out); // 13x16x4 (16x16x4)
-    computeDense(self_attn->key_layer, self_attn->pre_seq_len + padding, input, self_attn->key_layer_out); // 13x16x4 (16x16x4)
-    computeDense(self_attn->value_layer, self_attn->pre_seq_len + padding, input, self_attn->value_layer_out); // 13x16x4 (16x16x4)
+    computeDense(self_attn->query_layer, self_attn->pre_seq_len, input, self_attn->query_layer_out); // 13x16x4
+    computeDense(self_attn->key_layer, self_attn->pre_seq_len, input, self_attn->key_layer_out); // 13x16x4 
+    computeDense(self_attn->value_layer, self_attn->pre_seq_len, input, self_attn->value_layer_out); // 13x16x4
 
-    transpose_quant(self_attn->key_layer_out, self_attn->key_transposed_layer_out, self_attn->pre_seq_len +3, self_attn->head_hidden_size); // 4x13
+    transpose_quant(self_attn->key_layer_out, self_attn->key_transposed_layer_out, self_attn->pre_seq_len +3, self_attn->head_hidden_size); // 13x4 -> 4x13
     MatMul_scale(self_attn->key_transposed_layer_out, 1, self_attn->pre_seq_len * self_attn->head_hidden_size); //4x13
 
-    // Add padding 4x13 -> 4x16
-    add_padding(self_attn->key_transposed_layer_out, aux_padding, self_attn->pre_seq_len, self_attn->head_hidden_size, padding); // 4x16
-
-    // 13x4x13 (16x4x16)
-    MatMul_multiply(self_attn->pre_seq_len + padding, self_attn->query_layer_out, aux_padding, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len + padding);
+    MatMul_multiply(self_attn->pre_seq_len, self_attn->query_layer_out, self_attn->key_transposed_layer_out, intermediate, self_attn->head_hidden_size, self_attn->pre_seq_len); //13x4x13
     
-    // 13x16 -> 13x13
-    remove_padding(intermediate, self_attn->pre_seq_len, self_attn->pre_seq_len, padding);
-
     //printf("\rSoftmax\n");
     computeSoftmax(intermediate, self_attn->pre_seq_len);
     
-    // 13x13x4
-    MatMul_multiply(self_attn->pre_seq_len + padding, intermediate, self_attn->value_layer_out, output, self_attn->pre_seq_len, self_attn->head_hidden_size);
+    MatMul_multiply(self_attn->pre_seq_len, intermediate, self_attn->value_layer_out, output, self_attn->pre_seq_len, self_attn->head_hidden_size);
 }
