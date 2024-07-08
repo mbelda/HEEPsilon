@@ -10,11 +10,12 @@ module cgra_clock_gate
   output logic clk_o
 );
 
-    xilinx_clk_gating clk_gate_i (
+  /*  xilinx_clk_gating clk_gate_i (
         .clk_i,
         .en_i,
         .test_en_i,
         .clk_o
-    );
+    );*/
+  assign clk_o = clk_i;
 
 endmodule
