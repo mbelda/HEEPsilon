@@ -4,6 +4,8 @@
 
 #include "dense_layerC.h"
 #include <stdio.h>
+#include "performance.h"
+#include <stdint.h>
 
 void createDense(Dense* dense, size_t input_dim, size_t output_dim, quant_bit_width *weight, quant_bit_width* bias) {
     dense->input_size_ = input_dim;
@@ -44,8 +46,20 @@ void addbias(Dense* dense, size_t seq_len, int32_t* output) {
 
 void computeDense(Dense* dense, size_t seq_len, int32_t* input, int32_t* output) {
     //multiplyweight(dense, seq_len, input, output);
-    printf("\rMul %dx%dx%d\n", seq_len, dense->input_size_, dense->output_size_);
+
+    uint64_t begin, end;
+    begin = getTime_cy();
+    //kcom_perfRecordStart(&(kperf->time.mul));
     multiply_cgra(input, seq_len, dense->input_size_, dense->weight, dense->output_size_, output);
+    //kcom_perfRecordStop(&(kperf->time.mul));
+    end = getTime_cy();
+    uint64_t total = end - begin;
+    printf("\rMul %dx%dx%d: %llu\n", seq_len, dense->input_size_, dense->output_size_, (unsigned long long)(end - begin));
+    printf("begin: 0x%08lx%08lx, end: 0x%08lx%08lx, total: 0x%08lx%08lx\n", 
+        (unsigned long)(begin >> 32), (unsigned long)(begin & 0xFFFFFFFF), 
+        (unsigned long)(end >> 32), (unsigned long)(end & 0xFFFFFFFF),
+        (unsigned long)(total >> 32), (unsigned long)(total & 0xFFFFFFFF));
+    
     if (dense->bias != NULL) {
         addbias(dense, seq_len, output);
     }

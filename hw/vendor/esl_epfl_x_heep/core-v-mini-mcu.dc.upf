@@ -1,0 +1,547 @@
+upf_version 2.1
+
+set_design_top core_v_mini_mcu
+set_scope .
+
+
+
+#####################
+##  POWER DOMAINS  ##
+#####################
+
+create_power_domain PD_TOP -include_scope
+create_power_domain PD_CPU -elements {cpu_subsystem_i}
+create_power_domain PD_PERIP_SUBS -elements {peripheral_subsystem_i}
+create_power_domain PD_MEM_BANK_0 -elements {memory_subsystem_i/ram0_i}
+create_power_domain PD_MEM_BANK_1 -elements {memory_subsystem_i/ram1_i}
+create_power_domain PD_MEM_BANK_2 -elements {memory_subsystem_i/ram2_i}
+create_power_domain PD_MEM_BANK_3 -elements {memory_subsystem_i/ram3_i}
+create_power_domain PD_MEM_BANK_4 -elements {memory_subsystem_i/ram4_i}
+create_power_domain PD_MEM_BANK_5 -elements {memory_subsystem_i/ram5_i}
+create_power_domain PD_MEM_BANK_6 -elements {memory_subsystem_i/ram6_i}
+create_power_domain PD_MEM_BANK_7 -elements {memory_subsystem_i/ram7_i}
+create_power_domain PD_MEM_BANK_8 -elements {memory_subsystem_i/ram8_i}
+create_power_domain PD_MEM_BANK_9 -elements {memory_subsystem_i/ram9_i}
+create_power_domain PD_MEM_BANK_10 -elements {memory_subsystem_i/ram10_i}
+create_power_domain PD_MEM_BANK_11 -elements {memory_subsystem_i/ram11_i}
+create_power_domain PD_MEM_BANK_12 -elements {memory_subsystem_i/ram12_i}
+create_power_domain PD_MEM_BANK_13 -elements {memory_subsystem_i/ram13_i}
+
+
+
+####################
+##  POWER STATES  ##
+####################
+
+add_power_state PD_TOP.primary -state TOP_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_CPU.primary -state CPU_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_CPU.primary -state CPU_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_PERIP_SUBS.primary -state PERIP_SUBS_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_PERIP_SUBS.primary -state PERIP_SUBS_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_0.primary -state MEM_BANK_0_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_0.primary -state MEM_BANK_0_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_1.primary -state MEM_BANK_1_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_1.primary -state MEM_BANK_1_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_2.primary -state MEM_BANK_2_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_2.primary -state MEM_BANK_2_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_3.primary -state MEM_BANK_3_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_3.primary -state MEM_BANK_3_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_4.primary -state MEM_BANK_4_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_4.primary -state MEM_BANK_4_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_5.primary -state MEM_BANK_5_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_5.primary -state MEM_BANK_5_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_6.primary -state MEM_BANK_6_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_6.primary -state MEM_BANK_6_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_7.primary -state MEM_BANK_7_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_7.primary -state MEM_BANK_7_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_8.primary -state MEM_BANK_8_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_8.primary -state MEM_BANK_8_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_9.primary -state MEM_BANK_9_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_9.primary -state MEM_BANK_9_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_10.primary -state MEM_BANK_10_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_10.primary -state MEM_BANK_10_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_11.primary -state MEM_BANK_11_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_11.primary -state MEM_BANK_11_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_12.primary -state MEM_BANK_12_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_12.primary -state MEM_BANK_12_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+add_power_state PD_MEM_BANK_13.primary -state MEM_BANK_13_ON \
+    {-supply_expr {power == `{FULL_ON, 1.2} && ground == `{FULL_ON, 0.0}}}
+
+add_power_state PD_MEM_BANK_13.primary -state MEM_BANK_13_OFF \
+    {-supply_expr {power == `{OFF} && ground == `{FULL_ON, 0.0}}} -simstate CORRUPT
+
+
+
+###################
+##  SUPPLY NETS  ##
+###################
+
+create_supply_port VDD -direction in
+create_supply_port VSS -direction in
+
+create_supply_net VDD
+create_supply_net VSS
+
+connect_supply_net VDD -ports VDD
+connect_supply_net VSS -ports VSS
+
+create_supply_set PD_TOP.primary -function {power VDD} -function {ground VSS} -update
+
+create_supply_net VDD_CPU
+create_supply_set PD_CPU.primary -function {power VDD_CPU} -function {ground VSS} -update
+
+create_supply_net VDD_PERIP_SUBS
+create_supply_set PD_PERIP_SUBS.primary -function {power VDD_PERIP_SUBS} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_0
+create_supply_set PD_MEM_BANK_0.primary -function {power VDD_MEM_BANK_0} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_1
+create_supply_set PD_MEM_BANK_1.primary -function {power VDD_MEM_BANK_1} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_2
+create_supply_set PD_MEM_BANK_2.primary -function {power VDD_MEM_BANK_2} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_3
+create_supply_set PD_MEM_BANK_3.primary -function {power VDD_MEM_BANK_3} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_4
+create_supply_set PD_MEM_BANK_4.primary -function {power VDD_MEM_BANK_4} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_5
+create_supply_set PD_MEM_BANK_5.primary -function {power VDD_MEM_BANK_5} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_6
+create_supply_set PD_MEM_BANK_6.primary -function {power VDD_MEM_BANK_6} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_7
+create_supply_set PD_MEM_BANK_7.primary -function {power VDD_MEM_BANK_7} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_8
+create_supply_set PD_MEM_BANK_8.primary -function {power VDD_MEM_BANK_8} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_9
+create_supply_set PD_MEM_BANK_9.primary -function {power VDD_MEM_BANK_9} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_10
+create_supply_set PD_MEM_BANK_10.primary -function {power VDD_MEM_BANK_10} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_11
+create_supply_set PD_MEM_BANK_11.primary -function {power VDD_MEM_BANK_11} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_12
+create_supply_set PD_MEM_BANK_12.primary -function {power VDD_MEM_BANK_12} -function {ground VSS} -update
+
+create_supply_net VDD_MEM_BANK_13
+create_supply_set PD_MEM_BANK_13.primary -function {power VDD_MEM_BANK_13} -function {ground VSS} -update
+
+
+
+################
+##  SWITCHES  ##
+################
+
+create_power_switch switch_PD_CPU \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_CPU \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_CPU} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/cpu_subsystem_pwr_ctrl_o\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/cpu_subsystem_pwr_ctrl_i\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_PERIP_SUBS \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_PERIP_SUBS \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_PERIP_SUBS} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/peripheral_subsystem_pwr_ctrl_o\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/peripheral_subsystem_pwr_ctrl_i\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_0 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_0 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_0} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[0]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[0]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_1 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_1 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_1} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[1]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[1]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_2 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_2 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_2} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[2]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[2]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_3 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_3 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_3} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[3]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[3]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_4 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_4 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_4} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[4]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[4]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_5 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_5 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_5} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[5]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[5]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_6 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_6 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_6} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[6]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[6]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_7 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_7 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_7} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[7]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[7]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_8 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_8 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_8} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[8]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[8]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_9 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_9 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_9} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[9]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[9]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_10 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_10 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_10} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[10]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[10]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_11 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_11 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_11} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[11]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[11]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_12 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_12 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_12} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[12]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[12]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+create_power_switch switch_PD_MEM_BANK_13 \
+    -supply_set         PD_TOP.primary \
+    -domain             PD_MEM_BANK_13 \
+    -input_supply_port  {sw_in     VDD} \
+    -output_supply_port {sw_out    VDD_MEM_BANK_13} \
+    -control_port       {sw_ctrl   ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[13]\[pwrgate_en_n\]} \
+    -ack_port           {sw_ack    ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_i[13]\[pwrgate_ack_n\]}  \
+    -on_state           {on_state  sw_in {sw_ctrl}} \
+    -off_state          {off_state {!sw_ctrl}}
+
+
+
+#################
+##  ISOLATION  ##
+#################
+
+set_isolation cpu_iso \
+    -domain PD_CPU \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/cpu_subsystem_pwr_ctrl_o\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -applies_to outputs \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation perip_subs_iso \
+    -domain PD_PERIP_SUBS \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/peripheral_subsystem_pwr_ctrl_o\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -applies_to outputs \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_0_iso \
+    -domain PD_MEM_BANK_0 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[0]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram0_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_1_iso \
+    -domain PD_MEM_BANK_1 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[1]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram1_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_2_iso \
+    -domain PD_MEM_BANK_2 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[2]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram2_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_3_iso \
+    -domain PD_MEM_BANK_3 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[3]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram3_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_4_iso \
+    -domain PD_MEM_BANK_4 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[4]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram4_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_5_iso \
+    -domain PD_MEM_BANK_5 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[5]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram5_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_6_iso \
+    -domain PD_MEM_BANK_6 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[6]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram6_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_7_iso \
+    -domain PD_MEM_BANK_7 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[7]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram7_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_8_iso \
+    -domain PD_MEM_BANK_8 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[8]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram8_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_9_iso \
+    -domain PD_MEM_BANK_9 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[9]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram9_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_10_iso \
+    -domain PD_MEM_BANK_10 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[10]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram10_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_11_iso \
+    -domain PD_MEM_BANK_11 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[11]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram11_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_12_iso \
+    -domain PD_MEM_BANK_12 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[12]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram12_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+
+set_isolation mem_bank_13_iso \
+    -domain PD_MEM_BANK_13 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -isolation_signal ao_peripheral_subsystem_i/memory_subsystem_pwr_ctrl_o[13]\[isogate_en_n\]  \
+    -isolation_sense low \
+    -clamp_value 0 \
+    -elements {memory_subsystem_i/ram13_i/rdata_o} \
+    -name_prefix cpu_iso_cell \
+    -location parent
+

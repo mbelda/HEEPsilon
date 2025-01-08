@@ -5,6 +5,8 @@
 #include "dense_layerC.h"
 #include <stdio.h>
 
+#define PRINTS_DEBUG_MATMUL 1
+
 void createDense(Dense* dense, size_t input_dim, size_t output_dim, quant_bit_width *weight, quant_bit_width* bias) {
     dense->input_size_ = input_dim;
     dense->output_size_ = output_dim;
@@ -43,7 +45,22 @@ void addbias(Dense* dense, size_t seq_len, int32_t* output) {
 }
 
 void computeDense(Dense* dense, size_t seq_len, int32_t* input, int32_t* output) {
+    uint64_t begin, end;
+    if (PRINTS_DEBUG_MATMUL){
+        begin = getTime_cy();
+    }
     multiplyweight(dense, seq_len, input, output);
+
+    if (PRINTS_DEBUG_MATMUL){
+        end = getTime_cy();
+        uint64_t total = end - begin;
+        printf("Mul %dx%dx%d: begin: 0x%08lx%08lx, end: 0x%08lx%08lx, total: 0x%08lx%08lx\n", 
+            seq_len, dense->input_size_, dense->output_size_,
+            (unsigned long)(begin >> 32), (unsigned long)(begin & 0xFFFFFFFF), 
+            (unsigned long)(end >> 32), (unsigned long)(end & 0xFFFFFFFF),
+            (unsigned long)(total >> 32), (unsigned long)(total & 0xFFFFFFFF));
+    }
+
     if (dense->bias != NULL) {
         addbias(dense, seq_len, output);
     }
