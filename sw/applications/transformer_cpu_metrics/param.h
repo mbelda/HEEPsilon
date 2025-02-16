@@ -22,5 +22,5 @@
 #define SHIFT(x) ((x) >> NUM_FRACTION_BITS)
 
 
-typedef int16_t quant_bit_width;
+typedef int32_t quant_bit_width;
 #endif //FVLLMONTITRANSFORMER_PARAM_H

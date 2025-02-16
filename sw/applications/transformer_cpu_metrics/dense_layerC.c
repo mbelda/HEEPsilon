@@ -4,6 +4,8 @@
 
 #include "dense_layerC.h"
 #include <stdio.h>
+#include "performance.h"
+#include <stdint.h>
 
 void createDense(Dense* dense, size_t input_dim, size_t output_dim, quant_bit_width *weight, quant_bit_width* bias) {
     dense->input_size_ = input_dim;
@@ -17,7 +19,7 @@ void destroyDense(Dense* dense) {
     free(dense);
 }
 
-void multiplyweight(Dense* dense, size_t seq_len, int16_t* input, int16_t* output) {
+void multiplyweight(Dense* dense, size_t seq_len, int32_t* input, int32_t* output) {
     for (int length = 0; length < seq_len; length++) {
         for (int out_idx = 0; out_idx < dense->output_size_; out_idx++) {
             int32_t* weight_ptr = dense->weight + out_idx;
@@ -34,7 +36,7 @@ void multiplyweight(Dense* dense, size_t seq_len, int16_t* input, int16_t* outpu
     }
 }
 
-void addbias(Dense* dense, size_t seq_len, int16_t* output) {
+void addbias(Dense* dense, size_t seq_len, int32_t* output) {
     for (size_t idx = 0; idx < seq_len; idx++) {
         for (size_t feature_idx = 0; feature_idx < dense->output_size_; feature_idx++) {
             output[idx * dense->output_size_ + feature_idx] += dense->bias[feature_idx];
@@ -42,14 +44,29 @@ void addbias(Dense* dense, size_t seq_len, int16_t* output) {
     }
 }
 
-void computeDense(Dense* dense, size_t seq_len, int16_t* input, int16_t* output) {
+void computeDense(Dense* dense, size_t seq_len, int32_t* input, int32_t* output) {
+    
+
+    uint64_t begin, end;
+    begin = getTime_cy();
+    //kcom_perfRecordStart(&(kperf->time.mul));
     multiplyweight(dense, seq_len, input, output);
+    //multiply_cgra(input, seq_len, dense->input_size_, dense->weight, dense->output_size_, output);
+    //kcom_perfRecordStop(&(kperf->time.mul));
+    end = getTime_cy();
+    uint64_t total = end - begin;
+    printf("\rMul %dx%dx%d: %llu\n", seq_len, dense->input_size_, dense->output_size_, (unsigned long long)(end - begin));
+    printf("begin: 0x%08lx%08lx, end: 0x%08lx%08lx, total: 0x%08lx%08lx\n", 
+        (unsigned long)(begin >> 32), (unsigned long)(begin & 0xFFFFFFFF), 
+        (unsigned long)(end >> 32), (unsigned long)(end & 0xFFFFFFFF),
+        (unsigned long)(total >> 32), (unsigned long)(total & 0xFFFFFFFF));
+    
     if (dense->bias != NULL) {
         addbias(dense, seq_len, output);
     }
 }
 
-void activation(Dense* dense, size_t length, int16_t* input, int16_t* output) {
+void activation(Dense* dense, size_t length, int32_t* input, int32_t* output) {
     float in_float, in_tanh;
     int32_t x3, in_tanh_fxp;
     for (int i = 0; i < length; i++) {
@@ -59,7 +76,7 @@ void activation(Dense* dense, size_t length, int16_t* input, int16_t* output) {
         x3 = MUL(x3, 3268); // 3268 = sqrt(2/PI) in fixed-point 12 bit
         in_float = (float) x3 / (float) (1 << NUM_FRACTION_BITS);
         in_tanh = tanhf(in_float);
-        in_tanh_fxp = (int16_t) (in_tanh * (1 << NUM_FRACTION_BITS));
+        in_tanh_fxp = (int32_t) (in_tanh * (1 << NUM_FRACTION_BITS));
         in_tanh_fxp += (1 << NUM_FRACTION_BITS);
         output[i] = MUL(in_tanh_fxp, input[i] >> 1);
     }

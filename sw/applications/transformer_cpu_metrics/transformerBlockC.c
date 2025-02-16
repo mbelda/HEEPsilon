@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include "transformerBlockC.h"
+#include "multiply_cgra.h"
 
 SingleHeadSelfAttn global_selfatten [NUM_LAYERS * NUM_HEAD];
 Dense global_query_layer[NUM_LAYERS * NUM_HEAD];
@@ -18,7 +19,7 @@ Dense global_mlp;
 TransformerBlock  global_transformer_block;
 TokenPosEmbedding  global_token_embedding;
 
-TransformerBlock* createTransformerBlock(size_t pre_seq_len, size_t input_dim, size_t head_hidden_size, size_t num_heads, size_t ff_size, int16_t** weightVector, int16_t** biasVector, int16_t* clsTokenVector, int16_t* posMatrix) {
+TransformerBlock* createTransformerBlock(size_t pre_seq_len, size_t input_dim, size_t head_hidden_size, size_t num_heads, size_t ff_size, int32_t** weightVector, int32_t** biasVector, int32_t* clsTokenVector, int32_t* posMatrix) {
     TransformerBlock* transformerBlock = &global_transformer_block;
     transformerBlock->num_heads_ = num_heads;
     transformerBlock->head_hidden_size_ = head_hidden_size;
@@ -42,7 +43,6 @@ TransformerBlock* createTransformerBlock(size_t pre_seq_len, size_t input_dim, s
             transformerBlock->selfatten[l * num_heads + n]->value_layer = &global_value_layer[l * num_heads + n];
 
             create_SingleHeadSelfAttn(transformerBlock->selfatten[l * num_heads + n], (pre_seq_len + 1), input_dim, head_hidden_size, weightVector + l * 17 + 4 + n * 3);
-            //printf("self attention %ld, len: %ld\n", l*num_heads + n, transformerBlock->selfatten[l * num_heads + n]->query_layer->input_size_);
         }
 
         transformerBlock->condense[l] = &global_condense[l];
@@ -74,37 +74,45 @@ void destroyTransformerBlock(TransformerBlock* transformerBlock) {
 
 void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant_bit_width * input,
                        quant_bit_width * input_normalized, quant_bit_width * output,
-                       quant_bit_width* intermediate, quant_bit_width* qkv) {
+                       quant_bit_width* intermediate, quant_bit_width* qkv, void * kperf) {
+
+    //printf("\rStep 1\n");
     normalize(&transformerBlock->addNorm, input, input);
-    computeDense(transformerBlock->patchEmbedding, seq_len, input, output);
+    computeDense(transformerBlock->patchEmbedding, seq_len, input, output); // 120x400x16
     normalize(&transformerBlock->addNorm2, output, output);
 
     clsConcatenate(transformerBlock->token, output, input);
     seq_len++;
     posEmbedding(transformerBlock->token, input);
 
-    for (int l = 0; l < 4; l++) {
+    //printf("\rStep 2\n");
+    // REGULAR_LOOP_IT 4
+    int DEBUG_LOOP_IT = 1;
+    for (int l = 0; l < DEBUG_LOOP_IT; l++) {
         normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized);
-        for (int n = 0; n < NUM_HEAD; n++) {
+        //for (int n = 0; n < NUM_HEAD; n++) {
+        for (int n = 0; n < 0; n++) {
+            //printf("\rStep 3\n");
             compute_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n], input_normalized,
                                        output + n * (seq_len * transformerBlock->head_hidden_size_), qkv, intermediate);
 //            destroy_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n]);
         }
+        //printf("\rStep 4\n");
         multihead_transpose(output, intermediate, seq_len, transformerBlock->head_hidden_size_, transformerBlock->num_heads_);
 
-        computeDense(transformerBlock->condense[l], seq_len, intermediate, output);
+        computeDense(transformerBlock->condense[l], seq_len, intermediate, output); // 121x16x16
 
         add(input, output, seq_len, transformerBlock->input_dim_ );
 
         normalize(&transformerBlock->transformer_layer_1_addNorm[l], input, input_normalized);
-        computeDense(transformerBlock->feedForward0[l], seq_len, input_normalized, intermediate);
+        computeDense(transformerBlock->feedForward0[l], seq_len, input_normalized, intermediate); // 121x16x4
         activation(transformerBlock->feedForward0[l], seq_len * transformerBlock->ff_size_, intermediate, intermediate);
 
-        computeDense(transformerBlock->feedForward1[l], seq_len, intermediate, output);
+        computeDense(transformerBlock->feedForward1[l], seq_len, intermediate, output); // 121x4x16
         add(input, output, seq_len, transformerBlock->input_dim_ );
     }
-
+    //printf("\rStep 5\n");
     normalize(&transformerBlock->mlp_head_norm, input, input_normalized);
-    computeDense(transformerBlock->mlp_head_linear, 1, input_normalized, output);
+    computeDense(transformerBlock->mlp_head_linear, 1, input_normalized, output); // 1x16x16
 }
 

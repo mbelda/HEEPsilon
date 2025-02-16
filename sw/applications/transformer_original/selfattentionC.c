@@ -34,7 +34,7 @@ void compute_SingleHeadSelfAttn(SingleHeadSelfAttn* self_attn, int16_t* input, i
     self_attn->value_layer_out = qkv + 2 * self_attn->pre_seq_len * self_attn->head_hidden_size;
     self_attn->key_transposed_layer_out = qkv + 3 * self_attn->pre_seq_len * self_attn->head_hidden_size;
 
-    printf("Size query %ld\n", self_attn->query_layer->input_size_);
+    //printf("Size query %ld\n", self_attn->query_layer->input_size_);
     computeDense(self_attn->query_layer, self_attn->pre_seq_len, input, self_attn->query_layer_out);
     computeDense(self_attn->key_layer, self_attn->pre_seq_len, input, self_attn->key_layer_out);
     computeDense(self_attn->value_layer, self_attn->pre_seq_len, input, self_attn->value_layer_out);

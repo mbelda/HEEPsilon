@@ -11,6 +11,8 @@
 #include "weightsAndBiasesC.h"
 #include "transformerBlockC.h"
 
+#include "performance.h"
+
 float error_check(const quant_bit_width* groundTruth, const quant_bit_width* output, size_t length){
     long error = 0;
     for (int i=0; i<length; i++){
@@ -43,7 +45,7 @@ void transformerInference(quant_bit_width * transformerInput, quant_bit_width * 
     computeFixedPoint(selfatten, D_SEQ, transformerInput, input_normalized, transformerOutput, intermediate, qkv);
 }
 
-int32_t compute_log_amp(int32_t real, int32_t imag){
+quant_bit_width compute_log_amp(int32_t real, int32_t imag){
     real = MUL_HQ(real, 25) >> (NUM_FRACTION_BITS - 9);
     imag = MUL_HQ(imag, 25) >> (NUM_FRACTION_BITS - 9);
     int32_t real2 = MUL_LONG(real, real) >> NUM_FRACTION_BITS;
@@ -93,15 +95,40 @@ void stft_rearrange(int16_t* rawInputSignal, int32_t* stftVec, size_t patchHeigh
 }
 
 int main() {
-    int32_t* stftVec = raw_signal;
+    int16_t* stftVec = raw_signal;
     int16_t* rawInputSignal = raw_signal + 160*15*2;
-    int32_t* out = raw_signal + 160*15*20;
-    int32_t* intermediate = raw_signal + 16*1024;
-    int32_t* qkv = out + 2048;
-    int32_t* input_normalized = out + 4096;
-    int32_t distances[2];
-    stft_rearrange(rawInputSignal, stftVec, 80, 5);
+    int16_t* out = raw_signal + 160*15*20;
+    int16_t* intermediate = raw_signal + 16*1024;
+    int16_t* qkv = out + 2048;
+    int16_t* input_normalized = out + 4096;
+    int16_t distances[2];
+
+    timerInit();
+    uint64_t begin, end, diff;
+
+    // ----------------------
+    //         STFT
+    // ----------------------
+    begin = getTime_cy();
+    //stft_rearrange(rawInputSignal, stftVec, 80, 5);
+    end = getTime_cy();
+    diff = end - begin;
+    printf("STFT: 0x%08lx%08lx\n", 
+       (unsigned long)(diff >> 32), (unsigned long)(diff & 0xFFFFFFFF));
+
+    // ----------------------
+    //       Inference
+    // ----------------------
+    begin = getTime_cy();
     transformerInference(stftVec, out, input_normalized, qkv, intermediate);
+    end = getTime_cy();
+    diff = end - begin;
+    printf("Inference: 0x%08lx%08lx\n", 
+       (unsigned long)(diff >> 32), (unsigned long)(diff & 0xFFFFFFFF));
+
+    // ----------------------
+    //       Distances
+    // ----------------------
     prototype_distances(prototypes, out, distances, D_MODEL, 2);
     printf("Distances : \n");
     for (int i = 0; i< 2; i++)
