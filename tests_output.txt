@@ -1,0 +1,200 @@
+
+--- Ejemplo 4x4x4 ---
+
+Errors: 0
+A:4x4, B:4x4
+Sw: 1444
+Load: 7810
+Program cols: 151
+Input: 150
+Cgra: 473
+Padding: 109
+Total cgra: 8693
+
+--- Ejemplo 4x16x4 ---
+
+Errors: 0
+A:4x16, B:16x4
+Sw: 5092
+Load: 7810
+Program cols: 149
+Input: 155
+Cgra: 749
+Padding: 110
+Total cgra: 8973
+
+--- Ejemplo 16x16x16 ---
+
+Errors: 0
+A:16x16, B:16x16
+Sw: 75806
+Load: 7809
+Program cols: 151
+Input: 151
+Cgra: 6764
+Padding: 109
+Total cgra: 14984
+
+--- Ejemplo 16x4x16 ---
+
+Errors: 0
+A:16x4, B:4x16
+Sw: 21520
+Load: 7809
+Program cols: 153
+Input: 154
+Cgra: 2346
+Padding: 110
+Total cgra: 10572
+
+--- Ejemplo 32x16x16 ---
+
+Errors: 0
+A:32x16, B:16x16
+Sw: 159712
+Load: 7810
+Program cols: 151
+Input: 157
+Cgra: 6764
+Padding: 109
+Total cgra: 14991
+
+--- Ejemplo 32x32x32 ---
+
+Errors: 0
+A:32x32, B:32x32
+Sw: 597503
+Load: 7809
+Program cols: 150
+Input: 164
+Cgra: 49499
+Padding: 108
+Total cgra: 57730
+
+--- Ejemplo 34x32x32 ---
+
+Errors: 0
+A:34x32, B:32x32
+Sw: 634843
+Load: 7809
+Program cols: 150
+Input: 164
+Cgra: 49751
+Padding: 108
+Total cgra: 57982
+
+--- Ejemplo 33x32x32 ---
+
+Errors: 0
+A:33x32, B:32x32
+Sw: 616173
+Load: 7809
+Program cols: 150
+Input: 164
+Cgra: 49766
+Padding: 108
+Total cgra: 57997
+
+--- Ejemplo 34x32x32 ---
+
+Errors: 0
+A:34x32, B:32x32
+Sw: 634843
+Load: 7809
+Program cols: 150
+Input: 164
+Cgra: 49751
+Padding: 108
+Total cgra: 57982
+
+--- Ejemplo 32x32x33 ---
+
+Errors: 0
+A:32x32, B:32x33
+Sw: 616224
+Load: 7809
+Program cols: 150
+Input: 163
+Cgra: 62547
+Padding: 29323
+Total cgra: 99992
+
+--- Ejemplo 32x32x34 ---
+
+Errors: 0
+A:32x32, B:32x34
+Sw: 634880
+Load: 7809
+Program cols: 150
+Input: 163
+Cgra: 62547
+Padding: 29195
+Total cgra: 99864
+
+--- Ejemplo 32x32x35 ---
+
+Errors: 0
+A:32x32, B:32x35
+Sw: 653536
+Load: 7809
+Program cols: 150
+Input: 163
+Cgra: 62547
+Padding: 29067
+Total cgra: 99736
+
+--- Ejemplo 64x64x64 ---
+
+Errors: 0
+A:64x64, B:64x64
+Sw: 4748223
+Load: 8304
+Program cols: 150
+Input: 164
+Cgra: 385251
+Padding: 108
+Total cgra: 393977
+
+--- Ejemplo 64x64x65 ---
+
+Errors: 0
+A:64x64, B:64x65
+Sw: 5088705
+Load: 8304
+Program cols: 150
+Input: 163
+Cgra: 434859
+Padding: 112587
+Total cgra: 556063
+
+--- Ejemplo 16x32x16 ---
+
+Errors: 0
+A:16x32, B:32x16
+Sw: 157714
+Load: 7809
+Program cols: 153
+Input: 159
+Cgra: 12650
+Padding: 109
+Total cgra: 20880
+
+--- Ejemplo 16x16x32 ---
+
+Errors: 203
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
+[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]
