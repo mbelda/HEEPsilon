@@ -172,7 +172,7 @@ void main()
     cgra_input[2][2] = &matrixB[2];
     cgra_input[2][3] = padded_COLS_B/CGRA_N_ROWS;
     // Col 3: nItLoopRowsC, &A[3][0], &C[3][2], &B[0][3], 
-    cgra_input[3][0] = padded_COLS_B/CGRA_N_COLS;
+    cgra_input[3][0] = ROWS_A/CGRA_N_COLS;
     cgra_input[3][1] = &matrixA[3*COLS_A];
     cgra_input[3][2] = &matrixC[3*padded_COLS_B+2];
     cgra_input[3][3] = &matrixB[3];
