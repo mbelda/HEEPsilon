@@ -6,9 +6,9 @@
 
 // C multiple of 4x4
 
-#define ROWS_A 11
-#define COLS_A 9
-#define COLS_B 17
+#define ROWS_A 32
+#define COLS_A 32
+#define COLS_B 35
 #define ROWS_B COLS_A
 #define ROWS_C ROWS_A
 #define COLS_C COLS_B

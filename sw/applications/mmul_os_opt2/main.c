@@ -170,8 +170,9 @@ void main()
     cgra_input[2][0] = &matrixA[0];
     cgra_input[2][1] = &matrixC[COLS_B+2];
     cgra_input[2][2] = &matrixB[2];
-    cgra_input[2][3] = COLS_A;
-    cgra_input[2][4] = -4*COLS_B;
+    cgra_input[2][3] = nColsBlocksC; // Duplicate for faster spread
+    cgra_input[2][4] = COLS_A;
+    cgra_input[2][5] = -4*COLS_B;
     // Col 3
     cgra_input[3][0] = nRowsBlocksC;
     cgra_input[3][1] = &matrixA[COLS_A];
@@ -193,7 +194,9 @@ void main()
     cgra_intr_flag = 0;
     cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
     // Process extra rows/cols for non multiple dimensions
+    kcom_perfRecordStart(   &(kperf.time.extraRowsCols) );
     processExtraRowsAColsB();
+    kcom_perfRecordStop(   &(kperf.time.extraRowsCols) );
     // Wait until CGRA is done
     while(cgra_intr_flag==0) {
       wait_for_interrupt();
@@ -208,7 +211,7 @@ void main()
     checkErrors();
   }
 
-  //showPerformance(&kperf, 1);
+  showPerformance(&kperf, 1);
   
   return EXIT_SUCCESS;
 }
@@ -224,11 +227,10 @@ void processExtraRowsAColsB(){
       matrixC[rA*COLS_B + cB] = sum;
     } 
   }
-  //printf("Extra %d rowsA done\n", ROWS_A%BLOCK_SIZE);
 
   // Extra cols B
   for(int cB = COLS_B - COLS_B%BLOCK_SIZE; cB < COLS_B; cB++){
-    for(int rA = 0; rA < ROWS_A; rA++){
+    for(int rA = 0; rA < ROWS_A - ROWS_A%BLOCK_SIZE; rA++){
       int sum = 0;
       for(int k = 0; k < COLS_A; k++){
        sum += matrixA[rA*COLS_A + k] * matrixB[k*COLS_B + cB];
@@ -236,8 +238,6 @@ void processExtraRowsAColsB(){
       matrixC[rA*COLS_B + cB] = sum;
     } 
   }
-
-  //printf("Extra %d colsB done\n", COLS_B%BLOCK_SIZE);
 }
 
 int errors_idx[ROWS_A*COLS_B];
@@ -272,7 +272,12 @@ void checkErrors(){
     }
   }
   //printf("...]\n");
-  printf("Errors: %d\n", errors);
+  if (errors > 0){
+    printf("Errors: %d\n", errors);
+  } else{
+    printf("OK\n");
+  }
+  
 
   if(errors>0){
     printVector(errors_idx, errors);
@@ -351,6 +356,7 @@ void showPerformance( kcom_perf_t* kperf, int full){
     printf("Program cols: %d\n", kperf->time.reprogramCols.spent_cy);
     printf("Input: %d\n", kperf->time.input.spent_cy);
     printf("Cgra: %d\n", kperf->time.cgra.spent_cy);
+    printf("ExtraRowsCols: %d\n", kperf->time.extraRowsCols.spent_cy);
   }
   int32_t overhead = kperf->time.input.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
   printf("Total cgra: %d\n", overhead + kperf->time.cgra.spent_cy); 

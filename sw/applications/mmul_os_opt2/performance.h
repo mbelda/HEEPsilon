@@ -26,7 +26,7 @@ typedef struct
     kcom_time_diff_t    output;
     kcom_time_diff_t    reprogramCols;
     kcom_time_diff_t    bitstream;
-    kcom_time_diff_t    padding;
+    kcom_time_diff_t    extraRowsCols;
 } kcom_timing_t;
 
 typedef struct
