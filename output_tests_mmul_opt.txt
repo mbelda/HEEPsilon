@@ -1,0 +1,823 @@
+
+--- Ejemplo 4x4x4 ---
+A:4x4, B:4x4
+
+Errors: 0
+Sw: 1384
+Load: 7809
+Program cols: 154
+Input: 116
+Cgra: 475
+Total cgra: 8554
+
+--- Ejemplo 16x4x4 ---
+A:16x4, B:4x4
+
+Errors: 0
+Sw: 5585
+Load: 7809
+Program cols: 154
+Input: 117
+Cgra: 868
+Total cgra: 8948
+
+--- Ejemplo 4x16x4 ---
+A:4x16, B:16x4
+
+Errors: 0
+Sw: 4840
+Load: 7809
+Program cols: 156
+Input: 117
+Cgra: 749
+Total cgra: 8831
+
+--- Ejemplo 4x4x16 ---
+A:4x4, B:4x16
+
+Errors: 0
+Sw: 5176
+Load: 7809
+Program cols: 156
+Input: 118
+Cgra: 839
+Total cgra: 8922
+
+--- Ejemplo 16x16x16 ---
+A:16x16, B:16x16
+
+Errors: 0
+Sw: 79890
+Load: 7808
+Program cols: 154
+Input: 117
+Cgra: 6747
+Total cgra: 14826
+
+--- Ejemplo 32x32x32 ---
+A:32x32, B:32x32
+
+Errors: 0
+Sw: 630272
+Load: 7808
+Program cols: 158
+Input: 128
+Cgra: 49431
+Total cgra: 57525
+
+--- Ejemplo 33x32x32 ---
+A:33x32, B:32x32
+
+Errors: 0
+Sw: 649966
+Load: 7808
+Program cols: 158
+Input: 128
+Cgra: 49484
+Total cgra: 57578
+
+--- Ejemplo 34x32x32 ---
+A:34x32, B:32x32
+
+Errors: 0
+Sw: 669660
+Load: 7808
+Program cols: 158
+Input: 128
+Cgra: 49515
+Total cgra: 57609
+
+--- Ejemplo 35x32x32 ---
+A:35x32, B:32x32
+
+Errors: 0
+Sw: 689354
+Load: 7808
+Program cols: 158
+Input: 128
+Cgra: 49482
+Total cgra: 57576
+
+--- Ejemplo 32x32x33 ---
+A:32x32, B:32x33
+Sw: 649985
+Load: 7808
+Program cols: 158
+Input: 129
+Cgra: 49673
+Total cgra: 57768
+
+--- Ejemplo 32x32x34 ---
+A:32x32, B:32x34
+
+--- Ejemplo 32x32x35 ---
+A:32x32, B:32x35
+
+--- Ejemplo 64x64x64 ---
+A:64x64, B:64x64
+
+Errors: 0
+Sw: 4748223
+Load: 7808
+Program cols: 158
+Input: 128
+Cgra: 384983
+Total cgra: 393077
+
+--- Ejemplo 4x9x4 ---
+
+--- Ejemplo 4x9x5 ---
+
+--- Ejemplo 4x9x4 ---
+Launching mmul_os opt v2 for dimension 4x9x4
+Errors: 0
+
+--- Ejemplo 4x9x5 ---
+Launching mmul_os opt v2 for dimension 4x9x5
+Errors: 0
+
+--- Ejemplo 4x9x6 ---
+Launching mmul_os opt v2 for dimension 4x9x6
+Errors: 0
+
+--- Ejemplo 4x9x7 ---
+Launching mmul_os opt v2 for dimension 4x9x7
+Errors: 0
+
+--- Ejemplo 4x9x8 ---
+Launching mmul_os opt v2 for dimension 4x9x8
+Errors: 0
+
+--- Ejemplo 4x9x9 ---
+Launching mmul_os opt v2 for dimension 4x9x9
+Errors: 0
+
+--- Ejemplo 4x9x10 ---
+Launching mmul_os opt v2 for dimension 4x9x10
+Errors: 0
+
+--- Ejemplo 4x9x11 ---
+Launching mmul_os opt v2 for dimension 4x9x11
+Errors: 0
+
+--- Ejemplo 4x9x12 ---
+Launching mmul_os opt v2 for dimension 4x9x12
+Errors: 0
+
+--- Ejemplo 4x9x13 ---
+Launching mmul_os opt v2 for dimension 4x9x13
+Errors: 0
+
+--- Ejemplo 4x9x14 ---
+Launching mmul_os opt v2 for dimension 4x9x14
+Errors: 0
+
+--- Ejemplo 4x9x15 ---
+Launching mmul_os opt v2 for dimension 4x9x15
+Errors: 0
+
+--- Ejemplo 4x9x16 ---
+Launching mmul_os opt v2 for dimension 4x9x16
+Errors: 0
+
+--- Ejemplo 4x9x17 ---
+Launching mmul_os opt v2 for dimension 4x9x17
+Errors: 0
+
+--- Ejemplo 4x9x18 ---
+Launching mmul_os opt v2 for dimension 4x9x18
+Errors: 0
+
+--- Ejemplo 4x9x19 ---
+Launching mmul_os opt v2 for dimension 4x9x19
+Errors: 0
+
+--- Ejemplo 4x9x20 ---
+Launching mmul_os opt v2 for dimension 4x9x20
+Errors: 0
+
+--- Ejemplo 4x9x21 ---
+Launching mmul_os opt v2 for dimension 4x9x21
+Errors: 0
+
+--- Ejemplo 4x9x22 ---
+Launching mmul_os opt v2 for dimension 4x9x22
+Errors: 0
+
+--- Ejemplo 4x9x23 ---
+Launching mmul_os opt v2 for dimension 4x9x23
+Errors: 0
+
+--- Ejemplo 4x9x24 ---
+Launching mmul_os opt v2 for dimension 4x9x24
+Errors: 0
+
+--- Ejemplo 5x9x4 ---
+Launching mmul_os opt v2 for dimension 5x9x4
+Errors: 0
+
+--- Ejemplo 5x9x5 ---
+Launching mmul_os opt v2 for dimension 5x9x5
+Errors: 0
+
+--- Ejemplo 5x9x6 ---
+Launching mmul_os opt v2 for dimension 5x9x6
+Errors: 0
+
+--- Ejemplo 5x9x7 ---
+Launching mmul_os opt v2 for dimension 5x9x7
+Errors: 0
+
+--- Ejemplo 5x9x8 ---
+Launching mmul_os opt v2 for dimension 5x9x8
+Errors: 0
+
+--- Ejemplo 5x9x9 ---
+Launching mmul_os opt v2 for dimension 5x9x9
+Errors: 0
+
+--- Ejemplo 5x9x10 ---
+Launching mmul_os opt v2 for dimension 5x9x10
+Errors: 0
+
+--- Ejemplo 5x9x11 ---
+Launching mmul_os opt v2 for dimension 5x9x11
+Errors: 0
+
+--- Ejemplo 5x9x12 ---
+Launching mmul_os opt v2 for dimension 5x9x12
+Errors: 0
+
+--- Ejemplo 5x9x13 ---
+Launching mmul_os opt v2 for dimension 5x9x13
+Errors: 0
+
+--- Ejemplo 5x9x14 ---
+Launching mmul_os opt v2 for dimension 5x9x14
+Errors: 0
+
+--- Ejemplo 5x9x15 ---
+Launching mmul_os opt v2 for dimension 5x9x15
+Errors: 0
+
+--- Ejemplo 5x9x16 ---
+Launching mmul_os opt v2 for dimension 5x9x16
+Errors: 0
+
+--- Ejemplo 5x9x17 ---
+Launching mmul_os opt v2 for dimension 5x9x17
+Errors: 0
+
+--- Ejemplo 5x9x18 ---
+Launching mmul_os opt v2 for dimension 5x9x18
+Errors: 0
+
+--- Ejemplo 5x9x19 ---
+Launching mmul_os opt v2 for dimension 5x9x19
+Errors: 0
+
+--- Ejemplo 5x9x20 ---
+Launching mmul_os opt v2 for dimension 5x9x20
+Errors: 0
+
+--- Ejemplo 5x9x21 ---
+Launching mmul_os opt v2 for dimension 5x9x21
+Errors: 0
+
+--- Ejemplo 5x9x22 ---
+Launching mmul_os opt v2 for dimension 5x9x22
+Errors: 0
+
+--- Ejemplo 5x9x23 ---
+Launching mmul_os opt v2 for dimension 5x9x23
+Errors: 0
+
+--- Ejemplo 5x9x24 ---
+Launching mmul_os opt v2 for dimension 5x9x24
+Errors: 0
+
+--- Ejemplo 6x9x4 ---
+Launching mmul_os opt v2 for dimension 6x9x4
+Errors: 0
+
+--- Ejemplo 6x9x5 ---
+Launching mmul_os opt v2 for dimension 6x9x5
+Errors: 0
+
+--- Ejemplo 6x9x6 ---
+Launching mmul_os opt v2 for dimension 6x9x6
+Errors: 0
+
+--- Ejemplo 6x9x7 ---
+Launching mmul_os opt v2 for dimension 6x9x7
+Errors: 0
+
+--- Ejemplo 6x9x8 ---
+Launching mmul_os opt v2 for dimension 6x9x8
+Errors: 0
+
+--- Ejemplo 6x9x9 ---
+Launching mmul_os opt v2 for dimension 6x9x9
+Errors: 0
+
+--- Ejemplo 6x9x10 ---
+Launching mmul_os opt v2 for dimension 6x9x10
+Errors: 0
+
+--- Ejemplo 6x9x11 ---
+Launching mmul_os opt v2 for dimension 6x9x11
+Errors: 0
+
+--- Ejemplo 6x9x12 ---
+Launching mmul_os opt v2 for dimension 6x9x12
+Errors: 0
+
+--- Ejemplo 6x9x13 ---
+Launching mmul_os opt v2 for dimension 6x9x13
+Errors: 0
+
+--- Ejemplo 6x9x14 ---
+Launching mmul_os opt v2 for dimension 6x9x14
+Errors: 0
+
+--- Ejemplo 6x9x15 ---
+Launching mmul_os opt v2 for dimension 6x9x15
+Errors: 0
+
+--- Ejemplo 6x9x16 ---
+Launching mmul_os opt v2 for dimension 6x9x16
+Errors: 0
+
+--- Ejemplo 6x9x17 ---
+Launching mmul_os opt v2 for dimension 6x9x17
+Errors: 0
+
+--- Ejemplo 6x9x18 ---
+Launching mmul_os opt v2 for dimension 6x9x18
+Errors: 0
+
+--- Ejemplo 6x9x19 ---
+Launching mmul_os opt v2 for dimension 6x9x19
+Errors: 0
+
+--- Ejemplo 6x9x20 ---
+Launching mmul_os opt v2 for dimension 6x9x20
+Errors: 0
+
+--- Ejemplo 6x9x21 ---
+Launching mmul_os opt v2 for dimension 6x9x21
+Errors: 0
+
+--- Ejemplo 6x9x22 ---
+Launching mmul_os opt v2 for dimension 6x9x22
+Errors: 0
+
+--- Ejemplo 6x9x23 ---
+Launching mmul_os opt v2 for dimension 6x9x23
+Errors: 0
+
+--- Ejemplo 6x9x24 ---
+Launching mmul_os opt v2 for dimension 6x9x24
+Errors: 0
+
+--- Ejemplo 7x9x4 ---
+Launching mmul_os opt v2 for dimension 7x9x4
+Errors: 0
+
+--- Ejemplo 7x9x5 ---
+Launching mmul_os opt v2 for dimension 7x9x5
+Errors: 0
+
+--- Ejemplo 7x9x6 ---
+Launching mmul_os opt v2 for dimension 7x9x6
+Errors: 0
+
+--- Ejemplo 7x9x7 ---
+Launching mmul_os opt v2 for dimension 7x9x7
+Errors: 0
+
+--- Ejemplo 7x9x8 ---
+Launching mmul_os opt v2 for dimension 7x9x8
+Errors: 0
+
+--- Ejemplo 7x9x9 ---
+Launching mmul_os opt v2 for dimension 7x9x9
+Errors: 0
+
+--- Ejemplo 7x9x10 ---
+Launching mmul_os opt v2 for dimension 7x9x10
+Errors: 0
+
+--- Ejemplo 7x9x11 ---
+Launching mmul_os opt v2 for dimension 7x9x11
+Errors: 0
+
+--- Ejemplo 7x9x12 ---
+Launching mmul_os opt v2 for dimension 7x9x12
+Errors: 0
+
+--- Ejemplo 7x9x13 ---
+Launching mmul_os opt v2 for dimension 7x9x13
+Errors: 0
+
+--- Ejemplo 7x9x14 ---
+Launching mmul_os opt v2 for dimension 7x9x14
+Errors: 0
+
+--- Ejemplo 7x9x15 ---
+Launching mmul_os opt v2 for dimension 7x9x15
+Errors: 0
+
+--- Ejemplo 7x9x16 ---
+Launching mmul_os opt v2 for dimension 7x9x16
+Errors: 0
+
+--- Ejemplo 7x9x17 ---
+Launching mmul_os opt v2 for dimension 7x9x17
+Errors: 0
+
+--- Ejemplo 7x9x18 ---
+Launching mmul_os opt v2 for dimension 7x9x18
+Errors: 0
+
+--- Ejemplo 7x9x19 ---
+Launching mmul_os opt v2 for dimension 7x9x19
+Errors: 0
+
+--- Ejemplo 7x9x20 ---
+Launching mmul_os opt v2 for dimension 7x9x20
+Errors: 0
+
+--- Ejemplo 7x9x21 ---
+Launching mmul_os opt v2 for dimension 7x9x21
+Errors: 0
+
+--- Ejemplo 7x9x22 ---
+Launching mmul_os opt v2 for dimension 7x9x22
+Errors: 0
+
+--- Ejemplo 7x9x23 ---
+Launching mmul_os opt v2 for dimension 7x9x23
+Errors: 0
+
+--- Ejemplo 7x9x24 ---
+Launching mmul_os opt v2 for dimension 7x9x24
+Errors: 0
+
+--- Ejemplo 8x9x4 ---
+Launching mmul_os opt v2 for dimension 8x9x4
+Errors: 0
+
+--- Ejemplo 8x9x5 ---
+Launching mmul_os opt v2 for dimension 8x9x5
+Errors: 4
+[23, 28, 33, 38, ]
+
+--- Ejemplo 8x9x6 ---
+Launching mmul_os opt v2 for dimension 8x9x6
+Errors: 8
+[26, 27, 32, 33, 38, 39, 44, 45, ]
+
+--- Ejemplo 8x9x7 ---
+Launching mmul_os opt v2 for dimension 8x9x7
+Errors: 12
+[29, 30, 31, 36, 37, 38, 43, 44, 45, 50, 51, 52, ]
+
+--- Ejemplo 8x9x8 ---
+Launching mmul_os opt v2 for dimension 8x9x8
+Errors: 0
+
+--- Ejemplo 8x9x9 ---
+Launching mmul_os opt v2 for dimension 8x9x9
+Errors: 5
+[35, 43, 52, 61, 70, ]
+
+--- Ejemplo 8x9x10 ---
+Launching mmul_os opt v2 for dimension 8x9x10
+Errors: 8
+[46, 47, 56, 57, 66, 67, 76, 77, ]
+
+--- Ejemplo 8x9x11 ---
+Launching mmul_os opt v2 for dimension 8x9x11
+Errors: 13
+[41, 49, 50, 51, 60, 61, 62, 71, 72, 73, 82, 83, 84, ]
+
+--- Ejemplo 8x9x12 ---
+Launching mmul_os opt v2 for dimension 8x9x12
+Errors: 0
+
+--- Ejemplo 8x9x13 ---
+Launching mmul_os opt v2 for dimension 8x9x13
+Errors: 6
+[51, 63, 64, 76, 89, 102, ]
+
+--- Ejemplo 8x9x14 ---
+Launching mmul_os opt v2 for dimension 8x9x14
+Errors: 10
+[54, 66, 67, 68, 80, 81, 94, 95, 108, 109, ]
+
+--- Ejemplo 8x9x15 ---
+Launching mmul_os opt v2 for dimension 8x9x15
+Errors: 14
+[57, 69, 70, 71, 72, 84, 85, 86, 99, 100, 101, 114, 115, 116, ]
+
+--- Ejemplo 8x9x16 ---
+Launching mmul_os opt v2 for dimension 8x9x16
+Errors: 0
+
+--- Ejemplo 8x9x17 ---
+Launching mmul_os opt v2 for dimension 8x9x17
+Errors: 7
+[67, 83, 84, 100, 101, 117, 134, ]
+
+--- Ejemplo 8x9x18 ---
+Launching mmul_os opt v2 for dimension 8x9x18
+Errors: 11
+[70, 86, 87, 88, 104, 105, 106, 122, 123, 140, 141, ]
+
+--- Ejemplo 8x9x19 ---
+Launching mmul_os opt v2 for dimension 8x9x19
+Errors: 15
+[73, 89, 90, 91, 92, 108, 109, 110, 111, 127, 128, 129, 146, 147, 148, ]
+
+--- Ejemplo 8x9x20 ---
+Launching mmul_os opt v2 for dimension 8x9x20
+Errors: 0
+
+--- Ejemplo 8x9x21 ---
+Launching mmul_os opt v2 for dimension 8x9x21
+Errors: 8
+[83, 103, 104, 124, 125, 145, 146, 166, ]
+
+--- Ejemplo 8x9x22 ---
+Launching mmul_os opt v2 for dimension 8x9x22
+Errors: 12
+[86, 106, 107, 108, 128, 129, 130, 150, 151, 152, 172, 173, ]
+
+--- Ejemplo 8x9x23 ---
+Launching mmul_os opt v2 for dimension 8x9x23
+Errors: 16
+[89, 109, 110, 111, 112, 132, 133, 134, 135, 155, 156, 157, 158, 178, 179, 180, ]
+
+--- Ejemplo 8x9x24 ---
+Launching mmul_os opt v2 for dimension 8x9x24
+Errors: 0
+
+--- Ejemplo 9x9x4 ---
+Launching mmul_os opt v2 for dimension 9x9x4
+Errors: 0
+
+--- Ejemplo 9x9x5 ---
+Launching mmul_os opt v2 for dimension 9x9x5
+Errors: 4
+[23, 28, 33, 38, ]
+
+--- Ejemplo 9x9x6 ---
+Launching mmul_os opt v2 for dimension 9x9x6
+Errors: 8
+[26, 27, 32, 33, 38, 39, 44, 45, ]
+
+--- Ejemplo 9x9x7 ---
+Launching mmul_os opt v2 for dimension 9x9x7
+Errors: 12
+[29, 30, 31, 36, 37, 38, 43, 44, 45, 50, 51, 52, ]
+
+--- Ejemplo 9x9x8 ---
+Launching mmul_os opt v2 for dimension 9x9x8
+Errors: 0
+
+--- Ejemplo 9x9x9 ---
+Launching mmul_os opt v2 for dimension 9x9x9
+Errors: 4
+[43, 52, 61, 70, ]
+
+--- Ejemplo 9x9x10 ---
+Launching mmul_os opt v2 for dimension 9x9x10
+Errors: 8
+[46, 47, 56, 57, 66, 67, 76, 77, ]
+
+--- Ejemplo 9x9x11 ---
+Launching mmul_os opt v2 for dimension 9x9x11
+Errors: 12
+[49, 50, 51, 60, 61, 62, 71, 72, 73, 82, 83, 84, ]
+
+--- Ejemplo 9x9x12 ---
+Launching mmul_os opt v2 for dimension 9x9x12
+Errors: 0
+
+--- Ejemplo 9x9x13 ---
+Launching mmul_os opt v2 for dimension 9x9x13
+Errors: 4
+[63, 76, 89, 102, ]
+
+--- Ejemplo 9x9x14 ---
+Launching mmul_os opt v2 for dimension 9x9x14
+Errors: 8
+[66, 67, 80, 81, 94, 95, 108, 109, ]
+
+--- Ejemplo 9x9x15 ---
+Launching mmul_os opt v2 for dimension 9x9x15
+Errors: 12
+[69, 70, 71, 84, 85, 86, 99, 100, 101, 114, 115, 116, ]
+
+--- Ejemplo 9x9x16 ---
+Launching mmul_os opt v2 for dimension 9x9x16
+Errors: 0
+
+--- Ejemplo 9x9x17 ---
+Launching mmul_os opt v2 for dimension 9x9x17
+Errors: 4
+[83, 100, 117, 134, ]
+
+--- Ejemplo 9x9x18 ---
+Launching mmul_os opt v2 for dimension 9x9x18
+Errors: 8
+[86, 87, 104, 105, 122, 123, 140, 141, ]
+
+--- Ejemplo 9x9x19 ---
+Launching mmul_os opt v2 for dimension 9x9x19
+Errors: 12
+[89, 90, 91, 108, 109, 110, 127, 128, 129, 146, 147, 148, ]
+
+--- Ejemplo 9x9x20 ---
+Launching mmul_os opt v2 for dimension 9x9x20
+Errors: 0
+
+--- Ejemplo 9x9x21 ---
+Launching mmul_os opt v2 for dimension 9x9x21
+Errors: 4
+[103, 124, 145, 166, ]
+
+--- Ejemplo 9x9x22 ---
+Launching mmul_os opt v2 for dimension 9x9x22
+Errors: 8
+[106, 107, 128, 129, 150, 151, 172, 173, ]
+
+--- Ejemplo 9x9x23 ---
+Launching mmul_os opt v2 for dimension 9x9x23
+Errors: 12
+[109, 110, 111, 132, 133, 134, 155, 156, 157, 178, 179, 180, ]
+
+--- Ejemplo 9x9x24 ---
+Launching mmul_os opt v2 for dimension 9x9x24
+Errors: 0
+
+--- Ejemplo 10x9x4 ---
+Launching mmul_os opt v2 for dimension 10x9x4
+Errors: 0
+
+--- Ejemplo 10x9x5 ---
+Launching mmul_os opt v2 for dimension 10x9x5
+Errors: 4
+[23, 28, 33, 38, ]
+
+--- Ejemplo 10x9x6 ---
+Launching mmul_os opt v2 for dimension 10x9x6
+Errors: 8
+[26, 27, 32, 33, 38, 39, 44, 45, ]
+
+--- Ejemplo 10x9x7 ---
+Launching mmul_os opt v2 for dimension 10x9x7
+Errors: 12
+[29, 30, 31, 36, 37, 38, 43, 44, 45, 50, 51, 52, ]
+
+--- Ejemplo 10x9x8 ---
+Launching mmul_os opt v2 for dimension 10x9x8
+Errors: 0
+
+--- Ejemplo 10x9x9 ---
+Launching mmul_os opt v2 for dimension 10x9x9
+Errors: 4
+[43, 52, 61, 70, ]
+
+--- Ejemplo 10x9x10 ---
+Launching mmul_os opt v2 for dimension 10x9x10
+Errors: 8
+[46, 47, 56, 57, 66, 67, 76, 77, ]
+
+--- Ejemplo 10x9x11 ---
+Launching mmul_os opt v2 for dimension 10x9x11
+Errors: 12
+[49, 50, 51, 60, 61, 62, 71, 72, 73, 82, 83, 84, ]
+
+--- Ejemplo 10x9x12 ---
+Launching mmul_os opt v2 for dimension 10x9x12
+Errors: 0
+
+--- Ejemplo 10x9x13 ---
+Launching mmul_os opt v2 for dimension 10x9x13
+Errors: 4
+[63, 76, 89, 102, ]
+
+--- Ejemplo 10x9x14 ---
+Launching mmul_os opt v2 for dimension 10x9x14
+Errors: 8
+[66, 67, 80, 81, 94, 95, 108, 109, ]
+
+--- Ejemplo 10x9x15 ---
+Launching mmul_os opt v2 for dimension 10x9x15
+Errors: 12
+[69, 70, 71, 84, 85, 86, 99, 100, 101, 114, 115, 116, ]
+
+--- Ejemplo 10x9x16 ---
+Launching mmul_os opt v2 for dimension 10x9x16
+Errors: 0
+
+--- Ejemplo 10x9x17 ---
+Launching mmul_os opt v2 for dimension 10x9x17
+Errors: 4
+[83, 100, 117, 134, ]
+
+--- Ejemplo 10x9x18 ---
+Launching mmul_os opt v2 for dimension 10x9x18
+Errors: 8
+[86, 87, 104, 105, 122, 123, 140, 141, ]
+
+--- Ejemplo 10x9x19 ---
+Launching mmul_os opt v2 for dimension 10x9x19
+Errors: 12
+[89, 90, 91, 108, 109, 110, 127, 128, 129, 146, 147, 148, ]
+
+--- Ejemplo 10x9x20 ---
+Launching mmul_os opt v2 for dimension 10x9x20
+Errors: 0
+
+--- Ejemplo 10x9x21 ---
+Launching mmul_os opt v2 for dimension 10x9x21
+Errors: 4
+[103, 124, 145, 166, ]
+
+--- Ejemplo 10x9x22 ---
+Launching mmul_os opt v2 for dimension 10x9x22
+Errors: 8
+[106, 107, 128, 129, 150, 151, 172, 173, ]
+
+--- Ejemplo 10x9x23 ---
+Launching mmul_os opt v2 for dimension 10x9x23
+Errors: 12
+[109, 110, 111, 132, 133, 134, 155, 156, 157, 178, 179, 180, ]
+
+--- Ejemplo 10x9x24 ---
+Launching mmul_os opt v2 for dimension 10x9x24
+Errors: 0
+
+--- Ejemplo 11x9x4 ---
+Launching mmul_os opt v2 for dimension 11x9x4
+Errors: 0
+
+--- Ejemplo 11x9x5 ---
+Launching mmul_os opt v2 for dimension 11x9x5
+Errors: 4
+[23, 28, 33, 38, ]
+
+--- Ejemplo 11x9x6 ---
+Launching mmul_os opt v2 for dimension 11x9x6
+Errors: 8
+[26, 27, 32, 33, 38, 39, 44, 45, ]
+
+--- Ejemplo 11x9x7 ---
+Launching mmul_os opt v2 for dimension 11x9x7
+Errors: 12
+[29, 30, 31, 36, 37, 38, 43, 44, 45, 50, 51, 52, ]
+
+--- Ejemplo 11x9x8 ---
+Launching mmul_os opt v2 for dimension 11x9x8
+Errors: 0
+
+--- Ejemplo 11x9x9 ---
+Launching mmul_os opt v2 for dimension 11x9x9
+Errors: 4
+[43, 52, 61, 70, ]
+
+--- Ejemplo 11x9x10 ---
+Launching mmul_os opt v2 for dimension 11x9x10
+Errors: 8
+[46, 47, 56, 57, 66, 67, 76, 77, ]
+
+--- Ejemplo 11x9x11 ---
+Launching mmul_os opt v2 for dimension 11x9x11
+Errors: 12
+[49, 50, 51, 60, 61, 62, 71, 72, 73, 82, 83, 84, ]
+
+--- Ejemplo 11x9x12 ---
+Launching mmul_os opt v2 for dimension 11x9x12
+Errors: 0
+
+--- Ejemplo 11x9x13 ---
+Launching mmul_os opt v2 for dimension 11x9x13
+Errors: 4
+[63, 76, 89, 102, ]
+
+--- Ejemplo 11x9x14 ---
+Launching mmul_os opt v2 for dimension 11x9x14
+Errors: 8
+[66, 67, 80, 81, 94, 95, 108, 109, ]
+
+--- Ejemplo 11x9x15 ---
+Launching mmul_os opt v2 for dimension 11x9x15
+Errors: 12
+[69, 70, 71, 84, 85, 86, 99, 100, 101, 114, 115, 116, ]
+
+--- Ejemplo 11x9x16 ---
+Launching mmul_os opt v2 for dimension 11x9x16
+Errors: 0
