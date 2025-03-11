@@ -54,7 +54,7 @@ def main():
         for cols_a in range(32, 72):
             for cols_b in range(32, 72):
     #for i, (rows_a, cols_a, cols_b) in enumerate(graph_big_cases, 1):
-                print(f"Ejecutando ejemplo {rows_a}x{cols_a}x{cols_b} ({i}/{len(graph_big_cases)})")
+                print(f"Ejecutando ejemplo {rows_a}x{cols_a}x{cols_b} ({i}/{len(range(32, 72))*3})")
                 i+=1
 
                 # Modificar el archivo transformer.h
