@@ -7,6 +7,11 @@ graph_cases = [
     (4,4,4), (16,4,4), (4,16,4), (4,4,16), (16,16,16), (32,32,32), (33,32,32), (34,32,32), (35,32,32), (32,32,33), (32,32,34), (32,32,35), (35,35,35)
 ]
 
+graph_big_cases = [
+    (64,64,64), (65,65,65), (66,66,66), (67,67,67), (68,68,68)
+]
+
+
 #test_cases_rowsA = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
 #test_cases_colsA = [9]
 #test_cases_colsB = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
@@ -49,8 +54,8 @@ def main():
     #for rows_a in test_cases_rowsA:
     #    for cols_a in test_cases_colsA:
     #        for cols_b in test_cases_colsB:
-    for i, (rows_a, cols_a, cols_b) in enumerate(graph_cases, 1):
-        print(f"Ejecutando ejemplo {rows_a}x{cols_a}x{cols_b} ({i}/{len(graph_cases)})")
+    for i, (rows_a, cols_a, cols_b) in enumerate(graph_big_cases, 1):
+        print(f"Ejecutando ejemplo {rows_a}x{cols_a}x{cols_b} ({i}/{len(graph_big_cases)})")
         i+=1
 
         # Modificar el archivo transformer.h

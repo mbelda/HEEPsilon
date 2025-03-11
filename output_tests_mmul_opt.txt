@@ -143,3 +143,58 @@ Program cols: 158
 Input: 129
 Cgra: 110265
 Total cgra: 118362
+
+--- Ejemplo 64x64x64 ---
+Launching mmul_os opt v2 for dimension 64x64x64
+OK
+Sw: 3711999
+Load: 7809
+Program cols: 158
+Input: 129
+Cgra: 243280
+ExtraRowsCols: 0
+Total cgra: 251376
+
+--- Ejemplo 65x65x65 ---
+Launching mmul_os opt v2 for dimension 65x65x65
+OK
+Sw: 4162535
+Load: 7810
+Program cols: 158
+Input: 129
+Cgra: 238188
+ExtraRowsCols: 0
+Total cgra: 246285
+
+--- Ejemplo 66x66x66 ---
+Launching mmul_os opt v2 for dimension 66x66x66
+OK
+Sw: 4069558
+Load: 7809
+Program cols: 158
+Input: 129
+Cgra: 272006
+ExtraRowsCols: 0
+Total cgra: 280102
+
+--- Ejemplo 67x67x67 ---
+Launching mmul_os opt v2 for dimension 67x67x67
+OK
+Sw: 4256641
+Load: 7809
+Program cols: 154
+Input: 130
+Cgra: 244735
+ExtraRowsCols: 0
+Total cgra: 252828
+
+--- Ejemplo 68x68x68 ---
+Launching mmul_os opt v2 for dimension 68x68x68
+OK
+Sw: 4763670
+Load: 7808
+Program cols: 158
+Input: 129
+Cgra: 249827
+ExtraRowsCols: 0
+Total cgra: 257922
