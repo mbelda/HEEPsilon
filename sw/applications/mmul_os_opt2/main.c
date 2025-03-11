@@ -103,9 +103,9 @@ static uint8_t              cgra_slot;
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
 
 // Input and output matrixes
-int32_t matrixA[ROWS_A*COLS_A];
+int32_t matrixA[(ROWS_A+1)*COLS_A];
 int32_t matrixB[COLS_A*COLS_B];
-int32_t matrixC[ROWS_A*COLS_B];
+int32_t matrixC[(ROWS_A+1)*COLS_B];
 int32_t outSW[ROWS_A*COLS_B];
 
 /****************************************************************************/
@@ -136,6 +136,11 @@ void main()
     kcom_perfRecordStart(&(kperf.time.load));
     initCGRA();
     kcom_perfRecordStop(&(kperf.time.load));
+    int nRowsA = ROWS_A;
+    if (ROWS_A%4 == 3){
+      // Special case
+      nRowsA = ROWS_A +1;
+    }
 
     // Prepare the input vector for the CGRA
     kcom_perfRecordStart(&(kperf.time.input));
@@ -151,7 +156,7 @@ void main()
     // colsA             -               -           -4*colsB
     int nItLoopColsA = COLS_A;
     int nColsBlocksC = COLS_B/CGRA_N_ROWS;
-    int nRowsBlocksC = ROWS_A/CGRA_N_ROWS;
+    int nRowsBlocksC = nRowsA/CGRA_N_ROWS;
     // Col 0
     cgra_input[0][0] = &matrixB[0];
     cgra_input[0][1] = nColsBlocksC;
@@ -194,9 +199,9 @@ void main()
     cgra_intr_flag = 0;
     cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
     // Process extra rows/cols for non multiple dimensions
-    kcom_perfRecordStart(   &(kperf.time.extraRowsCols) );
+    //kcom_perfRecordStart(   &(kperf.time.extraRowsCols) );
     processExtraRowsAColsB();
-    kcom_perfRecordStop(   &(kperf.time.extraRowsCols) );
+    //kcom_perfRecordStop(   &(kperf.time.extraRowsCols) );
     // Wait until CGRA is done
     while(cgra_intr_flag==0) {
       wait_for_interrupt();
@@ -217,20 +222,24 @@ void main()
 }
 
 void processExtraRowsAColsB(){
+  int rAMax = ROWS_A;
   // Extra A rows
-  for(int rA = ROWS_A - ROWS_A%BLOCK_SIZE; rA < ROWS_A; rA++){
-    for(int cB = 0; cB < COLS_B; cB++){
-      int sum = 0;
-      for(int k = 0; k < COLS_A; k++){
-       sum += matrixA[rA*COLS_A + k] * matrixB[k*COLS_B + cB];
-      }
-      matrixC[rA*COLS_B + cB] = sum;
-    } 
+  if (ROWS_A%4 != 3){
+    for(int rA = ROWS_A - ROWS_A%BLOCK_SIZE; rA < ROWS_A; rA++){
+      for(int cB = 0; cB < COLS_B; cB++){
+        int sum = 0;
+        for(int k = 0; k < COLS_A; k++){
+        sum += matrixA[rA*COLS_A + k] * matrixB[k*COLS_B + cB];
+        }
+        matrixC[rA*COLS_B + cB] = sum;
+      } 
+    }
+    rAMax = ROWS_A - ROWS_A%BLOCK_SIZE;
   }
 
   // Extra cols B
   for(int cB = COLS_B - COLS_B%BLOCK_SIZE; cB < COLS_B; cB++){
-    for(int rA = 0; rA < ROWS_A - ROWS_A%BLOCK_SIZE; rA++){
+    for(int rA = 0; rA < rAMax; rA++){
       int sum = 0;
       for(int k = 0; k < COLS_A; k++){
        sum += matrixA[rA*COLS_A + k] * matrixB[k*COLS_B + cB];
