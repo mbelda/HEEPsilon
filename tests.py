@@ -13,17 +13,17 @@ graph_big_cases = [
 
 test_cases_rowsA_1 = [32]
 test_cases_colsA_1 = [32,33,34]
-test_cases_colsB_1 = [range(32,72)]
+test_cases_colsB_1 = [i for i in range(32,72)]
 
 test_cases_rowsA_2 = [32]
-test_cases_colsA_2 = [range(32,72)]
+test_cases_colsA_2 = [i for i in range(32,72)]
 test_cases_colsB_2 = [32]
 
-test_cases_rowsA_3 = [range(32,72)]
+test_cases_rowsA_3 = [i for i in range(32,72)]
 test_cases_colsA_3 = [32]
 test_cases_colsB_3 = [32]
 
-test_cases_dims = [range(32,72)]
+test_cases_dims = [i for i in range(32,72)]
 
 # Rutas de archivos y directorios
 PROJECT_NAME = "mmul_os_opt2"
