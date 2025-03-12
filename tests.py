@@ -11,15 +11,25 @@ graph_big_cases = [
     (64,64,64), (65,65,65), (66,66,66), (67,67,67), (68,68,68)
 ]
 
-#test_cases_rowsA = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
-#test_cases_colsA = [9]
-#test_cases_colsB = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+test_cases_rowsA_1 = [32]
+test_cases_colsA_1 = [32,33,34]
+test_cases_colsB_1 = [range(32,72)]
+
+test_cases_rowsA_2 = [32]
+test_cases_colsA_2 = [range(32,72)]
+test_cases_colsB_2 = [32]
+
+test_cases_rowsA_3 = [range(32,72)]
+test_cases_colsA_3 = [32]
+test_cases_colsB_3 = [32]
+
+test_cases_dims = [range(32,72)]
 
 # Rutas de archivos y directorios
 PROJECT_NAME = "mmul_os_opt2"
 TRANSFORMER_PATH = f"./sw/applications/{PROJECT_NAME}/transformer.h"
 BUILD_DIR = "./build/eslepfl_systems_cgra-x-heep_0/sim-verilator"
-OUTPUT_FILE = "output_tests_32-72_mmul_opt2.txt"
+OUTPUT_FILE = "output_tests_2_mmul_opt2.txt"
 
 
 def modify_file(filename, rowsA, colsA, colsB):
@@ -50,11 +60,11 @@ def execute_command(command):
 
 def main():
     i = 0
-    for rows_a in range(32, 72):
-        for cols_a in range(32, 72):
-            for cols_b in range(32, 72):
+    for rows_a in test_cases_rowsA_2:
+        for cols_a in test_cases_colsA_2:
+            for cols_b in test_cases_colsB_2:
     #for i, (rows_a, cols_a, cols_b) in enumerate(graph_big_cases, 1):
-                print(f"Ejecutando ejemplo {rows_a}x{cols_a}x{cols_b} ({i}/{len(range(32, 72))*3})")
+                print(f"Ejecutando ejemplo {rows_a}x{cols_a}x{cols_b} ({i}/{len(test_cases_colsB_2)*len(test_cases_colsA_2)*len(test_cases_rowsA_2)})")
                 i+=1
 
                 # Modificar el archivo transformer.h
