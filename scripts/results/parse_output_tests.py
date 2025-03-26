@@ -16,6 +16,7 @@ def parse_txt_to_csv(input_file, output_file):
             dimensions = re.search(r"(\d+)x(\d+)x(\d+)", line)
             if dimensions:
                 rows_a, cols_a, cols_b = map(int, dimensions.groups())
+                dimension_str = f"{rows_a}x{cols_a}x{cols_b}"
             
             # Saltar la línea siguiente
             i += 1
@@ -35,14 +36,14 @@ def parse_txt_to_csv(input_file, output_file):
 
             if sw_time is not None and cgra_time is not None:
                 speedup = sw_time / cgra_time
-                data.append([rows_a, cols_a, cols_b, cgra_time, sw_time, speedup])
+                data.append([rows_a, cols_a, cols_b, dimension_str, cgra_time, sw_time, speedup])
         
         i += 1
 
     # Escribir en CSV
     with open(output_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["RowsA", "ColsA", "ColsB", "CGRA", "CPU", "Speedup"])
+        writer.writerow(["RowsA", "ColsA", "ColsB", "Dimensions", "CGRA", "CPU", "Speedup"])
         writer.writerows(data)
 
 def main():

@@ -1,0 +1,968 @@
+
+--- Ejemplo 32x32x32 ---
+Launching mmul_os opt v2 for dimension 32x32x32
+OK
+Sw: 469535
+Load: 7810
+Cgra: 34962
+
+--- Ejemplo 32x32x33 ---
+Launching mmul_os opt v2 for dimension 32x32x33
+OK
+Sw: 517991
+Load: 7809
+Cgra: 35525
+
+--- Ejemplo 32x32x34 ---
+Launching mmul_os opt v2 for dimension 32x32x34
+OK
+Sw: 533671
+Load: 7809
+Cgra: 36213
+
+--- Ejemplo 32x32x35 ---
+Launching mmul_os opt v2 for dimension 32x32x35
+OK
+Sw: 549351
+Load: 7809
+Cgra: 49890
+
+--- Ejemplo 32x32x36 ---
+Launching mmul_os opt v2 for dimension 32x32x36
+OK
+Sw: 528198
+Load: 7810
+Cgra: 39245
+
+--- Ejemplo 32x32x37 ---
+Launching mmul_os opt v2 for dimension 32x32x37
+OK
+Sw: 580711
+Load: 7809
+Cgra: 40058
+
+--- Ejemplo 32x32x38 ---
+Launching mmul_os opt v2 for dimension 32x32x38
+OK
+Sw: 596391
+Load: 7809
+Cgra: 40501
+
+--- Ejemplo 32x32x39 ---
+Launching mmul_os opt v2 for dimension 32x32x39
+OK
+Sw: 612071
+Load: 7809
+Cgra: 50531
+
+--- Ejemplo 32x32x40 ---
+Launching mmul_os opt v2 for dimension 32x32x40
+OK
+Sw: 586822
+Load: 7810
+Cgra: 43576
+
+--- Ejemplo 32x32x41 ---
+Launching mmul_os opt v2 for dimension 32x32x41
+OK
+Sw: 643431
+Load: 7809
+Cgra: 44526
+
+--- Ejemplo 32x32x42 ---
+Launching mmul_os opt v2 for dimension 32x32x42
+OK
+Sw: 659111
+Load: 7809
+Cgra: 44860
+
+--- Ejemplo 32x32x43 ---
+Launching mmul_os opt v2 for dimension 32x32x43
+OK
+Sw: 674791
+Load: 7809
+Cgra: 51308
+
+--- Ejemplo 32x32x44 ---
+Launching mmul_os opt v2 for dimension 32x32x44
+OK
+Sw: 645446
+Load: 7810
+Cgra: 47880
+
+--- Ejemplo 32x32x45 ---
+Launching mmul_os opt v2 for dimension 32x32x45
+OK
+Sw: 706151
+Load: 7809
+Cgra: 48862
+
+--- Ejemplo 32x32x46 ---
+Launching mmul_os opt v2 for dimension 32x32x46
+OK
+Sw: 721831
+Load: 7809
+Cgra: 49111
+
+--- Ejemplo 32x32x47 ---
+Launching mmul_os opt v2 for dimension 32x32x47
+OK
+Sw: 737511
+Load: 7809
+Cgra: 52019
+
+--- Ejemplo 32x32x48 ---
+Launching mmul_os opt v2 for dimension 32x32x48
+OK
+Sw: 704070
+Load: 7810
+Cgra: 52184
+
+--- Ejemplo 32x32x49 ---
+Launching mmul_os opt v2 for dimension 32x32x49
+OK
+Sw: 768871
+Load: 7809
+Cgra: 53136
+
+--- Ejemplo 32x32x50 ---
+Launching mmul_os opt v2 for dimension 32x32x50
+OK
+Sw: 784551
+Load: 7809
+Cgra: 53476
+
+--- Ejemplo 32x32x51 ---
+Launching mmul_os opt v2 for dimension 32x32x51
+OK
+Sw: 800231
+Load: 7809
+Cgra: 54138
+
+--- Ejemplo 32x32x52 ---
+Launching mmul_os opt v2 for dimension 32x32x52
+OK
+Sw: 762694
+Load: 7810
+Cgra: 56488
+
+--- Ejemplo 32x32x53 ---
+Launching mmul_os opt v2 for dimension 32x32x53
+OK
+Sw: 831591
+Load: 7809
+Cgra: 57440
+
+--- Ejemplo 32x32x54 ---
+Launching mmul_os opt v2 for dimension 32x32x54
+OK
+Sw: 847271
+Load: 7809
+Cgra: 57742
+
+--- Ejemplo 32x32x55 ---
+Launching mmul_os opt v2 for dimension 32x32x55
+OK
+Sw: 862951
+Load: 7809
+Cgra: 58439
+
+--- Ejemplo 32x32x56 ---
+Launching mmul_os opt v2 for dimension 32x32x56
+OK
+Sw: 821318
+Load: 7810
+Cgra: 60792
+
+--- Ejemplo 32x32x57 ---
+Launching mmul_os opt v2 for dimension 32x32x57
+OK
+Sw: 894311
+Load: 7809
+Cgra: 61744
+
+--- Ejemplo 32x32x58 ---
+Launching mmul_os opt v2 for dimension 32x32x58
+OK
+Sw: 909991
+Load: 7809
+Cgra: 62052
+
+--- Ejemplo 32x32x59 ---
+Launching mmul_os opt v2 for dimension 32x32x59
+OK
+Sw: 925671
+Load: 7809
+Cgra: 62714
+
+--- Ejemplo 32x32x60 ---
+Launching mmul_os opt v2 for dimension 32x32x60
+OK
+Sw: 879942
+Load: 7810
+Cgra: 65096
+
+--- Ejemplo 32x32x61 ---
+Launching mmul_os opt v2 for dimension 32x32x61
+OK
+Sw: 957031
+Load: 7809
+Cgra: 66078
+
+--- Ejemplo 32x32x62 ---
+Launching mmul_os opt v2 for dimension 32x32x62
+OK
+Sw: 972711
+Load: 7809
+Cgra: 66380
+
+--- Ejemplo 32x32x63 ---
+Launching mmul_os opt v2 for dimension 32x32x63
+OK
+Sw: 988391
+Load: 7809
+Cgra: 67046
+
+--- Ejemplo 32x32x64 ---
+Launching mmul_os opt v2 for dimension 32x32x64
+OK
+Sw: 1004007
+Load: 7809
+Cgra: 69400
+
+--- Ejemplo 32x32x65 ---
+Launching mmul_os opt v2 for dimension 32x32x65
+OK
+Sw: 953222
+Load: 7810
+Cgra: 70383
+
+--- Ejemplo 32x32x66 ---
+Launching mmul_os opt v2 for dimension 32x32x66
+OK
+Sw: 967878
+Load: 7810
+Cgra: 70623
+
+--- Ejemplo 32x32x67 ---
+Launching mmul_os opt v2 for dimension 32x32x67
+OK
+Sw: 982534
+Load: 7810
+Cgra: 71312
+
+--- Ejemplo 32x32x68 ---
+Launching mmul_os opt v2 for dimension 32x32x68
+OK
+Sw: 1066791
+Load: 7809
+Cgra: 73704
+
+--- Ejemplo 32x32x69 ---
+Launching mmul_os opt v2 for dimension 32x32x69
+OK
+Sw: 1011846
+Load: 7810
+Cgra: 74687
+
+--- Ejemplo 32x32x70 ---
+Launching mmul_os opt v2 for dimension 32x32x70
+OK
+Sw: 1026502
+Load: 7810
+Cgra: 74926
+
+--- Ejemplo 32x32x71 ---
+Launching mmul_os opt v2 for dimension 32x32x71
+OK
+Sw: 1041158
+Load: 7810
+Cgra: 75589
+
+--- Ejemplo 32x33x32 ---
+Launching mmul_os opt v2 for dimension 32x33x32
+OK
+Sw: 483839
+Load: 7810
+Cgra: 35986
+
+--- Ejemplo 32x33x33 ---
+Launching mmul_os opt v2 for dimension 32x33x33
+OK
+Sw: 533760
+Load: 7809
+Cgra: 36548
+
+--- Ejemplo 32x33x34 ---
+Launching mmul_os opt v2 for dimension 32x33x34
+OK
+Sw: 514123
+Load: 7809
+Cgra: 36178
+
+--- Ejemplo 32x33x35 ---
+Launching mmul_os opt v2 for dimension 32x33x35
+OK
+Sw: 529227
+Load: 7809
+Cgra: 51368
+
+--- Ejemplo 32x33x36 ---
+Launching mmul_os opt v2 for dimension 32x33x36
+OK
+Sw: 582316
+Load: 7810
+Cgra: 40397
+
+--- Ejemplo 32x33x37 ---
+Launching mmul_os opt v2 for dimension 32x33x37
+OK
+Sw: 559435
+Load: 7809
+Cgra: 41234
+
+--- Ejemplo 32x33x38 ---
+Launching mmul_os opt v2 for dimension 32x33x38
+OK
+Sw: 574539
+Load: 7809
+Cgra: 41721
+
+--- Ejemplo 32x33x39 ---
+Launching mmul_os opt v2 for dimension 32x33x39
+OK
+Sw: 589643
+Load: 7809
+Cgra: 52071
+
+--- Ejemplo 32x33x40 ---
+Launching mmul_os opt v2 for dimension 32x33x40
+OK
+Sw: 646956
+Load: 7810
+Cgra: 44856
+
+--- Ejemplo 32x33x41 ---
+Launching mmul_os opt v2 for dimension 32x33x41
+OK
+Sw: 619851
+Load: 7809
+Cgra: 45836
+
+--- Ejemplo 32x33x42 ---
+Launching mmul_os opt v2 for dimension 32x33x42
+OK
+Sw: 634955
+Load: 7809
+Cgra: 46214
+
+--- Ejemplo 32x33x43 ---
+Launching mmul_os opt v2 for dimension 32x33x43
+OK
+Sw: 650059
+Load: 7809
+Cgra: 52813
+
+--- Ejemplo 32x33x44 ---
+Launching mmul_os opt v2 for dimension 32x33x44
+OK
+Sw: 711596
+Load: 7810
+Cgra: 49288
+
+--- Ejemplo 32x33x45 ---
+Launching mmul_os opt v2 for dimension 32x33x45
+OK
+Sw: 680267
+Load: 7809
+Cgra: 50268
+
+--- Ejemplo 32x33x46 ---
+Launching mmul_os opt v2 for dimension 32x33x46
+OK
+Sw: 695371
+Load: 7809
+Cgra: 50580
+
+--- Ejemplo 32x33x47 ---
+Launching mmul_os opt v2 for dimension 32x33x47
+OK
+Sw: 710475
+Load: 7809
+Cgra: 53539
+
+--- Ejemplo 32x33x48 ---
+Launching mmul_os opt v2 for dimension 32x33x48
+OK
+Sw: 776236
+Load: 7810
+Cgra: 53720
+
+--- Ejemplo 32x33x49 ---
+Launching mmul_os opt v2 for dimension 32x33x49
+OK
+Sw: 740683
+Load: 7809
+Cgra: 54733
+
+--- Ejemplo 32x33x50 ---
+Launching mmul_os opt v2 for dimension 32x33x50
+OK
+Sw: 755787
+Load: 7809
+Cgra: 55049
+
+--- Ejemplo 32x33x51 ---
+Launching mmul_os opt v2 for dimension 32x33x51
+OK
+Sw: 770891
+Load: 7809
+Cgra: 55689
+
+--- Ejemplo 32x33x52 ---
+Launching mmul_os opt v2 for dimension 32x33x52
+OK
+Sw: 840876
+Load: 7810
+Cgra: 58152
+
+--- Ejemplo 32x33x53 ---
+Launching mmul_os opt v2 for dimension 32x33x53
+OK
+Sw: 801099
+Load: 7809
+Cgra: 59133
+
+--- Ejemplo 32x33x54 ---
+Launching mmul_os opt v2 for dimension 32x33x54
+OK
+Sw: 816203
+Load: 7809
+Cgra: 59477
+
+--- Ejemplo 32x33x55 ---
+Launching mmul_os opt v2 for dimension 32x33x55
+OK
+Sw: 831307
+Load: 7809
+Cgra: 60150
+
+--- Ejemplo 32x33x56 ---
+Launching mmul_os opt v2 for dimension 32x33x56
+OK
+Sw: 905516
+Load: 7810
+Cgra: 62584
+
+--- Ejemplo 32x33x57 ---
+Launching mmul_os opt v2 for dimension 32x33x57
+OK
+Sw: 861515
+Load: 7809
+Cgra: 63565
+
+--- Ejemplo 32x33x58 ---
+Launching mmul_os opt v2 for dimension 32x33x58
+OK
+Sw: 876619
+Load: 7809
+Cgra: 63911
+
+--- Ejemplo 32x33x59 ---
+Launching mmul_os opt v2 for dimension 32x33x59
+OK
+Sw: 891723
+Load: 7809
+Cgra: 64551
+
+--- Ejemplo 32x33x60 ---
+Launching mmul_os opt v2 for dimension 32x33x60
+OK
+Sw: 970156
+Load: 7810
+Cgra: 67016
+
+--- Ejemplo 32x33x61 ---
+Launching mmul_os opt v2 for dimension 32x33x61
+OK
+Sw: 921931
+Load: 7809
+Cgra: 68028
+
+--- Ejemplo 32x33x62 ---
+Launching mmul_os opt v2 for dimension 32x33x62
+OK
+Sw: 937035
+Load: 7809
+Cgra: 68374
+
+--- Ejemplo 32x33x63 ---
+Launching mmul_os opt v2 for dimension 32x33x63
+OK
+Sw: 952139
+Load: 7809
+Cgra: 69014
+
+--- Ejemplo 32x33x64 ---
+Launching mmul_os opt v2 for dimension 32x33x64
+OK
+Sw: 1034727
+Load: 7809
+Cgra: 71448
+
+--- Ejemplo 32x33x65 ---
+Launching mmul_os opt v2 for dimension 32x33x65
+OK
+Sw: 1050956
+Load: 7810
+Cgra: 72461
+
+--- Ejemplo 32x33x66 ---
+Launching mmul_os opt v2 for dimension 32x33x66
+OK
+Sw: 997414
+Load: 7810
+Cgra: 72740
+
+--- Ejemplo 32x33x67 ---
+Launching mmul_os opt v2 for dimension 32x33x67
+OK
+Sw: 1083276
+Load: 7810
+Cgra: 73413
+
+--- Ejemplo 32x33x68 ---
+Launching mmul_os opt v2 for dimension 32x33x68
+OK
+Sw: 1027659
+Load: 7809
+Cgra: 75880
+
+--- Ejemplo 32x33x69 ---
+Launching mmul_os opt v2 for dimension 32x33x69
+OK
+Sw: 1115596
+Load: 7810
+Cgra: 76893
+
+--- Ejemplo 32x33x70 ---
+Launching mmul_os opt v2 for dimension 32x33x70
+OK
+Sw: 1131756
+Load: 7810
+Cgra: 77172
+
+--- Ejemplo 32x33x71 ---
+Launching mmul_os opt v2 for dimension 32x33x71
+OK
+Sw: 1147916
+Load: 7810
+Cgra: 77811
+
+--- Ejemplo 32x34x32 ---
+Launching mmul_os opt v2 for dimension 32x34x32
+OK
+Sw: 498175
+Load: 7810
+Cgra: 37010
+
+--- Ejemplo 32x34x33 ---
+Launching mmul_os opt v2 for dimension 32x34x33
+OK
+Sw: 513803
+Load: 7809
+Cgra: 37612
+
+--- Ejemplo 32x34x34 ---
+Launching mmul_os opt v2 for dimension 32x34x34
+OK
+Sw: 566240
+Load: 7809
+Cgra: 38308
+
+--- Ejemplo 32x34x35 ---
+Launching mmul_os opt v2 for dimension 32x34x35
+OK
+Sw: 544907
+Load: 7809
+Cgra: 52873
+
+--- Ejemplo 32x34x36 ---
+Launching mmul_os opt v2 for dimension 32x34x36
+OK
+Sw: 599596
+Load: 7810
+Cgra: 41549
+
+--- Ejemplo 32x34x37 ---
+Launching mmul_os opt v2 for dimension 32x34x37
+OK
+Sw: 576011
+Load: 7809
+Cgra: 42378
+
+--- Ejemplo 32x34x38 ---
+Launching mmul_os opt v2 for dimension 32x34x38
+OK
+Sw: 591563
+Load: 7809
+Cgra: 42978
+
+--- Ejemplo 32x34x39 ---
+Launching mmul_os opt v2 for dimension 32x34x39
+OK
+Sw: 607115
+Load: 7809
+Cgra: 53636
+
+--- Ejemplo 32x34x40 ---
+Launching mmul_os opt v2 for dimension 32x34x40
+OK
+Sw: 666156
+Load: 7810
+Cgra: 46136
+
+--- Ejemplo 32x34x41 ---
+Launching mmul_os opt v2 for dimension 32x34x41
+OK
+Sw: 638219
+Load: 7809
+Cgra: 47145
+
+--- Ejemplo 32x34x42 ---
+Launching mmul_os opt v2 for dimension 32x34x42
+OK
+Sw: 653771
+Load: 7809
+Cgra: 47579
+
+--- Ejemplo 32x34x43 ---
+Launching mmul_os opt v2 for dimension 32x34x43
+OK
+Sw: 669323
+Load: 7809
+Cgra: 54385
+
+--- Ejemplo 32x34x44 ---
+Launching mmul_os opt v2 for dimension 32x34x44
+OK
+Sw: 732716
+Load: 7810
+Cgra: 50696
+
+--- Ejemplo 32x34x45 ---
+Launching mmul_os opt v2 for dimension 32x34x45
+OK
+Sw: 700427
+Load: 7809
+Cgra: 51705
+
+--- Ejemplo 32x34x46 ---
+Launching mmul_os opt v2 for dimension 32x34x46
+OK
+Sw: 715979
+Load: 7809
+Cgra: 52129
+
+--- Ejemplo 32x34x47 ---
+Launching mmul_os opt v2 for dimension 32x34x47
+OK
+Sw: 731531
+Load: 7809
+Cgra: 55167
+
+--- Ejemplo 32x34x48 ---
+Launching mmul_os opt v2 for dimension 32x34x48
+OK
+Sw: 799276
+Load: 7810
+Cgra: 55256
+
+--- Ejemplo 32x34x49 ---
+Launching mmul_os opt v2 for dimension 32x34x49
+OK
+Sw: 762635
+Load: 7809
+Cgra: 56298
+
+--- Ejemplo 32x34x50 ---
+Launching mmul_os opt v2 for dimension 32x34x50
+OK
+Sw: 778187
+Load: 7809
+Cgra: 56668
+
+--- Ejemplo 32x34x51 ---
+Launching mmul_os opt v2 for dimension 32x34x51
+OK
+Sw: 793739
+Load: 7809
+Cgra: 57243
+
+--- Ejemplo 32x34x52 ---
+Launching mmul_os opt v2 for dimension 32x34x52
+OK
+Sw: 865836
+Load: 7810
+Cgra: 59816
+
+--- Ejemplo 32x34x53 ---
+Launching mmul_os opt v2 for dimension 32x34x53
+OK
+Sw: 824843
+Load: 7809
+Cgra: 60826
+
+--- Ejemplo 32x34x54 ---
+Launching mmul_os opt v2 for dimension 32x34x54
+OK
+Sw: 840395
+Load: 7809
+Cgra: 61257
+
+--- Ejemplo 32x34x55 ---
+Launching mmul_os opt v2 for dimension 32x34x55
+OK
+Sw: 855947
+Load: 7809
+Cgra: 61865
+
+--- Ejemplo 32x34x56 ---
+Launching mmul_os opt v2 for dimension 32x34x56
+OK
+Sw: 932396
+Load: 7810
+Cgra: 64376
+
+--- Ejemplo 32x34x57 ---
+Launching mmul_os opt v2 for dimension 32x34x57
+OK
+Sw: 887051
+Load: 7809
+Cgra: 65386
+
+--- Ejemplo 32x34x58 ---
+Launching mmul_os opt v2 for dimension 32x34x58
+OK
+Sw: 902603
+Load: 7809
+Cgra: 65813
+
+--- Ejemplo 32x34x59 ---
+Launching mmul_os opt v2 for dimension 32x34x59
+OK
+Sw: 918155
+Load: 7809
+Cgra: 66388
+
+--- Ejemplo 32x34x60 ---
+Launching mmul_os opt v2 for dimension 32x34x60
+OK
+Sw: 998956
+Load: 7810
+Cgra: 68936
+
+--- Ejemplo 32x34x61 ---
+Launching mmul_os opt v2 for dimension 32x34x61
+OK
+Sw: 949259
+Load: 7809
+Cgra: 69978
+
+--- Ejemplo 32x34x62 ---
+Launching mmul_os opt v2 for dimension 32x34x62
+OK
+Sw: 964811
+Load: 7809
+Cgra: 70379
+
+--- Ejemplo 32x34x63 ---
+Launching mmul_os opt v2 for dimension 32x34x63
+OK
+Sw: 980363
+Load: 7809
+Cgra: 70954
+
+--- Ejemplo 32x34x64 ---
+Launching mmul_os opt v2 for dimension 32x34x64
+OK
+Sw: 1065447
+Load: 7809
+Cgra: 73496
+
+--- Ejemplo 32x34x65 ---
+Launching mmul_os opt v2 for dimension 32x34x65
+OK
+Sw: 1082156
+Load: 7810
+Cgra: 74539
+
+--- Ejemplo 32x34x66 ---
+Launching mmul_os opt v2 for dimension 32x34x66
+OK
+Sw: 1098796
+Load: 7810
+Cgra: 74933
+
+--- Ejemplo 32x34x67 ---
+Launching mmul_os opt v2 for dimension 32x34x67
+OK
+Sw: 1115436
+Load: 7810
+Cgra: 75542
+
+--- Ejemplo 32x34x68 ---
+Launching mmul_os opt v2 for dimension 32x34x68
+OK
+Sw: 1132007
+Load: 7809
+Cgra: 78056
+
+--- Ejemplo 32x34x69 ---
+Launching mmul_os opt v2 for dimension 32x34x69
+OK
+Sw: 1148716
+Load: 7810
+Cgra: 79099
+
+--- Ejemplo 32x34x70 ---
+Launching mmul_os opt v2 for dimension 32x34x70
+OK
+Sw: 1165356
+Load: 7810
+Cgra: 79459
+
+--- Ejemplo 32x34x71 ---
+Launching mmul_os opt v2 for dimension 32x34x71
+OK
+Sw: 1181996
+Load: 7810
+Cgra: 80068
+
+--- Ejemplo 32x35x32 ---
+Launching mmul_os opt v2 for dimension 32x35x32
+OK
+Sw: 512511
+Load: 7810
+Cgra: 38034
+
+--- Ejemplo 32x35x33 ---
+Launching mmul_os opt v2 for dimension 32x35x33
+OK
+Sw: 528587
+Load: 7809
+Cgra: 38656
+
+--- Ejemplo 32x35x34 ---
+Launching mmul_os opt v2 for dimension 32x35x34
+OK
+Sw: 544587
+Load: 7809
+Cgra: 39437
+
+--- Ejemplo 32x35x35 ---
+Launching mmul_os opt v2 for dimension 32x35x35
+OK
+Sw: 599680
+Load: 7809
+Cgra: 54435
+
+--- Ejemplo 32x35x36 ---
+Launching mmul_os opt v2 for dimension 32x35x36
+OK
+Sw: 616876
+Load: 7810
+Cgra: 42701
+
+--- Ejemplo 32x35x37 ---
+Launching mmul_os opt v2 for dimension 32x35x37
+OK
+Sw: 592587
+Load: 7809
+Cgra: 43554
+
+--- Ejemplo 32x35x38 ---
+Launching mmul_os opt v2 for dimension 32x35x38
+OK
+Sw: 608587
+Load: 7809
+Cgra: 44121
+
+--- Ejemplo 32x35x39 ---
+Launching mmul_os opt v2 for dimension 32x35x39
+OK
+Sw: 624587
+Load: 7809
+Cgra: 55162
+
+--- Ejemplo 32x35x40 ---
+Launching mmul_os opt v2 for dimension 32x35x40
+OK
+Sw: 685356
+Load: 7810
+Cgra: 47416
+
+--- Ejemplo 32x35x41 ---
+Launching mmul_os opt v2 for dimension 32x35x41
+OK
+Sw: 656587
+Load: 7809
+Cgra: 48454
+
+--- Ejemplo 32x35x42 ---
+Launching mmul_os opt v2 for dimension 32x35x42
+OK
+Sw: 672587
+Load: 7809
+Cgra: 48833
+
+--- Ejemplo 32x35x43 ---
+Launching mmul_os opt v2 for dimension 32x35x43
+OK
+Sw: 688587
+Load: 7809
+Cgra: 55927
+
+--- Ejemplo 32x35x44 ---
+Launching mmul_os opt v2 for dimension 32x35x44
+OK
+Sw: 753836
+Load: 7810
+Cgra: 52104
+
+--- Ejemplo 32x35x45 ---
+Launching mmul_os opt v2 for dimension 32x35x45
+OK
+Sw: 720587
+Load: 7809
+Cgra: 53143
+
+--- Ejemplo 32x35x46 ---
+Launching mmul_os opt v2 for dimension 32x35x46
+OK
+Sw: 736587
+Load: 7809
+Cgra: 53519
+
+--- Ejemplo 32x35x47 ---
+Launching mmul_os opt v2 for dimension 32x35x47
+OK
+Sw: 752587
+Load: 7809
+Cgra: 56681
+
+--- Ejemplo 32x35x48 ---
+Launching mmul_os opt v2 for dimension 32x35x48
+OK
+Sw: 822316
+Load: 7810
+Cgra: 56792
+
+--- Ejemplo 32x35x49 ---
+Launching mmul_os opt v2 for dimension 32x35x49
+OK
+Sw: 784587
+Load: 7809
+Cgra: 57830
+
+--- Ejemplo 32x35x50 ---

@@ -1,0 +1,82 @@
+
+--- Ejemplo 32xrange(32, 72)x32 ---
+
+--- Ejemplo 32x32x32 ---
+
+--- Ejemplo 32x33x32 ---
+
+--- Ejemplo 32x34x32 ---
+
+--- Ejemplo 32x35x32 ---
+
+--- Ejemplo 32x36x32 ---
+
+--- Ejemplo 32x37x32 ---
+
+--- Ejemplo 32x38x32 ---
+
+--- Ejemplo 32x39x32 ---
+
+--- Ejemplo 32x40x32 ---
+
+--- Ejemplo 32x41x32 ---
+
+--- Ejemplo 32x42x32 ---
+
+--- Ejemplo 32x43x32 ---
+
+--- Ejemplo 32x44x32 ---
+
+--- Ejemplo 32x45x32 ---
+
+--- Ejemplo 32x46x32 ---
+
+--- Ejemplo 32x47x32 ---
+
+--- Ejemplo 32x48x32 ---
+
+--- Ejemplo 32x49x32 ---
+
+--- Ejemplo 32x50x32 ---
+
+--- Ejemplo 32x51x32 ---
+
+--- Ejemplo 32x52x32 ---
+
+--- Ejemplo 32x53x32 ---
+
+--- Ejemplo 32x54x32 ---
+
+--- Ejemplo 32x55x32 ---
+
+--- Ejemplo 32x56x32 ---
+
+--- Ejemplo 32x57x32 ---
+
+--- Ejemplo 32x58x32 ---
+
+--- Ejemplo 32x59x32 ---
+
+--- Ejemplo 32x60x32 ---
+
+--- Ejemplo 32x61x32 ---
+
+--- Ejemplo 32x62x32 ---
+
+--- Ejemplo 32x63x32 ---
+
+--- Ejemplo 32x64x32 ---
+
+--- Ejemplo 32x65x32 ---
+
+--- Ejemplo 32x66x32 ---
+
+--- Ejemplo 32x67x32 ---
+
+--- Ejemplo 32x68x32 ---
+
+--- Ejemplo 32x69x32 ---
+
+--- Ejemplo 32x70x32 ---
+
+--- Ejemplo 32x71x32 ---

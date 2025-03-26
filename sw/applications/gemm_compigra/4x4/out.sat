@@ -1,0 +1,494 @@
+T = 0
+SADD R0, 12, ZERO         
+SADD ROUT, 12, ZERO       
+SADD ROUT, 12, ZERO       
+SADD R0, 12, ZERO         
+SADD ROUT, 20, ZERO       
+NOP                      
+SADD ROUT, 16, ZERO       
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 1
+SLT ROUT, R0, 12          
+SADD R0, ZERO, ZERO       
+SLT ROUT, RCL, 12         
+SLT ROUT, R0, 12          
+NOP                      
+SLT ROUT, RCL, 12         
+SLT ROUT, RCT, 12         
+SLT R0, RCL, 12           
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 2
+NOP                      
+NOP                      
+SADD R0, 2188, RCR        
+NOP                      
+SADD R0, 2180, RCT        
+SADD R0, 2184, RCR        
+SADD ROUT, 2176, RCT      
+NOP                      
+NOP                      
+SADD R0, 2188, RCT        
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 3
+NOP                      
+NOP                      
+LWI R1, RCB              
+NOP                      
+LWI R0, R0               
+LWI R0, R0               
+NOP                      
+SADD R0, 2188, R0         
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 4
+NOP                      
+NOP                      
+SWI R1, 51200             
+NOP                      
+SWI R0, 51208             
+SWI R0, 51204             
+BEQ R0, R0, 5                
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 5
+LWI ROUT, 51200          
+NOP                      
+SADD R1, ZERO, ZERO       
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 6
+NOP                      
+BGE R0, RCL, 28           
+SWI R1, 51216             
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 7
+NOP                      
+NOP                      
+LWI R1, 51216            
+NOP                      
+NOP                      
+NOP                      
+LWI ROUT, 51204          
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 8
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SADD R1, ZERO, ZERO       
+SADD R0, ZERO, ZERO       
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 9
+NOP                      
+NOP                      
+BGE R1, RCB, 27           
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SWI R1, 51212             
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 10
+NOP                      
+NOP                      
+NOP                      
+LWI ROUT, 51208          
+NOP                      
+NOP                      
+NOP                      
+LWI R1, 51212            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 11
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+BGE R1, RCT, 21           
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 12
+LWI R0, 51212            
+LWI R1, 51208            
+LWI R1, 51216            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+LWI ROUT, 51204          
+T = 13
+NOP                      
+SMUL ROUT, R0, R1         
+NOP                      
+SMUL ROUT, RCR, RCT       
+SADD ROUT, RCT, 1         
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 14
+SADD ROUT, R0, RCR        
+NOP                      
+SADD ROUT, R1, RCR        
+NOP                      
+NOP                      
+SWI RCL, 51212            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 15
+NOP                      
+NOP                      
+NOP                      
+SMUL ROUT, RCR, 4         
+NOP                      
+NOP                      
+SMUL ROUT, RCT, 4         
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 16
+NOP                      
+NOP                      
+SADD ROUT, RCR, R0        
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SADD ROUT, RCL, R0        
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 17
+NOP                      
+LWI ROUT, RCR            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+LWI ROUT, RCR            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 18
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SMUL ROUT, RCT, RCR       
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 19
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SADD ROUT, RCT, ZERO      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 20
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+BEQ R0, R0, 10               
+NOP                      
+NOP                      
+NOP                      
+SADD R0, R0, RCR          
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 21
+LWI R0, 51216            
+LWI R1, 51204            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 22
+NOP                      
+SMUL R1, R0, R1           
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 23
+SADD ROUT, R0, 1          
+SADD ROUT, RCL, R1        
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 24
+NOP                      
+SWI RCL, 51216            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SMUL ROUT, RCB, 4         
+NOP                      
+NOP                      
+T = 25
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SADD ROUT, RCB, R0        
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 26
+BEQ R0, R0, 7                
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+SWI R0, RCR               
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 27
+BEQ R0, R0, 5                
+SADD R0, R0, 1            
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 28
+EXIT                     
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+NOP                      
+T = 0
