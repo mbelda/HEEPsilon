@@ -17,21 +17,21 @@ def plot_speedup(csv_file, output_file):
     # Convertir Speedup de string con coma decimal a float
     df['Speedup'] = df['Speedup'].str.replace(',', '.').astype(float)
     
-    # Calcular media y desviación estándar del Speedup para cada RowsA y ColsB
-    grouped = df.groupby(['RowsA', 'ColsB']).agg({'Speedup': ['mean', 'std']}).reset_index()
-    grouped.columns = ['RowsA', 'ColsB', 'Speedup_Mean', 'Speedup_Std']
+    # Calcular media y desviación estándar del Speedup para cada RowsA y ColsA
+    grouped = df.groupby(['RowsA', 'ColsA']).agg({'Speedup': ['mean', 'std']}).reset_index()
+    grouped.columns = ['RowsA', 'ColsA', 'Speedup_Mean', 'Speedup_Std']
     
     # Crear la gráfica
     plt.figure(figsize=(10, 6))
     
     for rowsA, group in grouped.groupby('RowsA'):
-        plt.plot(group['ColsB'], group['Speedup_Mean'], marker='o', label=f'RowsA={rowsA}')
-        plt.fill_between(group['ColsB'], group['Speedup_Mean'] - group['Speedup_Std'], 
+        plt.plot(group['ColsA'], group['Speedup_Mean'], marker='o', label=f'RowsA={rowsA}')
+        plt.fill_between(group['ColsA'], group['Speedup_Mean'] - group['Speedup_Std'], 
                          group['Speedup_Mean'] + group['Speedup_Std'], alpha=0.2)
     
-    plt.xlabel('ColsB')
+    plt.xlabel('ColsA')
     plt.ylabel('Speedup (CPU/CGRA)')
-    plt.title('Speedup agrupado por (RowsA,ColsA) con Media y Desviación Estándar')
+    plt.title('Speedup por (RowsA,ColsB) con Media y Desviación Estándar')
     plt.legend()
     plt.grid()
     
