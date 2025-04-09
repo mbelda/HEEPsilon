@@ -219,13 +219,13 @@ parameters:
     paramtype: vlogparam
     description: |
       Enables COREV_PULP custom RISC-V extension on the CV32E40P core. Admitted values: 1|0.
-    default: 0
+    default: 1
   FPU:
     datatype: int
     paramtype: vlogparam
     description: |
       Enables RV32F RISC-V extension on the CV32E40P core. Admitted values: 1|0.
-    default: 0
+    default: 1
   JTAG_DPI:
     datatype: int
     paramtype: vlogparam
