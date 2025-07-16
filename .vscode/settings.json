@@ -10,6 +10,14 @@
         "cgra.h": "c",
         "performance.h": "c",
         "multiply_cgra.h": "c",
-        "array_output.h": "c"
+        "array_output.h": "c",
+        "*.inc": "c",
+        "stdio.h": "c",
+        "x-heep.h": "c",
+        "hart.h": "c",
+        "handler.h": "c",
+        "csr.h": "c",
+        "csr_registers.h": "c",
+        "fcntl.h": "c"
     }
 }
