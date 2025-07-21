@@ -5,39 +5,34 @@ import shutil
 sizes = [8, 16, 32, 64, 128, 256]
 
 initial_dir = os.getcwd()
-relu_cpu_dir = os.path.join(initial_dir, "sw/applications/relu_cpu")
+relu_cgra_dir = os.path.join(initial_dir, "sw/applications/relu_meth")
 build_dir = os.path.join(initial_dir, "build/eslepfl_systems_cgra-x-heep_0/sim-verilator")
 uart_log = os.path.join(build_dir, "uart0.log")
-output_log = os.path.join(initial_dir, "results_relu_cpu.log")
+output_log = os.path.join(initial_dir, "results_relu_cgra_meth.txt")
 
-dataset_script = "gen_data.py"
-dataset_file = os.path.join(relu_cpu_dir, "dataset.h")
-datasets_dir = os.path.join(relu_cpu_dir, "datasets")
-
-os.makedirs(datasets_dir, exist_ok=True)
+datasets_dir = os.path.join(relu_cgra_dir, "datasets")
+dataset_target = os.path.join(relu_cgra_dir, "dataset.h")
 
 with open(output_log, "w") as outfile:
     for size in sizes:
-        print(f"\n**** Procesando tamaño {size}x{size} ****")
-        os.chdir(relu_cpu_dir)
+        print(f"\n*** Procesando tamaño {size}x{size} ***")
+        os.chdir(relu_cgra_dir)
 
-        # Generar dataset.h
-        with open(dataset_file, 'w') as f:
-            subprocess.run(
-                ["python3", dataset_script, str(size)],
-                check=True, stdout=f, stderr=subprocess.DEVNULL
-            )
+        # Copiar dataset correspondiente
+        dataset_source = os.path.join(datasets_dir, f"dataset_{size}.h")
+        if not os.path.exists(dataset_source):
+            print(f"Dataset para tamaño {size} no encontrado en {dataset_source}")
+            continue
 
-        dataset_copy = os.path.join(datasets_dir, f"dataset_{size}.h")
-        shutil.copyfile(dataset_file, dataset_copy)
-        print(f"Dataset para tamaño {size} guardado en: {dataset_copy}")
+        shutil.copyfile(dataset_source, dataset_target)
+        print(f"Dataset para tamaño {size} copiado en: {dataset_target}")
 
         os.chdir(initial_dir)
 
         # Compilar
         make_command = [
             "make", "app",
-            "PROJECT=relu_cpu",
+            "PROJECT=relu_meth",
             "COMPILER_FLAGS=-O3",
             "COMPILER_PREFIX=riscv32-corev-",
             "ARCH=rv32imc_zicsr_zifencei_xcvhwlp0p1_xcvmem0p1_xcvmac0p1_xcvbi0p1_xcvalu0p1_xcvsimd0p1_xcvbitmanip0p1"
@@ -55,7 +50,7 @@ with open(output_log, "w") as outfile:
         )
 
         # Guardar contenido uart0.log
-        outfile.write(f"\n**** Resultado para tamaño {size}x{size} ****n")
+        outfile.write(f"\n*** Resultado para tamaño {size}x{size} ***\n")
         if os.path.exists(uart_log):
             with open(uart_log, "r") as uart_file:
                 outfile.write(uart_file.read())
@@ -64,4 +59,4 @@ with open(output_log, "w") as outfile:
 
         os.chdir(initial_dir)
 
-print(f"\nTodos los tamaños procesados. Resultados en {output_log}")
+print(f"\n*** Todos los tamaños procesados. Resultados en {output_log} ***")

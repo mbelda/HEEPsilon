@@ -3,10 +3,11 @@
 ******************************* C SOURCE FILE *******************************
 **                            *******************                          **
 **                                                                         **
-** project  : GeMM                                                         **
+** project  : ReLu                                                         **
+** author   : Maria Jose Belda (mbelda@ucm.e                               **
 ** filename : main.c                                                       **
 ** version  : 1                                                            **
-** date     : 04/03/2025                                                   **
+** date     : 21/07/2025                                                   **
 **                                                                         **
 *****************************************************************************
 **                                                                         **
@@ -50,6 +51,9 @@
 #include "rv_plic_regs.h"
 #include "hart.h"
 
+// Dataset
+#include "dataset.h"
+
 
 /****************************************************************************/
 /**                                                                        **/
@@ -65,16 +69,12 @@
 /**                                                                        **/
 /****************************************************************************/
 
-// relu on cpu
-void reluCPU(int32_t * out, int32_t siz);
-// Fill input vectors with numbers
-void fillVector(int * vec, int n);
 // Handler for the CGRA interruption
 void handler_irq_cgra(uint32_t id);
-// Record the cycle number at the start
-void kcom_perfRecordStart( kcom_time_diff_t *perf );
-// Record the cycle number and compute the total cycles
-void kcom_perfRecordStop( kcom_time_diff_t *perf );
+// Pirnt metrics
+void printMetrics();
+// Initialize the CGRA
+void initCGRA();
 
 /****************************************************************************/
 /**                                                                        **/
@@ -95,10 +95,6 @@ static uint8_t              cgra_slot;
 #define CGRA_COL_INPUT_SIZE 2
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
 
-// Input and output matrixes
-#define VECTOR_SIZE 128*128
-static int32_t __attribute__((section(".xheep_data_interleaved"))) image[VECTOR_SIZE];
-static int32_t __attribute__((section(".xheep_data_interleaved"))) vecOutCPU[VECTOR_SIZE];
 
 /****************************************************************************/
 /**                                                                        **/
@@ -106,95 +102,50 @@ static int32_t __attribute__((section(".xheep_data_interleaved"))) vecOutCPU[VEC
 /**                                                                        **/
 /****************************************************************************/
 
-#define DEBUG 0
-#define N_TAMANYOS 5
-int tamanyos[N_TAMANYOS] = {8,16,32,64,128};
-int tiempos_cpu[N_TAMANYOS] = {0};
-int tiempos_cgra[N_TAMANYOS] = {0};
-int image_size;
-
 void main()
 {
 
   // Initialize the CGRA
-  initCGRA(); // This only needs to be done once
+  initCGRA();
 
+  // Enable and reset the CGRA performance counters
+  cgra_perf_cnt_enable(&cgra, 1);
+  cgra_perf_cnt_reset( &cgra );
 
-  for (int i= 0; i < N_TAMANYOS; i++) {
-    // Init timer
-    timerInit();
-
-    // Enable and reset the CGRA performance counters
-    cgra_perf_cnt_enable(&cgra, 1);
-    cgra_perf_cnt_reset( &cgra );
-
-    // Reset performnace counters
-    kcom_perf_t  kperf;
-
-    image_size = tamanyos[i];
-    printf("Running relu for image size %d...", image_size);
+  printf("Running relu for image size %d...", DATA_SIZE);
     
-    // Generate data
-    fillVector(image, image_size);
 
-    // Prepare the input vector for the CGRA
-    // ----------------------
-    // Config values
-    // ----------------------
-    // &Im           -         &Im         -
-    // nIt
-    
-    int nIt = image_size/16;
-    // Col 0
-    cgra_input[0][0] = &image[0];
-    cgra_input[0][1] = nIt;
-    // Col 1
-    // Col 2
-    cgra_input[2][0] = &image[0];
-    // Col 3
+  // Prepare the input vector for the CGRA
+  // ----------------------
+  // Config values
+  // ----------------------
+  // &Im           -         &Im         -
+  // nIt
+  
+  int nIt = DATA_SIZE/16;
+  // Col 0
+  cgra_input[0][0] = &input[0];
+  cgra_input[0][1] = nIt;
+  // Col 1
+  // Col 2
+  cgra_input[2][0] = &input[0];
+  // Col 3
 
-    // Set CGRA kernel L/S pointers
-    for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
-      cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
-    }
-
-    // Execute on cpu 
-    kcom_perfRecordStart( &(kperf.time.cpu) );
-    reluCPU(vecOutCPU, image_size);
-    kcom_perfRecordStop( &(kperf.time.cpu) );
-    tiempos_cpu[i] = kperf.time.cpu.spent_cy;
-
-    // CGRA Execution
-    kcom_perfRecordStart( &(kperf.time.cgra) );
-    cgra_intr_flag = 0;
-    cgra_set_kernel( &cgra, cgra_slot, RELU );
-
-     // Wait until CGRA is done
-    while(cgra_intr_flag==0) {
-      wait_for_interrupt();
-    }
-    kcom_perfRecordStop( &(kperf.time.cgra) );
-    tiempos_cgra[i] = kperf.time.cgra.spent_cy;
-
-    // Check results
-    int errors = 0;
-    for(int i = 0; i < image_size; i++){
-      if(image[i] != vecOutCPU[i]){
-        errors++;
-      }
-    }
-    if(errors > 0){
-     printf("ERR\n");
-    } else{
-      printf("OK\n");
-    }
-
+  // Set CGRA kernel L/S pointers
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
   }
- 
-  for (int i = 0; i < N_TAMANYOS; ++i) {
-    int tam = tamanyos[i] * tamanyos[i];
-    printf("Tamaño: %d\tCPU: %d\tCGRA: %d\n", tam, tiempos_cpu[i], tiempos_cgra[i]);
+
+  // CGRA Execution
+  cgra_intr_flag = 0;
+  cgra_set_kernel( &cgra, cgra_slot, RELU );
+
+  // Wait until CGRA is done
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
   }
+
+  printMetrics();
 
 
   return EXIT_SUCCESS;
@@ -224,22 +175,24 @@ void initCGRA(){
   cgra_slot = cgra_get_slot(&cgra);
 }
 
-// Fill matrix inputs
-void fillVector(int * vec, int n){
-  for(int i = 0; i < n; i++){
-    vec[i] = (i+1)%100;
-  }
-}
 
-// Cpu vector addition
-void reluCPU(int32_t * out, int32_t siz){
-  for(int i = 0; i < siz; i++){
-    if(image[i] < 0){
-      out[i] = 0;
-    } else {
-      out[i] = image[i];
-    }
-  }
+
+// Print metrics
+void printMetrics(){
+  // Performance counter display
+  printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
+  int column_idx = 0;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  column_idx = 1;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  column_idx = 2;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  column_idx = 3;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
 }
 
 // Interrupt controller variables

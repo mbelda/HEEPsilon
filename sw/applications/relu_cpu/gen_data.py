@@ -11,13 +11,13 @@ X = [int(random.random() * 100.0 - 50.0) for _ in range(data_size)]
 Z = [int(relu(X[x])) for x in range(data_size)]
 
 def print_array_interleaved(array_type, array_name, array_sz, pyarr):
-    print("{} {}[{}] __attribute__((section(\".xheep_data_interleaved\"))) = ".format(array_type, array_name, array_sz))
+    print("volatile {} {}[{}] __attribute__((section(\".xheep_data_interleaved\"))) = ".format(array_type, array_name, array_sz))
     print("{")
     print(", ".join(map(str, pyarr)))
     print("};")
 
 def print_array(array_type, array_name, array_sz, pyarr):
-    print("{} {}[{}] = ".format(array_type, array_name, array_sz))
+    print("volatile {} {}[{}] = ".format(array_type, array_name, array_sz))
     print("{")
     print(", ".join(map(str, pyarr)))
     print("};")
