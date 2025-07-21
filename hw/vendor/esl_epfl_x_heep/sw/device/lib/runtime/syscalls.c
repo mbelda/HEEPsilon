@@ -21,11 +21,15 @@
 #include <newlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include "uart.h"
 #include "soc_ctrl.h"
 #include "core_v_mini_mcu.h"
 #include "error.h"
 #include "x-heep.h"
+
+#include <stddef.h>
+
 
 #undef errno
 extern int errno;
@@ -44,6 +48,7 @@ extern int errno;
 #    define _fstat fstat
 #    define _isatty isatty
 #endif
+
 
 void unimplemented_syscall()
 {

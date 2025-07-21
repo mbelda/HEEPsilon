@@ -129,7 +129,7 @@ void (*gpio_handlers[ GPIO_INTR_QTY ])( void );
 
 volatile gpio * gpio_perif;
 
-__attribute__((optimize("O0"))) static void gpio_handler_irq_dummy( uint32_t dummy );
+__attribute__((optimize("O0"))) static void gpio_handler_irq_dummy( void );
 
 
 __attribute__((always_inline)) void select_gpio_domain(gpio_pin_number_t pin)
@@ -146,7 +146,7 @@ __attribute__((always_inline)) void select_gpio_domain(gpio_pin_number_t pin)
 /****************************************************************************/
 
 gpio_result_t gpio_assign_irq_handler( uint32_t intr_id,
-                                       void *handler() )
+                                       void (*handler)(void) )
 {
   if( intr_id >= GPIO_INTR_START && intr_id <= GPIO_INTR_END )
   {
@@ -563,7 +563,7 @@ void gpio_intr_set_mode (gpio_pin_number_t pin, gpio_intr_general_mode_t mode)
 /**                                                                        **/
 /****************************************************************************/
 
-__attribute__((optimize("O0"))) static void gpio_handler_irq_dummy( uint32_t dummy )
+__attribute__((optimize("O0"))) static void gpio_handler_irq_dummy( void )
 {
   return;
 }

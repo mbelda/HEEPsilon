@@ -51,6 +51,12 @@
 /**                                                                        **/
 /****************************************************************************/
 
+
+/**
+ * Pointer used to dynamically access the different interrupt handlers.
+*/
+typedef void (*handler_funct_t)(uint32_t);
+
 /**
  * Start and end ID of the UART interrupt request lines
 */
@@ -345,7 +351,7 @@ plic_result_t plic_software_irq_is_pending(void);
  * @return The result of the operation
 */
 plic_result_t plic_assign_external_irq_handler( uint32_t id,
-                                                void  *handler );
+                                                handler_funct_t handler );
 
 /**
  * Resets all peripheral handlers to their pre-set ones. All external handlers

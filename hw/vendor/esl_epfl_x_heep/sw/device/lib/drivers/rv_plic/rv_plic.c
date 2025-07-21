@@ -68,10 +68,6 @@ const uint32_t plicMaxPriority = RV_PLIC_PRIO0_PRIO0_MASK;
 /**                                                                        **/
 /****************************************************************************/
 
-/**
- * Pointer used to dynamically access the different interrupt handlers.
-*/
-typedef void (*handler_funct_t)(uint32_t);
 
 /****************************************************************************/
 /**                                                                        **/
@@ -367,11 +363,11 @@ plic_result_t plic_software_irq_is_pending(void)
 
 
 plic_result_t plic_assign_external_irq_handler( uint32_t id,
-                                                void *handler )
+                                                handler_funct_t handler )
 {
   if( id >= EXT_IRQ_START && id <= QTY_INTR )
   {
-    handlers[ id ] = (handler_funct_t*) handler;
+    handlers[ id ] = handler;
     return kPlicOk;
   }
   return kPlicBadArg;
