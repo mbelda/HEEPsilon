@@ -9,9 +9,25 @@
 #include "cgra_x_heep.h"
 
 
+// N*M*K matrix dimensions
+
+/*
+#  ifdef MINI_DATASET
+#   define NI 20
+#   define NJ 25
+#   define NK 30
+#  endif
+
+#  ifdef SMALL_DATASET
+#   define NI 60
+#   define NJ 70
+#   define NK 80
+#  endif
+*/
+
 int main()
 {
-    printf("Executing gemm cpu dimensions (%d,%d,%d)\n", DIM_M, DIM_N, DIM_K);
+    printf("Executing gemm cpu dimensions (%d,%d,%d)\n", NI, NK, NJ);
     CSR_WRITE(CSR_REG_MCOUNTINHIBIT, 0);
 
     int i, j, k;
@@ -19,13 +35,13 @@ int main()
     uint32_t sw_time;
 
     CSR_WRITE(CSR_REG_MCYCLE, 0);
-    for(i = 0; i < DIM_N; i ++) {
-        for(j = 0; j < DIM_M; j ++) {
+    for(i = 0; i < NI; i ++) {
+        for(j = 0; j < NJ; j ++) {
             sum = 0;
-            for(k = 0; k < DIM_K; k++) {
-                sum += inputX[i * DIM_K + k] * inputY[k * DIM_M + j];
+            for(k = 0; k < NK; k++) {
+                sum += inputX[i * NK + k] * inputY[k * NJ + j];
             }
-            inputZ[i * DIM_M + j] = ALPHA * sum + BETA * inputZ[i * DIM_M + j];
+            inputZ[i * NJ + j] = ALPHA * sum + BETA * inputZ[i * NJ + j];
         }
     }
     CSR_READ(CSR_REG_MCYCLE, &sw_time);
