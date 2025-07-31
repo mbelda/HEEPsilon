@@ -3,11 +3,10 @@
 ******************************* C SOURCE FILE *******************************
 **                            *******************                          **
 **                                                                         **
-** project  : ReLu                                                         **
-** author   : Maria Jose Belda (mbelda@ucm.e                               **
+** project  : 3MM                                                          **
 ** filename : main.c                                                       **
 ** version  : 1                                                            **
-** date     : 21/07/2025                                                   **
+** date     : 04/03/2025                                                   **
 **                                                                         **
 *****************************************************************************
 **                                                                         **
@@ -39,6 +38,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "dataset.h"
 #include "cgra_bitstream.h"
 #include "cgra_x_heep.h"
 
@@ -49,9 +49,6 @@
 #include "rv_plic_regs.h"
 #include "hart.h"
 
-// Dataset
-#include "dataset.h"
-
 
 /****************************************************************************/
 /**                                                                        **/
@@ -59,7 +56,8 @@
 /**                                                                        **/
 /****************************************************************************/
 
-
+#define CGRA_COL_INPUT_SIZE 2 // Size of the input buffer for the CGRA
+#define BLOCK_SIZE 4
 
 /****************************************************************************/
 /**                                                                        **/
@@ -69,19 +67,17 @@
 
 // Handler for the CGRA interruption
 void handler_irq_cgra(uint32_t id);
-// Pirnt metrics
-void printMetrics();
-// Initialize the CGRA
-void initCGRA();
 
-void check_errors();
-void printAsMatrix(int *array, int rows, int cols);
+void printMetrics();
+
+void checkErrors(int * res, int * in, int rows, int cols);
 
 /****************************************************************************/
 /**                                                                        **/
 /*                            GLOBAL VARIABLES                              */
 /**                                                                        **/
 /****************************************************************************/
+
 
 // Plic controller variables
 volatile bool               cgra_intr_flag;
@@ -90,10 +86,7 @@ volatile bool               cgra_intr_flag;
 static cgra_t               cgra;
 static uint8_t              cgra_slot;
 
-
-
-// CGRA input buffers
-#define CGRA_COL_INPUT_SIZE 1
+// CGRA input and output buffers
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
 
 
@@ -105,89 +98,144 @@ static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((a
 
 void main()
 {
+  printf("Launching 3MM for dimension %dx%dx%dx%dx%d\n", ROWS_A, COLS_A, COLS_B, COLS_C, COLS_D);
 
-    // Initialize the CGRA
-    initCGRA();
+  // Initialize the CGRA
+  initCGRA();
 
-    // Enable and reset the CGRA performance counters
-    cgra_perf_cnt_enable(&cgra, 1);
-    cgra_perf_cnt_reset( &cgra );
+  // Enable and reset the CGRA performance counters
+  cgra_perf_cnt_enable(&cgra, 1);
+  cgra_perf_cnt_reset( &cgra );
 
-    printf("Running gemm for size %dx%dx%d...\n", NI, NK, NJ);
+  // 16x20x18
+  // 40x60x50
+  loadKernelCGRA(cgra_imem_bitstream_16x20x18, cgra_kmem_bitstream_16x20x18);
+
+  // Prepare the input vector for the CGRA
+  // ----------------------
+  // -             -            &output[0]    &input1[0]
+  // -             -            -             &input2[0] 
+
+  // Col 0
+  // Col 1
+  // Col 2
+  cgra_input[2][0] = &matrixE[0];
+  // Col 3
+  cgra_input[3][0] = &matrixA[0];
+  cgra_input[3][1] = &matrixB[0];
+
+  // Set CGRA kernel L/S pointers
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+  }
+
+  // CGRA Execution
+  cgra_intr_flag = 0;
+  cgra_set_kernel( &cgra, cgra_slot, MMUL_COMPI );
+  
+  // Wait until CGRA is done
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
+  }
+  printf("Finished E\n");
 
 
-    int nRowsA = NI;
-    if (NI%4 == 3){
-        // Special case
-        nRowsA = NI +1;
-    }
+
+  // 18x24x22
+  // 50x80x70
+  loadKernelCGRA(cgra_imem_bitstream_18x24x22, cgra_kmem_bitstream_18x24x22);
 
     // Prepare the input vector for the CGRA
-    // ----------------------
+  // ----------------------
+  // -             -            &output[0]    &input1[0]
+  // -             -            -             &input2[0] 
+  // Col 0
+  // Col 1
+  // Col 2
+  cgra_input[2][0] = &matrixF[0];
+  // Col 3
+  cgra_input[3][0] = &matrixC[0];
+  cgra_input[3][1] = &matrixD[0];
 
-    // Col 0
-    cgra_input[0][0] = &inputZ[0];
-    // Col 1
-    cgra_input[1][0] = &inputY[0];
-    // Col 2
-    // Col 3
-    cgra_input[3][0] = &inputX[0];
 
-    // Set CGRA kernel L/S pointers
-    for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+  // Set CGRA kernel L/S pointers
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
     cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
-    }
+  }
 
-    // CGRA Execution
-    cgra_intr_flag = 0;
-    cgra_set_kernel( &cgra, cgra_slot, GEMM );
+  // CGRA Execution
+  
+  cgra_intr_flag = 0;
+  cgra_set_kernel( &cgra, cgra_slot, MMUL_COMPI );
 
-    // Wait until CGRA is done
-    while(cgra_intr_flag==0) {
+  // Wait until CGRA is done
+  while(cgra_intr_flag==0) {
     wait_for_interrupt();
-    }
+  }
 
 
-    // Check errrors
-    check_errors();
-    printMetrics();
+  printf("Finished F\n");
 
-    
+  // 16x18x22
+  // 40x50x70
+  loadKernelCGRA(cgra_imem_bitstream_16x18x22, cgra_kmem_bitstream_16x18x22);
+
+  // Prepare the input vector for the CGRA
+  // ----------------------
+  // -             -            &output[0]    &input1[0]
+  // -             -            -             &input2[0] 
+
+  // Col 0
+  // Col 1
+  // Col 2
+  cgra_input[2][0] = &matrixG[0];
+  // Col 3
+  cgra_input[3][0] = &matrixE[0];
+  cgra_input[3][1] = &matrixF[0];
 
 
-    return EXIT_SUCCESS;
+  // Set CGRA kernel L/S pointers
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+  }
+
+  // CGRA Execution
+  
+  cgra_intr_flag = 0;
+  cgra_set_kernel( &cgra, cgra_slot, MMUL_COMPI );
+
+  // Wait until CGRA is done
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
+  }
+
+
+  printf("Finished G\n");
+  checkErrors(expected_result, matrixG, ROWS_E, COLS_F);
+  printMetrics();
+
+  
+  return EXIT_SUCCESS;
 }
 
-void printAsMatrix(int *array, int rows, int cols) {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("%d ", array[i * cols + j]);
-        }
-        printf("\n"); // Salto de línea tras cada fila
+
+void checkErrors(int * res, int * in, int rows, int cols){
+  int errors = 0;
+  
+  for(int i = 0; i < rows*cols; i++ ){
+    if(res[i]!=in[i]){
+      errors++;
     }
+  }
+
+  if (errors > 0){
+    printf("Errors: %d\n", errors);
+  } else{
+    printf("OK\n");
+  }
+  
 }
 
-
-
-// Check errors
-void check_errors() {
-
-    int error = 0;
-    for(int i = 0; i < NI * NJ; i++) {
-        if(inputZ[i] != expected_result[i]) {
-          error++;
-        }
-    }
-
-    if(error) {
-        printf("FAIL with %d errors!!!\n\r", error);
-        /*printAsMatrix(inputZ, NI, NJ);
-        printf("Expected result:\n\r");
-        printAsMatrix(expected_result, NI, NJ);*/
-    } else {
-        printf("SUCCESS!\n\r");
-    }
-}
 
 // Initialize the CGRA
 void initCGRA(){
@@ -205,28 +253,53 @@ void initCGRA(){
   CSR_SET_BITS(CSR_REG_MIE, mask);
   cgra_intr_flag = 0;
 
-  // Load kernel
-  cgra_cmem_init(cgra_imem_bitstream, cgra_kmem_bitstream);
-
   cgra.base_addr = mmio_region_from_addr((uintptr_t)CGRA_PERIPH_START_ADDRESS);
   // Select request slot of CGRA
   cgra_slot = cgra_get_slot(&cgra);
 }
 
+void loadKernelCGRA(uint32_t imem_bitstream, uint32_t kmem_bitstream){
+  // Load kernel
+  cgra_cmem_init(imem_bitstream, kmem_bitstream);
+}
+
+// Fill matrix inputs
+void fillMatrixInputs(int * matrix, int rows, int cols){
+  for(int i = 0; i < rows; i++){
+    for(int j=0; j < cols; j++){
+      matrix[i*cols+j] = (i*cols+j+1)%100;
+    }
+  }
+}
 
 
-// Print metrics
-void printMetrics(){
-  // Performance counter display
-  int column_idx = 0;
-  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+// Print matrix
+void printMatrix(int * matrix, int rows, int cols){
+  for(int i = 0; i < rows; i++){
+    printf("[ ");
+    for(int j=0; j < cols; j++){
+      printf("%d ", matrix[i*cols+j]);
+    }
+    printf("]\n");
+  }
 }
 
 // Interrupt controller variables
 void handler_irq_cgra(uint32_t id) {
   cgra_intr_flag = 1;
 }
+
+// Print metrics
+void printMetrics(){
+  // Performance counter display
+  printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
+  int column_idx = 0;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+}
+
+
+
 
 /****************************************************************************/
 /**                                                                        **/

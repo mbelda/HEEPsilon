@@ -75,7 +75,6 @@ void printMetrics();
 void initCGRA();
 
 void check_errors();
-void printAsMatrix(int *array, int rows, int cols);
 
 /****************************************************************************/
 /**                                                                        **/
@@ -106,84 +105,61 @@ static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((a
 void main()
 {
 
-    // Initialize the CGRA
-    initCGRA();
+  // Initialize the CGRA
+  initCGRA();
 
-    // Enable and reset the CGRA performance counters
-    cgra_perf_cnt_enable(&cgra, 1);
-    cgra_perf_cnt_reset( &cgra );
+  // Enable and reset the CGRA performance counters
+  cgra_perf_cnt_enable(&cgra, 1);
+  cgra_perf_cnt_reset( &cgra );
 
-    printf("Running gemm for size %dx%dx%d...\n", NI, NK, NJ);
-
-
-    int nRowsA = NI;
-    if (NI%4 == 3){
-        // Special case
-        nRowsA = NI +1;
-    }
-
-    // Prepare the input vector for the CGRA
-    // ----------------------
-
-    // Col 0
-    cgra_input[0][0] = &inputZ[0];
-    // Col 1
-    cgra_input[1][0] = &inputY[0];
-    // Col 2
-    // Col 3
-    cgra_input[3][0] = &inputX[0];
-
-    // Set CGRA kernel L/S pointers
-    for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
-    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
-    }
-
-    // CGRA Execution
-    cgra_intr_flag = 0;
-    cgra_set_kernel( &cgra, cgra_slot, GEMM );
-
-    // Wait until CGRA is done
-    while(cgra_intr_flag==0) {
-    wait_for_interrupt();
-    }
-
-
-    // Check errrors
-    check_errors();
-    printMetrics();
-
+  printf("Running relu compigra for image size %d...\n", DATA_SIZE);
     
 
+  // Prepare the input vector for the CGRA
+  // ----------------------
+  // Config values
+  // ----------------------
+  // &im     -     -     -
+  
+  // Col 0
+  cgra_input[0][0] = &input[0];
+  // Col 1
+  // Col 2
+  // Col 3
 
-    return EXIT_SUCCESS;
+  // Set CGRA kernel L/S pointers
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+  }
+
+  // CGRA Execution
+  cgra_intr_flag = 0;
+  cgra_set_kernel( &cgra, cgra_slot, RELU );
+
+  // Wait until CGRA is done
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
+  }
+
+  check_errors();
+  printMetrics();
+
+
+  return EXIT_SUCCESS;
 }
-
-void printAsMatrix(int *array, int rows, int cols) {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("%d ", array[i * cols + j]);
-        }
-        printf("\n"); // Salto de línea tras cada fila
-    }
-}
-
-
 
 // Check errors
 void check_errors() {
 
     int error = 0;
-    for(int i = 0; i < NI * NJ; i++) {
-        if(inputZ[i] != expected_result[i]) {
+    for(int i = 0; i < DATA_SIZE; i++) {
+        if(input[i] != expected_result[i]) {
           error++;
         }
     }
 
     if(error) {
         printf("FAIL with %d errors!!!\n\r", error);
-        /*printAsMatrix(inputZ, NI, NJ);
-        printf("Expected result:\n\r");
-        printAsMatrix(expected_result, NI, NJ);*/
     } else {
         printf("SUCCESS!\n\r");
     }
@@ -218,7 +194,17 @@ void initCGRA(){
 // Print metrics
 void printMetrics(){
   // Performance counter display
+  printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
   int column_idx = 0;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  column_idx = 1;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  column_idx = 2;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+  column_idx = 3;
   printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
   printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
 }

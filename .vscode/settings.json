@@ -18,6 +18,8 @@
         "handler.h": "c",
         "csr.h": "c",
         "csr_registers.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "dataset.h": "c",
+        "cgra_x_heep.h": "c"
     }
 }
