@@ -27,7 +27,7 @@ extern "C" {
  *
  * This function may behave as if it is a no-op.
  */
-static inline void wait_for_interrupt(void) { asm volatile("wfi"); }
+inline void wait_for_interrupt(void) { asm volatile("wfi"); }
 
 
 #ifdef __cplusplus

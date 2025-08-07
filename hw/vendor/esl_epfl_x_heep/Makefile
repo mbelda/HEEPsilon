@@ -98,7 +98,7 @@ environment.yml: python-requirements.txt
 ## @section Installation
 
 ## Generates mcu files core-v-mini-mcu files and build the design with fusesoc
-## @param CPU=[cv32e20(default),cv32e40p,cv32e40x,cv32e40px]
+## @param CPU=[cv32e20(default),cv32e40p,cv32e40x]
 ## @param BUS=[onetoM(default),NtoM]
 ## @param MEMORY_BANKS=[2(default) to (16 - MEMORY_BANKS_IL)]
 ## @param MEMORY_BANKS_IL=[0(default),2,4,8]
@@ -150,13 +150,13 @@ verible:
 ## @param COMPILER_PREFIX=riscv32-unknown-(default)
 ## @param ARCH=rv32imc(default), <any RISC-V ISA string supported by the CPU>
 app: clean-app
-	@$(MAKE) -C sw PROJECT=$(PROJECT) TARGET=$(TARGET) LINKER=$(LINKER) LINK_FOLDER=$(LINK_FOLDER) COMPILER=$(COMPILER) COMPILER_PREFIX=$(COMPILER_PREFIX) ARCH=$(ARCH) SOURCE=$(SOURCE) \
+	$(MAKE) -C sw PROJECT=$(PROJECT) TARGET=$(TARGET) LINKER=$(LINKER) LINK_FOLDER=$(LINK_FOLDER) COMPILER=$(COMPILER) COMPILER_PREFIX=$(COMPILER_PREFIX) ARCH=$(ARCH) SOURCE=$(SOURCE) \
 	|| { \
-	@echo "\033[0;31mHmmm... seems like the compilation failed...\033[0m"; \
-	@echo "\033[0;31mIf you do not understand why, it is likely that you either:\033[0m"; \
-	@echo "\033[0;31m  a) offended the Leprechaun of Electronics\033[0m"; \
-	@echo "\033[0;31m  b) forgot to run make mcu-gen\033[0m"; \
-	@echo "\033[0;31mI would start by checking b) if I were you!\033[0m"; \
+	echo "\033[0;31mHmmm... seems like the compilation failed...\033[0m"; \
+	echo "\033[0;31mIf you do not understand why, it is likely that you either:\033[0m"; \
+	echo "\033[0;31m  a) offended the Leprechaun of Electronics\033[0m"; \
+	echo "\033[0;31m  b) forgot to run make mcu-gen\033[0m"; \
+	echo "\033[0;31mI would start by checking b) if I were you!\033[0m"; \
 	exit 1; \
 	}
 
@@ -193,7 +193,7 @@ questasim-sim-opt-upf: questasim-sim
 	$(MAKE) -C build/openhwgroup.org_systems_core-v-mini-mcu_0/sim-modelsim opt-upf
 
 ## VCS simulation
-## @param CPU=cv32e20(default),cv32e40p,cv32e40x,cv32e40px
+## @param CPU=cv32e20(default),cv32e40p,cv32e40x
 ## @param BUS=onetoM(default),NtoM
 vcs-sim:
 	$(FUSESOC) --cores-root . run --no-export --target=sim --tool=vcs $(FUSESOC_FLAGS) --build openhwgroup.org:systems:core-v-mini-mcu ${FUSESOC_PARAM} 2>&1 | tee buildsim.log
