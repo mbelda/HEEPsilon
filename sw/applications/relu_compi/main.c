@@ -89,10 +89,11 @@ volatile bool               cgra_intr_flag;
 static cgra_t               cgra;
 static uint8_t              cgra_slot;
 
+int data_size_var = DATA_SIZE;
 
 
 // CGRA input buffers
-#define CGRA_COL_INPUT_SIZE 1
+#define CGRA_COL_INPUT_SIZE 2
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
 
 
@@ -103,7 +104,7 @@ static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((a
 /****************************************************************************/
 
 void main()
-{
+{ 
 
   // Initialize the CGRA
   initCGRA();
@@ -119,13 +120,20 @@ void main()
   // ----------------------
   // Config values
   // ----------------------
-  // &im     -     -     -
-  
+  // &im     &Im     &Im            &Im
+  // &im     &Im     DATA_SIZE/4    &Im
   // Col 0
   cgra_input[0][0] = &input[0];
+  cgra_input[0][1] = &input[0];
   // Col 1
+  cgra_input[0][0] = &input[0];
+  cgra_input[0][1] = &input[0];
   // Col 2
+  cgra_input[0][0] = &input[0];
+  cgra_input[0][1] = DATA_SIZE/4;
   // Col 3
+  cgra_input[0][0] = &input[0];
+  cgra_input[0][1] = &input[0];
 
   // Set CGRA kernel L/S pointers
   for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
@@ -155,6 +163,7 @@ void check_errors() {
     for(int i = 0; i < DATA_SIZE; i++) {
         if(input[i] != expected_result[i]) {
           error++;
+          //printf("Error at index %d: expected %d, got %d\n\r", i, expected_result[i], input[i]);
         }
     }
 
@@ -196,15 +205,6 @@ void printMetrics(){
   // Performance counter display
   printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
   int column_idx = 0;
-  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 1;
-  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 2;
-  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
-  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
-  column_idx = 3;
   printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
   printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
 }
