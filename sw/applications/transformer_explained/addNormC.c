@@ -61,7 +61,7 @@ void normalize(AddNormalize *addNorm, quant_bit_width *input, quant_bit_width *i
         input_ptr = input + i * (addNorm->input_dim_); // Restart input_ptr to the beginning of the row
         input_normalized_ptr = input_normalized + i * (addNorm->input_dim_);
 
-        // Normalize the row and apply scale and shift
+        // Normalize the row and apply scale and shift // Only this part can be done on CGRA
         for (int j = 0; j < addNorm->input_dim_; j++) {
             // Normalize: (x - mu) * (1/sigma)
             *input_normalized_ptr = (quant_bit_width)MUL((*input_ptr - mean), sd_inv_int); // Q12
@@ -84,7 +84,7 @@ void add(quant_bit_width *input, quant_bit_width *to_be_added, int seq_len, int 
     int32_t sum;
     for (int i = 0; i < seq_len * input_dim; i++) {
         sum = input[i] + to_be_added[i];
-        if ((quant_bit_width)sum != sum) // In case of overflow in 16 bits
+        if ((quant_bit_width)sum != sum) // In case of overflow in 16 bits // To be studied for CGRA
             input[i] = (sum > 0) ? INT16_MAX : INT16_MIN;
         else
             input[i] = (quant_bit_width)sum;
