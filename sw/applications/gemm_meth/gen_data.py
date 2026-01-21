@@ -4,7 +4,8 @@ import random
 ni = int(sys.argv[1])
 nj = int(sys.argv[2])
 nk = int(sys.argv[3])
-
+alpha = int(sys.argv[4])
+beta = int(sys.argv[5])
 
 #  ifdef MINI_DATASET
 #   define NI 20
@@ -31,8 +32,7 @@ def gemm(X,Y,Z, alpha, beta):
             Z[i * nj + j] = int(alpha * sum + beta * Z[i * nj + j])
 
 
-alpha = 32412
-beta  = 2123
+
 X = [int(random.random() * 100 - 50) for _ in range(ni*nk)]
 Y = [int(random.random() * 100 - 50) for _ in range(nk*nj)]
 Z = [int(random.random() * 100 - 50) for _ in range(ni*nj)]

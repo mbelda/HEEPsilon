@@ -83,6 +83,8 @@ void printMatrix(int * matrix, int rows, int cols);
 // Process non multiple number of rows and cols
 void processExtraRowsAColsB();
 
+void printMetrics();
+
 /****************************************************************************/
 /**                                                                        **/
 /*                            GLOBAL VARIABLES                              */
@@ -200,7 +202,7 @@ void main()
     cgra_intr_flag = 0;
     cgra_set_kernel( &cgra, cgra_slot, TRANSFORMER );
     // Process extra rows/cols for non multiple dimensions
-    processExtraRowsAColsB();
+    //processExtraRowsAColsB();
     // Wait until CGRA is done
     while(cgra_intr_flag==0) {
       wait_for_interrupt();
@@ -285,6 +287,7 @@ void checkErrors(){
   } else{
     printf("OK\n");
   }
+  printMetrics();
   
 
   if(errors>0){
@@ -368,6 +371,15 @@ void showPerformance( kcom_perf_t* kperf, int full){
   }
   int32_t overhead = kperf->time.input.spent_cy + kperf->time.reprogramCols.spent_cy + kperf->time.load.spent_cy;
   //printf("Total cgra: %d\n", overhead + kperf->time.cgra.spent_cy); 
+}
+
+// Print metrics
+void printMetrics(){
+  // Performance counter display
+  printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
+  int column_idx = 0;
+  printf("CGRA active cycles: %d\n\r", cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA stall cycles : %d\n\r", cgra_perf_cnt_get_col_stall(&cgra, column_idx));
 }
 
 
