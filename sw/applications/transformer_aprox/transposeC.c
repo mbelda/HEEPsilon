@@ -2,7 +2,7 @@
 // Created by alireza on 10/6/23.
 //
 
-#include "softmaxC.h"
+#include "softmaxC_aprox.h"
 
 
 void multihead_transpose(const quant_bit_width * input, quant_bit_width* output, size_t seq_len,

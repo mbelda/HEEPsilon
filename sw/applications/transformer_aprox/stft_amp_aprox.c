@@ -1,13 +1,13 @@
-#include "stft_amp.h"
+#include "stft_amp_aprox.h"
 #include <math.h>
 #include <stdio.h>
-#include "defines.h"
-#include "../param.h"
+//#include "defines.h"
+#include "param.h"
 #include <stdint.h>
 #include <limits.h>
 #include <stdbool.h> // For bool
 
-
+/*
 // Q4.12 format
 #define Q_FORMAT (1 << NUM_FRACTION_BITS)
 #define Q_MULT_25(a) (((int32_t)(a) * 25) >> (7)) // Specialized multiplication by 25, optimized for Q4.12
@@ -225,3 +225,4 @@ quant_bit_width compute_magnitude_fxp_opt(int32_t real, int32_t imag) {
     //Adjust final shift based on earlier scaling (9) and the fact guess is uint32_t.
     return (quant_bit_width)(guess >> 5);
 }
+*/

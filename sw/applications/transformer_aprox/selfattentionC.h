@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "dense_layerC.h"
-#include "softmaxC.h"
+#include "softmaxC_aprox.h"
 #include "transposeC.h"
 #include "matMulC.h"
 #include "param.h"

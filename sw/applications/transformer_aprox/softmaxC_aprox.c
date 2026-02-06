@@ -3,8 +3,11 @@
 // Approx version by Hossein Taji and Francesco Poluzzi on 25/2/25.
 //
 
-#include "softmaxC.h"
-#include "defines.h"
+#include "softmaxC_aprox.h"
+//#include "defines.h"
+#define SM_SOFTERMAX
+#define SM_IMPL SM_SOFTERMAX
+
 
 #define USE_RCF
 
@@ -47,15 +50,15 @@ int16_t beta_fxp = 6144;  //in Q4.12, 1.5 in float -> 1.5 * 4096 = 6144
 int32_t reciprocal_factorials[N_TAYLOR_COEFF - 1] = {16777216, 8388608, 2796203, 699051, 139810};
 
 void computeSoftmax(int16_t* input, size_t seq_len) {
-    #if SM_IMPL == SM_FP
+    /*#if SM_IMPL == SM_FP
     computeSoftmax_fp(input, seq_len);
-    #elif SM_IMPL == SM_SOFTERMAX
+    #elif SM_IMPL == SM_SOFTERMAX*/
     softermax(input, seq_len, seq_len);
-    #elif SM_IMPL == SM_FIXED
+    /*#elif SM_IMPL == SM_FIXED
     computeSoftmax_nonsquare_fixed(input, seq_len, seq_len);
     #elif SM_IMPL == SM_ConSmax
     consmax(input, seq_len, seq_len, beta_fxp, gamma_inv_fxp);
-    #endif
+    #endif*/
 }
 
 // softmax scales a matrix into values between 0 and 1 => turns into a probability distribution

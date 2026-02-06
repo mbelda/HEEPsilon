@@ -1,11 +1,11 @@
 //
 // Created by Hossein Taji on 25/2/25.
 //
-#include "gelu.h"
+#include "gelu_aprox.h"
 #include <math.h>
 #include "dense_layerC.h"
 #include <stdio.h>
-#include "defines.h"
+//#include "defines.h"
 
 #define NUM_FRACTION_BITS 12
 #define M1 2048
@@ -13,6 +13,7 @@
 #define P 4294965248
 #define A 4294967280
 #define B 4294966016
+
 
 #define MUL(x, y) (int32_t) (((int32_t)(x) * (int32_t)(y)) >> NUM_FRACTION_BITS)
 

@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <stdlib.h>
-#include "../param.h"
+#include "param.h"
 
 void computeSoftmax(int16_t* input, size_t seq_len);
 
