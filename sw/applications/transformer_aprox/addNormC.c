@@ -3,6 +3,7 @@
 //
 
 #include "addNormC.h"
+#include "performance.h"
 
 
 
@@ -21,6 +22,9 @@ AddNormalize createAddNormalize(int seq_len, int input_dim, quant_bit_width *wei
 
 
 void normalize(AddNormalize *addNorm, quant_bit_width *input, quant_bit_width *input_normalized) {
+    printf("Normalize\n");
+    reset_csr_counters();
+
     for (int i = 0; i < addNorm->seq_len_; i++) {
         quant_bit_width *input_ptr = input + i * (addNorm->input_dim_);
         quant_bit_width *input_normalized_ptr = input_normalized + i * (addNorm->input_dim_);
@@ -57,9 +61,12 @@ void normalize(AddNormalize *addNorm, quant_bit_width *input, quant_bit_width *i
             input_normalized_ptr++;
         }
     }
+    read_csr_counters();
 }
 
 void add(quant_bit_width *input, quant_bit_width *to_be_added, int seq_len, int input_dim) {
+    printf("Add\n");
+    reset_csr_counters();
     int32_t sum;
     for (int i = 0; i < seq_len * input_dim; i++) {
         sum = input[i] + to_be_added[i];
@@ -68,4 +75,5 @@ void add(quant_bit_width *input, quant_bit_width *to_be_added, int seq_len, int 
         else
             input[i] = (quant_bit_width)sum;
     }
+    read_csr_counters();
 }

@@ -7,6 +7,8 @@
 #include <stdio.h>
 //#include "defines.h"
 
+#include "performance.h"
+
 #define NUM_FRACTION_BITS 12
 #define M1 2048
 #define M2 4294966784
@@ -21,11 +23,11 @@
 // GELU activation function
 void gelu(Dense *dense, size_t length, int16_t *input, int16_t *output)
 {
-    #if GELU_IMPL == GELU_FP
-    gelu_fp(dense, length, input, output);
-    #elif GELU_IMPL == GELU_PWL
+    //#if GELU_IMPL == GELU_FP
+    //gelu_fp(dense, length, input, output);
+    //#elif GELU_IMPL == GELU_PWL
     gelu_pwl(dense, length, input, output);
-    #endif
+    //#endif
 }
 
 void gelu_fp(Dense *dense, size_t length, int16_t *input, int16_t *output)
@@ -52,6 +54,8 @@ void gelu_fp(Dense *dense, size_t length, int16_t *input, int16_t *output)
 
 void gelu_pwl(Dense *dense, size_t length, int16_t *input, int16_t *output)
 {
+    printf("GELU PWL\n");
+    reset_csr_counters();
     for (size_t i = 0; i < length; i++)
     {
         int16_t x = input[i]; // Current input
@@ -75,6 +79,7 @@ void gelu_pwl(Dense *dense, size_t length, int16_t *input, int16_t *output)
         }
         output[i] = result; // Store the result in the output array
     }
+    read_csr_counters();
 }
 
 uint32_t mse(size_t length, int16_t *a, int16_t *b)

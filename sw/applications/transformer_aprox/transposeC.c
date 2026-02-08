@@ -3,10 +3,12 @@
 //
 
 #include "softmaxC_aprox.h"
-
+#include "performance.h"
 
 void multihead_transpose(const quant_bit_width * input, quant_bit_width* output, size_t seq_len,
                          size_t head_hidden_size, size_t num_head) {
+    printf("Multihead transpose\n");
+    reset_csr_counters();
     const quant_bit_width * initial_input = input;
     for (int i=0; i < seq_len; i++){
         for (int n=0; n< num_head; n++){
@@ -16,16 +18,20 @@ void multihead_transpose(const quant_bit_width * input, quant_bit_width* output,
             }
         }
     }
+    read_csr_counters();
 }
 
 
 void transpose_quant(const quant_bit_width * input, quant_bit_width* output,
                      size_t width, size_t height) {
+    printf("Transpose\n");
+    reset_csr_counters();
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
             output[i * width + j] = input[j * height + i];
         }
     }
+    read_csr_counters();
 }
 
 

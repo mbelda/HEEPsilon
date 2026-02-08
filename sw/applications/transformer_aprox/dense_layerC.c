@@ -22,6 +22,8 @@ void destroyDense(Dense* dense) {
 }
 
 void multiplyweight(Dense* dense, size_t seq_len, int32_t* input, int32_t* output) {
+    printf("Multiply\n");
+    reset_csr_counters();
     for (int length = 0; length < seq_len; length++) {
         for (int out_idx = 0; out_idx < dense->output_size_; out_idx++) {
             int32_t* weight_ptr = dense->weight + out_idx;
@@ -36,14 +38,18 @@ void multiplyweight(Dense* dense, size_t seq_len, int32_t* input, int32_t* outpu
             *(output_ptr) = (int32_t) (sum >> NUM_FRACTION_BITS); // NUM_FRACTION_BITS macro
         }
     }
+    read_csr_counters();
 }
 
 void addbias(Dense* dense, size_t seq_len, int32_t* output) {
+    printf("Add bias\n");
+    reset_csr_counters();
     for (size_t idx = 0; idx < seq_len; idx++) {
         for (size_t feature_idx = 0; feature_idx < dense->output_size_; feature_idx++) {
             output[idx * dense->output_size_ + feature_idx] += dense->bias[feature_idx];
         }
     }
+    read_csr_counters();
 }
 
 void computeDense(Dense* dense, size_t seq_len, int32_t* input, int32_t* output) {

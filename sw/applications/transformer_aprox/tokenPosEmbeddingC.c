@@ -3,6 +3,7 @@
 //
 
 #include "tokenPosEmbeddingC.h"
+#include "performance.h"
 
 
 void createTokenPosEmbedding(TokenPosEmbedding* tokenPosEmbedding, quant_bit_width* pos_matrix, quant_bit_width* cls_token_vector, size_t seq_len, size_t input_dim, size_t pos_matrix_dim) {
@@ -13,6 +14,8 @@ void createTokenPosEmbedding(TokenPosEmbedding* tokenPosEmbedding, quant_bit_wid
 }
 
 void clsConcatenate(TokenPosEmbedding* tpe, quant_bit_width* input, quant_bit_width* concatenated_input) {
+    printf("CLS Concatenate\n");
+    reset_csr_counters();
     // Copy cls_token_ into the concatenated array column-wise at the beginning
     for (size_t i = 0; i < tpe->input_dim_; ++i) {
         concatenated_input[i] = tpe->cls_token_vector_[i];
@@ -21,13 +24,18 @@ void clsConcatenate(TokenPosEmbedding* tpe, quant_bit_width* input, quant_bit_wi
     for (size_t i = 0; i < tpe->seq_len_ * tpe->input_dim_; ++i) {
         concatenated_input[i + tpe->input_dim_] = input[i];
     }
+    read_csr_counters();
 }
 
 void posEmbedding(TokenPosEmbedding* tpe, quant_bit_width* input) {
+    printf("Positional embedding\n");
+    reset_csr_counters();
+    
     for (size_t i = 0; i < (tpe->seq_len_ + 1); ++i) {
         for (size_t j = 0; j < tpe->input_dim_; ++j) {
             input[i * tpe->input_dim_+ j] += tpe->pos_matrix_[i * tpe->input_dim_ + j];
         }
     }
+    read_csr_counters();
 }
 

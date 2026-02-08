@@ -5,8 +5,9 @@
 
 #include "softmaxC_aprox.h"
 //#include "defines.h"
-#define SM_SOFTERMAX
-#define SM_IMPL SM_SOFTERMAX
+
+
+#include "performance.h"
 
 
 #define USE_RCF
@@ -183,6 +184,8 @@ void computeSoftmax_nonsquare_fixed(int16_t* input, size_t num_rows, size_t num_
 
 // alternative implementation of softmax that works with non-square matrices
 void softermax(int16_t* input, size_t num_rows, size_t num_cols) {
+    printf("Softermax\n");
+    reset_csr_counters();
     int16_t max_values[num_cols];
     max_values[0] = -32767;
     for (int i = 0; i < num_rows; i++) {
@@ -200,6 +203,7 @@ void softermax(int16_t* input, size_t num_rows, size_t num_cols) {
             input[i * num_cols + j] = (int16_t)  fixed_div( (input[i * num_cols + j]>>(absolute_max-max_values[j])), d);
         }
     }
+    read_csr_counters();
 }
 
 // change divisions to multiplication

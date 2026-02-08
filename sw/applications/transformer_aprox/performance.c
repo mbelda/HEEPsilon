@@ -1,62 +1,42 @@
 #include "performance.h"
+#include "csr.h"
+#include "csr_registers.h"
 
-// For the timer
-#include "rv_timer.h"
-#include "soc_ctrl.h"
-#include "core_v_mini_mcu.h"
+void init_csr_counters(){
+    // activar contadores
+    CSR_WRITE(CSR_REG_MCOUNTINHIBIT, 0);
 
-// Timer
-static rv_timer_t          timer;
-
-void kcom_perfRecordStart( kcom_time_diff_t *perf )
-{
-    timeStart( perf );
+    // seleccionar eventos
+    CSR_WRITE(CSR_REG_MHPMEVENT3, 3);   // loads
+    CSR_WRITE(CSR_REG_MHPMEVENT4, 4);   // stores
+    CSR_WRITE(CSR_REG_MHPMEVENT5, 10);  // load stall
+    CSR_WRITE(CSR_REG_MHPMEVENT6, 13);  // data miss
 }
 
-void kcom_perfRecordStop( kcom_time_diff_t *perf )
-{
-    timeStop( perf );
+void reset_csr_counters(){
+    CSR_WRITE(CSR_REG_MHPMCOUNTER3, 0);
+    CSR_WRITE(CSR_REG_MHPMCOUNTER4, 0);
+    CSR_WRITE(CSR_REG_MHPMCOUNTER5, 0);
+    CSR_WRITE(CSR_REG_MHPMCOUNTER6, 0);
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
+    CSR_WRITE(CSR_REG_MINSTRET, 0);
 }
 
-void timeStart( kcom_time_diff_t *perf )
-{
-    perf->start_cy = getTime_cy();
-}
+void read_csr_counters(){
+    // leer resultados
+    uint32_t cycles, inst, loads, stores, ldstall, dmiss;
 
-void timeStop( kcom_time_diff_t *perf )
-{
-    perf->end_cy = getTime_cy();
-    perf->spent_cy += perf->end_cy - perf->start_cy;
-}
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+    CSR_READ(CSR_REG_MINSTRET, &inst);
+    CSR_READ(CSR_REG_MHPMCOUNTER3, &loads);
+    CSR_READ(CSR_REG_MHPMCOUNTER4, &stores);
+    CSR_READ(CSR_REG_MHPMCOUNTER5, &ldstall);
+    CSR_READ(CSR_REG_MHPMCOUNTER6, &dmiss);
 
-uint64_t getTime_cy( )
-{
-    static uint64_t out;
-    rv_timer_counter_read( &timer, HART_ID, &out );
-    return out;
-}
-
-//Initialize the timer
-void timerInit()
-{
-    soc_ctrl_t soc_ctrl;
-    soc_ctrl.base_addr  = mmio_region_from_addr((uintptr_t)SOC_CTRL_START_ADDRESS);
-    uint32_t freq_hz  = soc_ctrl_get_frequency(&soc_ctrl);
-
-    mmio_region_t timer_0_reg = mmio_region_from_addr(RV_TIMER_AO_START_ADDRESS);
-
-    rv_timer_init( timer_0_reg, (rv_timer_config_t) { .hart_count = 2, .comparator_count = 1 }, &timer );
-
-    rv_timer_tick_params_t tick_params;
-
-    // The same frequency is provided to get one tick per cycle.
-    rv_timer_approximate_tick_params( freq_hz, freq_hz, &tick_params );
-    rv_timer_set_tick_params(&timer, HART_ID, tick_params);
-
-    // Juan: see if i cannot remove this!
-    rv_timer_irq_enable(&timer, HART_ID, 0, kRvTimerEnabled);
-    rv_timer_arm(&timer, HART_ID, 0, 1);
-
-    rv_timer_counter_set_enabled(&timer, HART_ID, kRvTimerEnabled);
-
+    printf("Cc: %lu\n", cycles);
+    printf("Instr: %lu\n", inst);
+    printf("Lds: %lu\n", loads);
+    printf("Str: %lu\n", stores);
+    printf("Ld Stalls: %lu\n", ldstall);
+    printf("Data Miss: %lu\n", dmiss);
 }

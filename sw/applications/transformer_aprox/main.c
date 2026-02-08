@@ -12,12 +12,13 @@
 #include "transformerBlockC.h"
 
 // For the cgra
-#include "multiply_cgra.h"
-
+//#include "multiply_cgra.h"
 
 // FFT
 #include "stftVec.h"
 
+// Performance
+#include "performance.h"
 
 
 float error_check(const quant_bit_width* groundTruth, const quant_bit_width* output, size_t length){
@@ -41,7 +42,7 @@ void prototype_distances(quant_bit_width* prototypeVec, const quant_bit_width* m
     }
 }
 
-void transformerInference(quant_bit_width * transformerInput, quant_bit_width * transformerOutput, quant_bit_width* input_normalized, quant_bit_width* qkv, quant_bit_width* intermediate, void * kperf){
+void transformerInference(quant_bit_width * transformerInput, quant_bit_width * transformerOutput, quant_bit_width* input_normalized, quant_bit_width* qkv, quant_bit_width* intermediate){
     quant_bit_width * weightVec[NUM_LAYERS*(3*NUM_HEAD+5)+5];
     quant_bit_width * biasVec[NUM_LAYERS*(3*NUM_HEAD+5)+5];
     //getWeights(weightVec);
@@ -49,7 +50,7 @@ void transformerInference(quant_bit_width * transformerInput, quant_bit_width * 
     quant_bit_width * clsTokenVector = getClassToken();
     quant_bit_width * posMatrix = getPosEmbedding();
     TransformerBlock* selfatten = createTransformerBlock(D_SEQ, D_MODEL, D_Q, NUM_HEAD, D_FF, weightVec, biasVec, clsTokenVector, posMatrix);
-    computeFixedPoint(selfatten, D_SEQ, transformerInput, input_normalized, transformerOutput, intermediate, qkv, kperf);
+    computeFixedPoint(selfatten, D_SEQ, transformerInput, input_normalized, transformerOutput, intermediate, qkv);
 }
 
 quant_bit_width compute_log_amp(int32_t real, int32_t imag){
@@ -105,17 +106,14 @@ void stft_rearrange(quant_bit_width* rawInputSignal, quant_bit_width* stftVec, s
 
 
 int main() {
-    kcom_perf_t kperf;
-    // Init timer
-    timerInit();
+    
+    init_csr_counters();
 
     // Initialize the CGRA
-    kcom_perfRecordStart(&(kperf.time.load));
-    initCGRA();
-    kcom_perfRecordStop(&(kperf.time.load));
+    //initCGRA();
 
     // Enable and reset the CGRA performance counters
-    countersInit();
+    //countersInit();
 
     // Transformer
     //quant_bit_width* stftVec = raw_signal;
@@ -138,10 +136,9 @@ int main() {
     //kcom_perfRecordStart(&(perf.stft));    
     //stft_rearrange(rawInputSignal, stftVec, 80, 5);
     //kcom_perfRecordStop(&(perf.stft));    
-    printf("Start inference\n");
-    kcom_perfRecordStart(&(kperf.time.infer));
-    transformerInference(stftVec, output, input_normalized, qkv, intermediate, (void *) &kperf);
-    kcom_perfRecordStop(&(kperf.time.infer));
+    //printf("Start inference\n");
+    transformerInference(stftVec, output, input_normalized, qkv, intermediate);
+
     
     //kcom_perfRecordStart(&(kperf.time.proto));
     prototype_distances(prototypes, output, distances, D_MODEL, 2);

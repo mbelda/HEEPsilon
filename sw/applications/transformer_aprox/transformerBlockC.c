@@ -4,7 +4,8 @@
 
 #include <stdio.h>
 #include "transformerBlockC.h"
-#include "multiply_cgra.h"
+
+#include "performance.h"
 
 SingleHeadSelfAttn global_selfatten [NUM_LAYERS * NUM_HEAD];
 Dense global_query_layer[NUM_LAYERS * NUM_HEAD];
@@ -74,7 +75,7 @@ void destroyTransformerBlock(TransformerBlock* transformerBlock) {
 
 void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant_bit_width * input,
                        quant_bit_width * input_normalized, quant_bit_width * output,
-                       quant_bit_width* intermediate, quant_bit_width* qkv, void * kperf) {
+                       quant_bit_width* intermediate, quant_bit_width* qkv) {
 
     //printf("\rStep 1\n");
     normalize(&transformerBlock->addNorm, input, input);
