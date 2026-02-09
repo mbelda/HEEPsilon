@@ -15,7 +15,10 @@
 #define N_TAYLOR_COEFF 3
 int32_t factorials[N_TAYLOR_COEFF-1] = {1<<NUM_FRACTION_BITS, 2<<NUM_FRACTION_BITS, 6<<NUM_FRACTION_BITS, 24<<NUM_FRACTION_BITS, 120<<NUM_FRACTION_BITS};
 
+// Q4.12 constants
 #define FP_ONE (1 << NUM_FRACTION_BITS)
+#define FP_TWO (2 << NUM_FRACTION_BITS)   
+
 #define EPSILON 1
 
 
@@ -54,12 +57,13 @@ void computeSoftmax(int16_t* input, size_t seq_len) {
     /*#if SM_IMPL == SM_FP
     computeSoftmax_fp(input, seq_len);
     #elif SM_IMPL == SM_SOFTERMAX*/
-    softermax(input, seq_len, seq_len);
+    //softermax(input, seq_len, seq_len);
     /*#elif SM_IMPL == SM_FIXED
     computeSoftmax_nonsquare_fixed(input, seq_len, seq_len);
     #elif SM_IMPL == SM_ConSmax
     consmax(input, seq_len, seq_len, beta_fxp, gamma_inv_fxp);
     #endif*/
+    softermax_approx_d(input, seq_len, seq_len);
 }
 
 // softmax scales a matrix into values between 0 and 1 => turns into a probability distribution
@@ -181,6 +185,57 @@ void computeSoftmax_nonsquare_fixed(int16_t* input, size_t num_rows, size_t num_
         }
     }
 }
+
+// Aproximación inicial: r0 ≈ 2^12 / d
+static inline int32_t reciprocal_init(int32_t d) {
+    return (FP_ONE << NUM_FRACTION_BITS) / d;
+}
+
+// Newton-Raphson en Q4.12 para calcular la inversa de d: r = r * (2 - d*r)
+static inline int32_t reciprocal_nr(int32_t d) {
+
+    int32_t r = reciprocal_init(d);
+
+    // 2 iteraciones bastan para softmax
+    for(int i = 0; i < 2; i++) {
+        // r = r * (2 - d*r)
+
+        int32_t dr = MUL(d, r);             // Q4.12
+        int32_t term = FP_TWO - dr;         // Q4.12
+        r = MUL(r, term);                   // Q4.12
+    }
+
+    return r;
+}
+
+void softermax_approx_d(int16_t* input, size_t num_rows, size_t num_cols) {
+    printf("-----------------------\n");
+    printf("Softermax aprox d (%dx%d)\n", num_rows, num_cols);
+    printf("-----------------------\n");
+    reset_csr_counters();
+    int16_t max_values[num_cols];
+    max_values[0] = -32767;
+    for (int i = 0; i < num_rows; i++) {
+        int32_t d = 0;
+        for (int j = 1; j < num_cols; j++) {
+            int16_t current_val = input[i * num_cols + j];
+            int16_t max_val= FIXED_MAX(current_val, max_values[j-1]);
+            max_values[j] = max_val;
+            int32_t exp_term = exp_fixed_point_taylor(current_val - max_val);
+            d = (d>>(max_val-max_values[j-1]))+exp_term;
+            input[i * num_cols + j] = exp_term;
+        }
+        // Calcular 1/d
+        int32_t inv_d = reciprocal_nr(d);
+
+        int16_t absolute_max = max_values[num_cols-1];
+        for (int j = 0; j < num_cols; j++) {
+            input[i * num_cols + j] = (int16_t)  MUL( (input[i * num_cols + j]>>(absolute_max-max_values[j])), inv_d);
+        }
+    }
+    read_csr_counters();
+}
+
 
 // alternative implementation of softmax that works with non-square matrices
 void softermax(int16_t* input, size_t num_rows, size_t num_cols) {
