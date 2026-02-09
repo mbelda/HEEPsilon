@@ -87,7 +87,7 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
     posEmbedding(transformerBlock->token, input);
 
     //printf("\rStep 2\n");
-    for (int l = 0; l < 4; l++) { // 4 it
+    for (int l = 0; l < 1; l++) { // 4 it
         normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized);
         for (int n = 0; n < NUM_HEAD; n++) {
             //printf("\rStep 3\n");
