@@ -326,7 +326,7 @@ module core_v_mini_mcu
 
   localparam JTAG_IDCODE = 32'h10001c05;
   localparam BOOT_ADDR = core_v_mini_mcu_pkg::BOOTROM_START_ADDRESS;
-  localparam NUM_MHPMCOUNTERS = 1;
+  localparam NUM_MHPMCOUNTERS = 4;
 
   // Log top level parameter values
 `ifndef SYNTHESIS
