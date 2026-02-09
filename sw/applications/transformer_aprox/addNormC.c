@@ -22,7 +22,9 @@ AddNormalize createAddNormalize(int seq_len, int input_dim, quant_bit_width *wei
 
 
 void normalize(AddNormalize *addNorm, quant_bit_width *input, quant_bit_width *input_normalized) {
-    printf("Normalize\n");
+    printf("-----------------------\n");
+    printf("Normalize (%dx%d)\n", addNorm->seq_len_, addNorm->input_dim_);
+    printf("-----------------------\n");
     reset_csr_counters();
 
     for (int i = 0; i < addNorm->seq_len_; i++) {
@@ -65,7 +67,9 @@ void normalize(AddNormalize *addNorm, quant_bit_width *input, quant_bit_width *i
 }
 
 void add(quant_bit_width *input, quant_bit_width *to_be_added, int seq_len, int input_dim) {
-    printf("Add\n");
+    printf("-----------------------\n");
+    printf("Add (%dx%d)\n", seq_len, input_dim);
+    printf("-----------------------\n");
     reset_csr_counters();
     int32_t sum;
     for (int i = 0; i < seq_len * input_dim; i++) {

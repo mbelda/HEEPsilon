@@ -10,7 +10,9 @@
 
 void MatMul_multiply_cpu(size_t seq_len, quant_bit_width* input, quant_bit_width* weight,
                            quant_bit_width* output, size_t input_size, size_t output_size ) {
-    printf("MatMul\n");
+    printf("-----------------------\n");
+    printf("MatMul (%dx%dx%d)\n", seq_len, input_size, output_size);
+    printf("-----------------------\n");
     reset_csr_counters();
     for (size_t i = 0; i < seq_len; i++) {
         for (size_t j = 0; j < output_size; j++) {
@@ -31,7 +33,9 @@ void MatMul_multiply(size_t seq_len, quant_bit_width* input, quant_bit_width* we
 }
 
 void MatMul_scale(quant_bit_width* input, int shift_scale, size_t mat_size) {
-    printf("MatMul scale\n");
+    printf("-----------------------\n");
+    printf("MatMul scale (%d)\n", mat_size);
+    printf("-----------------------\n");
     reset_csr_counters();
     for (size_t i = 0; i < mat_size; i++) {
         *input = (*input) >> shift_scale;

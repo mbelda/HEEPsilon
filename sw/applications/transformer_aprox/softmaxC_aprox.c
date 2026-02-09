@@ -184,7 +184,9 @@ void computeSoftmax_nonsquare_fixed(int16_t* input, size_t num_rows, size_t num_
 
 // alternative implementation of softmax that works with non-square matrices
 void softermax(int16_t* input, size_t num_rows, size_t num_cols) {
-    printf("Softermax\n");
+    printf("-----------------------\n");
+    printf("Softermax (%dx%d)\n", num_rows, num_cols);
+    printf("-----------------------\n");
     reset_csr_counters();
     int16_t max_values[num_cols];
     max_values[0] = -32767;

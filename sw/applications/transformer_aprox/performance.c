@@ -7,10 +7,10 @@ void init_csr_counters(){
     CSR_WRITE(CSR_REG_MCOUNTINHIBIT, 0);
 
     // seleccionar eventos
-    CSR_WRITE(CSR_REG_MHPMEVENT3, 3);   // loads
-    CSR_WRITE(CSR_REG_MHPMEVENT4, 4);   // stores
-    CSR_WRITE(CSR_REG_MHPMEVENT5, 10);  // load stall
-    CSR_WRITE(CSR_REG_MHPMEVENT6, 13);  // data miss
+    CSR_WRITE(CSR_REG_MHPMEVENT3, 5);   // loads
+    CSR_WRITE(CSR_REG_MHPMEVENT4, 6);   // stores
+    CSR_WRITE(CSR_REG_MHPMEVENT5, 2);   // load stall due to hazard
+    CSR_WRITE(CSR_REG_MHPMEVENT6, 11);  // pipe stall
 }
 
 void reset_csr_counters(){
@@ -24,19 +24,20 @@ void reset_csr_counters(){
 
 void read_csr_counters(){
     // leer resultados
-    uint32_t cycles, inst, loads, stores, ldstall, dmiss;
+    uint32_t cycles, inst, loads, stores, ldstall, pipestall;
 
     CSR_READ(CSR_REG_MCYCLE, &cycles);
     CSR_READ(CSR_REG_MINSTRET, &inst);
     CSR_READ(CSR_REG_MHPMCOUNTER3, &loads);
     CSR_READ(CSR_REG_MHPMCOUNTER4, &stores);
     CSR_READ(CSR_REG_MHPMCOUNTER5, &ldstall);
-    CSR_READ(CSR_REG_MHPMCOUNTER6, &dmiss);
-
+    CSR_READ(CSR_REG_MHPMCOUNTER6, &pipestall);
+    printf("-----------------------\n");
     printf("Cc: %lu\n", cycles);
     printf("Instr: %lu\n", inst);
     printf("Lds: %lu\n", loads);
     printf("Str: %lu\n", stores);
     printf("Ld Stalls: %lu\n", ldstall);
-    printf("Data Miss: %lu\n", dmiss);
+    printf("Pipe stalls: %lu\n", pipestall);
+    printf("-----------------------\n");
 }

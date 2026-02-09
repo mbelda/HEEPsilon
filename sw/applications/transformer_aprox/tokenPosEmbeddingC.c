@@ -14,7 +14,9 @@ void createTokenPosEmbedding(TokenPosEmbedding* tokenPosEmbedding, quant_bit_wid
 }
 
 void clsConcatenate(TokenPosEmbedding* tpe, quant_bit_width* input, quant_bit_width* concatenated_input) {
-    printf("CLS Concatenate\n");
+    printf("-----------------------\n");
+    printf("CLS Concatenate (%dx%d)\n", tpe->seq_len_, tpe->input_dim_);
+    printf("-----------------------\n");
     reset_csr_counters();
     // Copy cls_token_ into the concatenated array column-wise at the beginning
     for (size_t i = 0; i < tpe->input_dim_; ++i) {
@@ -28,7 +30,9 @@ void clsConcatenate(TokenPosEmbedding* tpe, quant_bit_width* input, quant_bit_wi
 }
 
 void posEmbedding(TokenPosEmbedding* tpe, quant_bit_width* input) {
-    printf("Positional embedding\n");
+    printf("-----------------------\n");
+    printf("Positional embedding (%dx%d)\n", tpe->seq_len_, tpe->input_dim_);
+    printf("-----------------------\n");
     reset_csr_counters();
     
     for (size_t i = 0; i < (tpe->seq_len_ + 1); ++i) {

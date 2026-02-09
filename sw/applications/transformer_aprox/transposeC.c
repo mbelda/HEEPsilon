@@ -7,7 +7,9 @@
 
 void multihead_transpose(const quant_bit_width * input, quant_bit_width* output, size_t seq_len,
                          size_t head_hidden_size, size_t num_head) {
-    printf("Multihead transpose\n");
+    printf("-----------------------\n");
+    printf("Multihead transpose (%dx%d -> %dx%d)\n", seq_len, head_hidden_size, seq_len, head_hidden_size * num_head);
+    printf("-----------------------\n");
     reset_csr_counters();
     const quant_bit_width * initial_input = input;
     for (int i=0; i < seq_len; i++){
@@ -24,7 +26,9 @@ void multihead_transpose(const quant_bit_width * input, quant_bit_width* output,
 
 void transpose_quant(const quant_bit_width * input, quant_bit_width* output,
                      size_t width, size_t height) {
-    printf("Transpose\n");
+    printf("-----------------------\n");
+    printf("Transpose (%dx%d)\n", width, height);
+    printf("-----------------------\n");
     reset_csr_counters();
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {

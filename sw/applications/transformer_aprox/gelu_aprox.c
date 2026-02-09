@@ -53,8 +53,10 @@ void gelu_fp(Dense *dense, size_t length, int16_t *input, int16_t *output)
 }
 
 void gelu_pwl(Dense *dense, size_t length, int16_t *input, int16_t *output)
-{
-    printf("GELU PWL\n");
+{   
+    printf("-----------------------\n");
+    printf("GELU PWL (%d)\n", length);
+    printf("-----------------------\n");
     reset_csr_counters();
     for (size_t i = 0; i < length; i++)
     {
