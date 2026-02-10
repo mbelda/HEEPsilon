@@ -125,10 +125,6 @@ void main()
   // Init timer
   timerInit();
 
-  // Enable and reset the CGRA performance counters
-  cgra_perf_cnt_enable(&cgra, 1);
-  cgra_perf_cnt_reset( &cgra );
-
   if(ROWS_A < CGRA_N_COLS || COLS_B < CGRA_N_ROWS){
     kcom_perfRecordStart(&(kperf.time.sw));
     mmulSoftware(matrixC);
@@ -138,6 +134,11 @@ void main()
     kcom_perfRecordStart(&(kperf.time.load));
     initCGRA();
     kcom_perfRecordStop(&(kperf.time.load));
+
+    // Enable and reset the CGRA performance counters
+    cgra_perf_cnt_enable(&cgra, 1);
+    cgra_perf_cnt_reset( &cgra );
+
     int nRowsA = ROWS_A;
     if (ROWS_A%4 == 3){
       // Special case
