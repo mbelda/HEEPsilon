@@ -87,9 +87,10 @@ void computeFixedPoint(TransformerBlock* transformerBlock, size_t seq_len, quant
     posEmbedding(transformerBlock->token, input);
 
     //printf("\rStep 2\n");
+    // TODO: Change its, 1 is only for debug purposes
     for (int l = 0; l < 1; l++) { // 4 it
         normalize(&transformerBlock->transformer_layer_0_addNorm[l], input, input_normalized);
-        for (int n = 0; n < NUM_HEAD; n++) {
+        for (int n = 0; n < 1; n++) { // NUM_HEAD it
             //printf("\rStep 3\n");
             compute_SingleHeadSelfAttn(transformerBlock->selfatten[l * NUM_HEAD + n], input_normalized,
                                        output + n * (seq_len * transformerBlock->head_hidden_size_), qkv, intermediate);

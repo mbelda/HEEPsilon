@@ -57,13 +57,13 @@ void computeSoftmax(int16_t* input, size_t seq_len) {
     /*#if SM_IMPL == SM_FP
     computeSoftmax_fp(input, seq_len);
     #elif SM_IMPL == SM_SOFTERMAX*/
-    //softermax(input, seq_len, seq_len);
+    softermax(input, seq_len, seq_len);
     /*#elif SM_IMPL == SM_FIXED
     computeSoftmax_nonsquare_fixed(input, seq_len, seq_len);
     #elif SM_IMPL == SM_ConSmax
     consmax(input, seq_len, seq_len, beta_fxp, gamma_inv_fxp);
     #endif*/
-    softermax_approx_d(input, seq_len, seq_len);
+    //softermax_approx_d(input, seq_len, seq_len);
 }
 
 // softmax scales a matrix into values between 0 and 1 => turns into a probability distribution
