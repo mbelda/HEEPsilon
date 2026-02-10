@@ -4,21 +4,22 @@ import csv
 import argparse
 from pathlib import Path
 
-
 def parse_log(input_path, output_csv):
 
-    # Detecta inicio de kernel
-    # Acepta:
-    #   MatMul (121x4x121)
-    #   MatMul (121x4x121
-    #   MatMul 121x4x121
+    # Función: acepta múltiples palabras, con o sin paréntesis, dimensiones opcionales
     func_pattern = re.compile(
-        r'^([A-Za-z0-9_]+)\s*(?:\(\s*([0-9xX]+)\s*\)?|([0-9xX]+))'
+        r'^([A-Za-z ]+?)\s*(?:\(\s*([0-9xX]+)\s*\)?|([0-9xX]+))?$'
     )
 
-    cc_pattern = re.compile(r'^Cc:\s*(\d+)')
-    instr_pattern = re.compile(r'^Instr:\s*(\d+)')
-    lds_pattern = re.compile(r'^Lds:\s*(\d+)')
+    # Métricas
+    metrics_patterns = {
+        "cc": re.compile(r'^Cc:\s*(\d+)'),
+        "instr": re.compile(r'^Instr:\s*(\d+)'),
+        "lds": re.compile(r'^Lds:\s*(\d+)'),
+        "str": re.compile(r'^Str:\s*(\d+)'),
+        "ld_stalls": re.compile(r'^Ld Stalls:\s*(\d+)'),
+        "pipe_stalls": re.compile(r'^Pipe stalls:\s*(\d+)')
+    }
 
     results = []
     current = None
@@ -30,13 +31,11 @@ def parse_log(input_path, output_csv):
             # ───── Detectar nueva función ─────
             m = func_pattern.match(line)
             if m:
-                # Guardar anterior
+                # Guardar la función anterior
                 if current:
                     results.append(current)
 
-                func_name = m.group(1)
-
-                # dimensiones pueden estar en grupo2 o grupo3
+                func_name = m.group(1).strip()
                 dimensions = m.group(2) if m.group(2) else m.group(3)
                 dimensions = dimensions if dimensions else ""
 
@@ -45,50 +44,42 @@ def parse_log(input_path, output_csv):
                     "size": dimensions,
                     "cc": "",
                     "instr": "",
-                    "lds": ""
+                    "lds": "",
+                    "str": "",
+                    "ld_stalls": "",
+                    "pipe_stalls": ""
                 }
                 continue
 
             if not current:
                 continue
 
-            # ───── Métricas ─────
-            m = cc_pattern.match(line)
-            if m:
-                current["cc"] = m.group(1)
-                continue
+            # ───── Capturar métricas ─────
+            for key, pattern in metrics_patterns.items():
+                m = pattern.match(line)
+                if m:
+                    current[key] = m.group(1)
+                    break  # una línea corresponde a una sola métrica
 
-            m = instr_pattern.match(line)
-            if m:
-                current["instr"] = m.group(1)
-                continue
-
-            m = lds_pattern.match(line)
-            if m:
-                current["lds"] = m.group(1)
-                continue
-
-    # Guardar último kernel
+    # Guardar el último bloque
     if current:
         results.append(current)
 
     # ───── Escribir CSV ─────
+    fieldnames = ["function", "size"] + list(metrics_patterns.keys())
     with open(output_csv, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function", "size", "cc", "instr", "lds"])
-
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
         for r in results:
-            writer.writerow([r["function"], r["size"], r["cc"], r["instr"], r["lds"]])
+            writer.writerow(r)
 
     print(f"✔ Datos guardados en {output_csv}")
     print(f"  Bloques procesados: {len(results)}")
-
 
 def main():
     parser = argparse.ArgumentParser(description="Parsear logs de kernels y generar CSV")
     parser.add_argument("input_log", help="Ruta al fichero de log")
     parser.add_argument("output_csv", help="Nombre del CSV de salida")
-
     args = parser.parse_args()
 
     if not Path(args.input_log).exists():
@@ -96,7 +87,6 @@ def main():
         return
 
     parse_log(args.input_log, args.output_csv)
-
 
 if __name__ == "__main__":
     main()
