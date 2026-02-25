@@ -80,7 +80,7 @@ ${pad.core_v_mini_mcu_interface}
 
   localparam JTAG_IDCODE = 32'h10001c05;
   localparam BOOT_ADDR = core_v_mini_mcu_pkg::BOOTROM_START_ADDRESS;
-  localparam NUM_MHPMCOUNTERS = 4;
+  localparam NUM_MHPMCOUNTERS = 6;
 
   // Log top level parameter values
 `ifndef SYNTHESIS
