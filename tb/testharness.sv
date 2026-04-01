@@ -119,7 +119,7 @@ module testharness #(
   assign delayed_tb_memory_subsystem_banks_powergate_switch_ack = tb_memory_subsystem_banks_powergate_switch_ack[SWITCH_ACK_LATENCY];
   assign delayed_tb_external_subsystem_powergate_switch_ack = tb_external_subsystem_powergate_switch_ack[SWITCH_ACK_LATENCY];
 
-  always_comb begin
+/*  always_comb begin
 `ifndef VERILATOR
     force cgra_x_heep_top_i.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_powergate_switch_ack_i = delayed_tb_cpu_subsystem_powergate_switch_ack;
     force cgra_x_heep_top_i.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_powergate_switch_ack_i = delayed_tb_peripheral_subsystem_powergate_switch_ack;
@@ -131,7 +131,7 @@ module testharness #(
     cgra_x_heep_top_i.x_heep_system_i.memory_subsystem_banks_powergate_switch_ack_n = delayed_tb_memory_subsystem_banks_powergate_switch_ack;
     cgra_x_heep_top_i.external_subsystem_powergate_switch_ack = delayed_tb_external_subsystem_powergate_switch_ack;
 `endif
-  end
+  end*/
 
   uartdpi #(
       .BAUD('d256000),

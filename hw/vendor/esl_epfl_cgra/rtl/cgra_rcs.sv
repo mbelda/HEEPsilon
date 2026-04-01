@@ -108,7 +108,7 @@ module cgra_rcs
   begin
     for (int l=0; l<N_COL; l++) begin
       // branch cols branch request for multi-cols kernels
-      rcs_br_req_col_merged_s[l] = rcs_br_req_row_merged_s & col_acc_map_i[l];
+      //rcs_br_req_col_merged_s[l] = rcs_br_req_row_merged_s & col_acc_map_i[l];
       // Capture execution end signal
       rcs_exec_end_col_merged[l] = (rcs_ex_end[3][l] | rcs_ex_end[2][l] | rcs_ex_end[1][l] | rcs_ex_end[0][l]) & ~rcs_br_req_o[l];
       // RCs stall capture

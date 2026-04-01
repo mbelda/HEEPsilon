@@ -194,7 +194,7 @@ module tb_top #(
       .COREV_PULP                 (COREV_PULP),
       .FPU                        (FPU),
       .ZFINX                      (ZFINX),
-      .X_EXT                      (X_EXT),
+      //.X_EXT                      (X_EXT),
       .JTAG_DPI                   (JTAG_DPI),
       .USE_EXTERNAL_DEVICE_EXAMPLE(USE_EXTERNAL_DEVICE_EXAMPLE),
       .CLK_FREQUENCY              (CLK_FREQUENCY_KHz)
