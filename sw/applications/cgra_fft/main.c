@@ -14,6 +14,8 @@
 #include "defines.h"
 #include "fft_data.h"
 
+#include "performance.h"
+
 #ifdef CPLX_FFT
   #if FFT_SIZE==512
     #include "fft_factors_512_32b_int.h"
@@ -88,6 +90,17 @@ void handler_irq_cgra(uint32_t id) {
     cgra_intr_flag = 1;
 }
 
+cgra_t cgra;
+
+// Print metrics
+void printMetrics(){
+  // Performance counter display
+  printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
+  int column_idx = 0;
+  printf("CGRA active cycles: %d\n\r", cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA stall cycles : %d\n\r", cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+}
+
 /* --------------------------------------------------------------------------
  *                     main
  * --------------------------------------------------------------------------*/
@@ -96,6 +109,8 @@ int main(void) {
   PRINTF("Init CGRA context memory...\n");
   cgra_cmem_init(cgra_imem_bitstream, cgra_kmem_bitstream);
   PRINTF("\rdone\n");
+
+  init_csr_counters();
 
   // Init the PLIC
   plic_Init();
@@ -111,8 +126,11 @@ int main(void) {
   CSR_SET_BITS(CSR_REG_MIE, mask);
   cgra_intr_flag = 0;
 
-  cgra_t cgra;
+  
   cgra.base_addr = mmio_region_from_addr((uintptr_t)CGRA_PERIPH_START_ADDRESS);
+
+  cgra_perf_cnt_enable(&cgra, 1);
+  cgra_perf_cnt_reset( &cgra );
 
   //////////////////////////////////////////////////////////
   //
@@ -121,7 +139,7 @@ int main(void) {
   //////////////////////////////////////////////////////////
 #ifdef CPLX_FFT
 
-  cgra_perf_cnt_enable(&cgra, 1);
+  
   uint16_t numBits = NumberOfBitsNeeded ( FFT_SIZE );
   int8_t column_idx;
 
@@ -130,6 +148,8 @@ int main(void) {
   // Select request slot of CGRA (2 slots)
   uint32_t cgra_slot = cgra_get_slot(&cgra);
   column_idx = 0;
+  PRINTF("Cycles for bit reverse config l/d pointer\n");
+  reset_csr_counters();
   cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[column_idx][cgra_slot], column_idx);
 
   // input data ptr column 0
@@ -140,9 +160,22 @@ int main(void) {
   cgra_input[column_idx][cgra_slot][4] = (int32_t)&ImagOut_fft0_fxp[0];
   cgra_input[column_idx][cgra_slot][5] = (int32_t)&RealOut_fft0_fxp[0];
   cgra_input[column_idx][cgra_slot][6] = 0; // idx start
+  read_csr_counters();
+  
 
   // Launch CGRA kernel
+  PRINTF("Cycles for bit reverse execution\n");
+  cgra_perf_cnt_reset( &cgra );
+  reset_csr_counters();
   cgra_set_kernel(&cgra, cgra_slot, CGRA_FTT_BITREV_ID);
+  // Wait CGRA is done
+  cgra_intr_flag=0;
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
+  }
+  read_csr_counters();
+  printMetrics();
+
 
   cgra_slot = cgra_get_slot(&cgra);
   column_idx = 0;
@@ -159,6 +192,7 @@ int main(void) {
 
   // Launch CGRA kernel
   cgra_set_kernel(&cgra, cgra_slot, CGRA_FTT_BITREV_ID);
+  
 
 #ifdef CGRA_100_PERCENT
   cgra_slot = cgra_get_slot(&cgra);
@@ -205,6 +239,8 @@ int main(void) {
 
   cgra_slot = cgra_get_slot(&cgra);
   column_idx = 0;
+  PRINTF("Cycles for fft config l/d pointer\n");
+  reset_csr_counters();
   cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[column_idx][cgra_slot], column_idx);
   // cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_output[column_idx][cgra_slot], column_idx);
 
@@ -221,47 +257,26 @@ int main(void) {
   cgra_input[column_idx][cgra_slot][0] = (int32_t)&f_imag[0];
   cgra_input[column_idx][cgra_slot][1] = (int32_t)&ImagOut_fft0_fxp[0];
   cgra_input[column_idx][cgra_slot][2] = (int32_t)numBits;
+  read_csr_counters();
 
   // Launch CGRA kernel
   #ifdef CGRA_FFT_FOREVER
     cgra_set_kernel(&cgra, cgra_slot, CGRA_FTT_CPLX_FOREVER_ID);
   #else
+    PRINTF("Clean cycles\n");
+    cgra_perf_cnt_reset( &cgra );
+    printMetrics();
+    PRINTF("Cycles for fft execution\n");
+    cgra_perf_cnt_reset( &cgra );
     cgra_set_kernel(&cgra, cgra_slot, CGRA_FTT_CPLX_ID);
   #endif
-
-#ifdef CGRA_100_PERCENT
-  cgra_slot = cgra_get_slot(&cgra);
-  column_idx = 0;
-  cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[column_idx][cgra_slot], column_idx);
-  // cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_output[column_idx][cgra_slot], column_idx);
-
-  // input data ptr column 0
-  cgra_input[column_idx][cgra_slot][0] = (int32_t)&RealOut_fft1_fxp[0];
-  cgra_input[column_idx][cgra_slot][1] = (int32_t)&f_real[0];
-  cgra_input[column_idx][cgra_slot][2] = (int32_t)FFT_SIZE;
-
-  column_idx = 1;
-  cgra_set_read_ptr(&cgra, cgra_slot, (uint32_t) cgra_input[column_idx][cgra_slot], column_idx);
-  // cgra_set_write_ptr(&cgra, cgra_slot, (uint32_t) cgra_output[column_idx][cgra_slot], column_idx);
-
-  // input data ptr column 0
-  cgra_input[column_idx][cgra_slot][0] = (int32_t)&f_imag[0];
-  cgra_input[column_idx][cgra_slot][1] = (int32_t)&ImagOut_fft1_fxp[0];
-  cgra_input[column_idx][cgra_slot][2] = (int32_t)numBits;
-
-  // Launch CGRA kernel
-  #ifdef CGRA_FFT_FOREVER
-    cgra_set_kernel(&cgra, cgra_slot, CGRA_FTT_CPLX_FOREVER_ID);
-  #else
-    cgra_set_kernel(&cgra, cgra_slot, CGRA_FTT_CPLX_ID);
-  #endif
-#endif // CGRA_100_PERCENT
 
   // Wait CGRA is done
   cgra_intr_flag=0;
   while(cgra_intr_flag==0) {
     wait_for_interrupt();
   }
+  printMetrics();
 #endif // CPLX_FFT
 
 #ifdef REAL_FFT
