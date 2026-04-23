@@ -51,6 +51,7 @@
 
 // Dataset
 #include "dataset.h"
+#include "performance.h"
 
 
 /****************************************************************************/
@@ -106,17 +107,21 @@ static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((a
 
 void main()
 {
-
+    printf("Gemm meth execution with sizes %dx%dx%d\n", NI, NK, NJ);
+    init_csr_counters();
     // Initialize the CGRA
     initCGRA();
 
+    printf("CPU Execution\n");
+    reset_csr_counters();
     gemm_cpu(expected_result);
+    read_csr_counters();
 
     // Enable and reset the CGRA performance counters
     cgra_perf_cnt_enable(&cgra, 1);
     cgra_perf_cnt_reset( &cgra );
 
-    printf("Running gemm for size %dx%dx%d...\n", NI, NK, NJ);
+    //printf("Running gemm for size %dx%dx%d...\n", NI, NK, NJ);
 
 
     int nRowsA = NI;
@@ -124,7 +129,8 @@ void main()
         // Special case
         nRowsA = NI +1;
     }
-
+    printf("CGRA Config cycles\n");
+    reset_csr_counters();
     // Prepare the input vector for the CGRA
     // ----------------------
     // &B[0][0]          &C[0][1]        &A[0][0]       nRowsBlocksC
@@ -176,6 +182,8 @@ void main()
     for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
     cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
     }
+    read_csr_counters();
+
 
     // CGRA Execution
     cgra_intr_flag = 0;
@@ -185,15 +193,11 @@ void main()
     while(cgra_intr_flag==0) {
     wait_for_interrupt();
     }
+
     uint32_t sw_time;
-    CSR_WRITE(CSR_REG_MCOUNTINHIBIT, 0);
-    CSR_WRITE(CSR_REG_MCYCLE, 0);
-    processExtraRowsAColsB();
-    CSR_READ(CSR_REG_MCYCLE, &sw_time);
-    printf("SW cycles: %lu\n", sw_time);
 
     // Check errrors
-    check_errors();
+    //check_errors();
     printMetrics();
 
     

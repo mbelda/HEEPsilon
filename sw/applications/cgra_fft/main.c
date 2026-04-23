@@ -48,6 +48,9 @@
   #define PRINTF(...)
 #endif
 
+void fft_cpu_fixed_point_out_of_place(const fxp *real_in, const fxp *imag_in, 
+                                      fxp *real_out, fxp *imag_out, uint16_t n) ;
+
 /* --------------------------------------------------------------------------
  *                     Functions declaration
  * --------------------------------------------------------------------------*/
@@ -57,6 +60,10 @@ uint16_t NumberOfBitsNeeded ( uint16_t powerOfTwo );
 /* --------------------------------------------------------------------------
  *                     Global variables
  * --------------------------------------------------------------------------*/
+// CPU
+fxp RealOut_fft0_fxp_cpu[FFT_SIZE];
+fxp ImagOut_fft0_fxp_cpu[FFT_SIZE];
+
 
 // FFT radix-2 variables
 fxp RealOut_fft0_fxp[FFT_SIZE] __attribute__ ((aligned (4))) = { 0 };
@@ -137,6 +144,7 @@ int main(void) {
   // COMPLEX FFT radix-2 (Butterfy) implementation
   //
   //////////////////////////////////////////////////////////
+  /*
 #ifdef CPLX_FFT
 
   
@@ -308,8 +316,69 @@ int main(void) {
   printf("CGRA FFT computation finished with %d errors\n", errors);
 #endif // CHECK_ERRORS
 
+*/
+  // CPU execution
+  printf("CPU exec FFT\n");
+  reset_csr_counters();
+  fft_cpu_fixed_point_out_of_place(&input_signal[0], &input_signal[1], RealOut_fft0_fxp_cpu, ImagOut_fft0_fxp_cpu, FFT_SIZE);
+  read_csr_counters();
+
+
+
   return EXIT_SUCCESS;
 }
+
+#define SHIFT_AMOUNT 12 // Ajusta este valor según tu formato (ej. 15 para Q15)
+
+// Macro simple (cuidado con los desbordamientos antes del desplazamiento)
+#define FXP_MUL(a, b) ( (fxp) ( ((int64_t)(a) * (int64_t)(b)) >> SHIFT_AMOUNT ) )
+
+void fft_cpu_fixed_point_out_of_place(const fxp *real_in, const fxp *imag_in, 
+                                      fxp *real_out, fxp *imag_out, uint16_t n) {
+    uint16_t i, j, k, n1, n2;
+    fxp c, s, t1, t2;
+    uint16_t stages = NumberOfBitsNeeded(n);
+
+    // 1. BIT-REVERSAL: Copiamos de 'in' a 'out' reordenando
+    // Esto equivale al primer Kernel que lanzas en el CGRA
+    for (i = 0; i < n; i++) {
+        j = ReverseBits(i, stages);
+        real_out[j] = real_in[i];
+        imag_out[j] = imag_in[i];
+    }
+
+    // 2. ALGORITMO DE MARIPOSA (In-place sobre el buffer de salida)
+    n2 = 1;
+    for (i = 0; i < stages; i++) {
+        n1 = n2;
+        n2 = n2 << 1;
+        
+        // El salto en la tabla de twiddles depende de la etapa actual
+        uint16_t twiddle_step = n / n2;
+
+        for (j = 0; j < n1; j++) {
+            // Obtenemos los factores de rotación de tus tablas precalculadas
+            c = f_real[j * twiddle_step];
+            s = f_imag[j * twiddle_step];
+
+            for (k = j; k < n; k += n2) {
+                uint16_t idx_a = k;
+                uint16_t idx_b = k + n1;
+
+                // t1 + j*t2 = (c + j*s) * (real_out[idx_b] + j*imag_out[idx_b])
+                // Usamos FXP_MUL (multiplicación con desplazamiento de punto fijo)
+                t1 = FXP_MUL(c, real_out[idx_b]) - FXP_MUL(s, imag_out[idx_b]);
+                t2 = FXP_MUL(s, real_out[idx_b]) + FXP_MUL(c, imag_out[idx_b]);
+                
+                real_out[idx_b] = real_out[idx_a] - t1;
+                imag_out[idx_b] = imag_out[idx_a] - t2;
+                real_out[idx_a] = real_out[idx_a] + t1;
+                imag_out[idx_a] = imag_out[idx_a] + t2;
+            }
+        }
+    }
+}
+
 
 uint16_t ReverseBits (uint16_t index, uint16_t numBits)
 {

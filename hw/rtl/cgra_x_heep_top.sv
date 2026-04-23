@@ -88,7 +88,7 @@ module cgra_x_heep_top #(
   /* verilator lint_off unused */
   logic external_subsystem_clkgate_en_n;
   logic external_subsystem_powergate_switch;
-  logic external_subsystem_powergate_switch_ack;
+  logic external_subsystem_powergate_switch_ack = 1'b0;
   logic external_subsystem_powergate_iso;
 
   // CGRA logic clock gating unit enable (always-on in this case)
