@@ -427,6 +427,6 @@ module alu
   assign flag_o      = {alu_res_o[DP_WIDTH-1], ~(|alu_res_o)};
   assign br_req_o    = br_req_s;
     assign br_add_o    = alu_op_i == CGRA_ALU_JUMP ? adder_result[RCS_NUM_CREG_LOG2-1:0] : '0;
-  assign alu_stall_o = (alu_op_i == CGRA_ALU_SMUL || alu_op_i == CGRA_ALU_FXPMUL) ? 1'b1 : '0;
+  assign alu_stall_o =  1'b0;
 
 endmodule
