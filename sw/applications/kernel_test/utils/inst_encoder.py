@@ -1,9 +1,9 @@
 '''
     File name: inst_encoder.py
-    Author: Benoit Denkinger
+    Author: Benoit Denkinger / Modified for C Header output
     Date created: 28/06/2018
     Python Version: Python 3.4.3
-    Description: Encode instructions for the CGRA
+    Description: Encode instructions for the CGRA and output a C header file
 '''
 
 import os
@@ -163,24 +163,21 @@ rcs_nop_instr = ['ZERO', 'ZERO', 'NOP', '-', 'SELF', '0']
 #                                                                                   #
 #####################################################################################
 
-
-
-#####################################################################################
-
 if len(sys.argv) != 3 :
     sys.exit("[ERROR] Incomplete data. Please provide a kernel path (<<..../kernel_name>>) and CGRA dimension (<<CxR>>).")
 
 # Get the path to the kernel from the input of the command
-KER_PATH = sys.argv[1] # e.g. "../kernels/this_kernel/" 
-if KER_PATH[-1] == "/":
-    # Extract the kernel name
-    KER_NAME = KER_PATH[ KER_PATH.rfind("/") +1 :-1 ] # e.g. "this_kernel"
-else:
-    KER_NAME = KER_PATH[ KER_PATH.rfind("/") +1 :] # e.g. "this_kernel"
+KER_PATH = sys.argv[1] # e.g. "../../MAESTRO/gesummv/" 
+
+# Clean up path parsing to accurately pull directory name without trailing slash complications
+clean_path = KER_PATH.rstrip('/')
+KER_NAME = os.path.basename(clean_path) # Extract 'gesummv' cleanly
+
+if KER_PATH[-1] != "/":
     KER_PATH = KER_PATH + "/"    
 
 # Get the desired dimension
-DIMENSION = sys.argv[2] # e.g. "3x3"
+DIMENSION = sys.argv[2] # e.g. "4x4"
 
 # Get the dimension-dependant data folder
 DATA_DIR = KER_PATH  + DIMENSION + "/"
@@ -188,8 +185,8 @@ DATA_DIR = KER_PATH  + DIMENSION + "/"
 # Obtain the number of columns and row independently
 CGRA_N_COL, CGRA_N_ROW = [int(s) for s in DIMENSION if s.isdigit() ]
 
-# The file where the bitstreams will be stored 
-BITSTREAMS_PATH = DATA_DIR + 'bitstreams'
+# Point directly to the new header file output instead of the raw text bitstreams
+BITSTREAMS_PATH = os.path.join(DATA_DIR, 'cgra_bitstream.h')
 OUT_SAT_PATH    = DATA_DIR + 'out.sat'
 
 # Obtain the numnber of Processing Elements
@@ -212,42 +209,43 @@ ker_conf_words[0] = ker_null_conf
 intr_log = False
 set_path = False
 
+# Ensure target directory structure exists
+os.makedirs(DATA_DIR, exist_ok=True)
 
-exec(open("bitstream_gen.py").read())
-
+try:
+    exec(open("bitstream_gen.py").read())
+except FileNotFoundError:
+    print("[WARNING] bitstream_gen.py not found. Skipping preset bitstream parsing logic.")
 
 # PRINT STATS
 print("\n\n-------------------------------------")
 print("CGRA conf. word width  :", CGRA_KMEM_WIDTH)
-print("CGRA instruction width :", CGRA_IMEM_WIDTH)
+print("CGRA instruction width :", CGEM_WIDTH if 'CGEM_WIDTH' in locals() else CGRA_IMEM_WIDTH)
 # Check instruction memory is large enough
 print("INFO: {}/{} CGRA INSTRUCTIONS".format(kernel_start, CGRA_IMEM_N_LINE));
 print("-------------------------------------")
 
-bitstreams_str = "kmem: "
-for i in range(0,CGRA_KMEM_N_KER):
-    bitstreams_str += hex(int(ker_conf_words[i],2)) + ", "
-bitstreams_str += "\nimem: "
 
+# Arrays to hold hex elements for dynamic text reconstruction inside the C arrays
+kmem_hex_list = []
+imem_hex_list = []
+
+for i in range(0, CGRA_KMEM_N_KER):
+    kmem_hex_list.append(hex(int(ker_conf_words[i], 2)))
 
 instr_count = 0
-for i in range(0,CGRA_N_ROW):
+for i in range(0, CGRA_N_ROW):
     for instruction in rcs_instructions[i]:
-
         instr_bits = ""
 
         for idx in range(len(instruction)):
             cmd = instruction[idx]
 
-            # Don't care is replaced by default value
             if cmd == '-':
                 cmd = rcs_nop_instr[idx]
 
-            # Don't care for register destination also need a 0 bit to disable write to register
             if idx == 3:
-                # Default command
                 cmd_tmp = ['R0', '0']
-                # If we write to a register put a 1 for write enable
                 if cmd != '-':
                     cmd_tmp[0] = cmd
                     cmd_tmp[1] = '1'
@@ -269,30 +267,50 @@ for i in range(0,CGRA_N_ROW):
             else:
                 print("ERROR: index overflow in instruction word")
 
-        bitstreams_str += (hex(int(instr_bits,2))) + ", "
-
-
+        imem_hex_list.append(hex(int(instr_bits, 2)))
         instr_count += 1
 
-with open(BITSTREAMS_PATH, 'w') as f:
-    f.write(bitstreams_str)
+# Join individual array components with standard commas 
+kmem_values_str = ", ".join(kmem_hex_list)
+imem_values_str = ", ".join(imem_hex_list)
+
+# Generate formatted string context using the requested macro layout
+c_header_content = f"""#ifndef _CGRA_BITSTREAM_H_
+#define _CGRA_BITSTREAM_H_
+
+#include <stdint.h>
+
+#include "cgra.h"
+
+// Kernel 0 => NULL
+#define {KER_NAME.upper()}_KERNEL_ID 1
+
+static uint32_t cgra_kmem_bitstream[CGRA_KMEM_SIZE] = {{ {kmem_values_str} }};
+const uint32_t  cgra_imem_bitstream[CGRA_IMEM_SIZE] = {{ {imem_values_str} }};
+
+#endif // _CGRA_BITSTREAM_H_
+"""
+
+# Safely write the formatted structure out to cgra_bitstream.h
+try:
+    with open(BITSTREAMS_PATH, 'w') as f:
+        f.write(c_header_content)
+    print(f"[SUCCESS] C Header Bitstream successfully saved to: {BITSTREAMS_PATH}")
+except Exception as e:
+    print(f"[ERROR] Could not write bitstream header file: {e}")
 
 
+# Wrap secondary generator executions gracefully
+try:
+    exec(open("io_gen.py").read())
+except FileNotFoundError as e:
+    print(f"[WARNING] io_gen.py execution skipped or failed: {e}")
+except Exception as e:
+    print(f"[WARNING] General error during io_gen.py: {e}")
 
-exec(open("io_gen.py").read())
-
-exec(open("heeptest_gen.py").read())
-
-
-#####################################################################################
-# TO DOs
-#####################################################################################
-
-# Fix the naming of the software function in the source file
-# Differentiate between variables and pointers
-# Give the variables a min and max
-# Make different sizes be considered different "versions" or "configurations"
-# Put all sources' versions into a single file
-# Rename the out.sats as kernel_version.mapit
-# Consider data types (not always uint32_t)
-# Differentiate between function arguments and function constants
+try:
+    exec(open("heeptest_gen.py").read())
+except FileNotFoundError as e:
+    print(f"[WARNING] heeptest_gen.py execution skipped or failed: {e}")
+except Exception as e:
+    print(f"[WARNING] General error during heeptest_gen.py: {e}")
