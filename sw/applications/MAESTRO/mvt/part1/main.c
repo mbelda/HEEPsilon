@@ -1,0 +1,258 @@
+/*
+                              *******************
+******************************* C SOURCE FILE *******************************
+** ******************* **
+** **
+** project  : MVT                                                          **
+** author   : Maria Jose Belda (mbelda@ucm.es)                             **
+** filename : main.c                                                       **
+** version  : 1                                                            **
+** date     : 08/07/2026                                                   **
+** **
+*****************************************************************************
+** **
+** Copyright (c) UCM                                                       **
+** All rights reserved.                                                    **
+** **
+*****************************************************************************
+*/
+
+/***************************************************************************/
+/***************************************************************************/
+
+/**
+* @file   main.c
+* @date   08/07/2026
+* @brief  An application to run MVT Part 1 (x1 = x1 + A * y1) on CGRA.
+*
+*/
+
+/****************************************************************************/
+/** **/
+/* MODULES USED                                 */
+/** **/
+/****************************************************************************/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include "cgra_bitstream.h"
+#include "cgra_x_heep.h"
+
+// For interrupt handling
+#include "csr.h"
+#include "handler.h"
+#include "rv_plic.h"
+#include "rv_plic_regs.h"
+#include "hart.h"
+
+// Dataset
+#include "dataset.h"
+
+
+/****************************************************************************/
+/** **/
+/* DEFINITIONS AND MACROS                            */
+/** **/
+/****************************************************************************/
+
+
+
+/****************************************************************************/
+/** **/
+/* PROTOTYPES OF LOCAL FUNCTIONS                       */
+/** **/
+/****************************************************************************/
+
+// Handler for the CGRA interruption
+void handler_irq_cgra(uint32_t id);
+// Print metrics
+void printMetrics();
+// Initialize the CGRA
+void initCGRA();
+// Check output
+void check_errors();
+
+/****************************************************************************/
+/** **/
+/* GLOBAL VARIABLES                              */
+/** **/
+/****************************************************************************/
+
+// Plic controller variables
+volatile bool               cgra_intr_flag;
+
+// CGRA variables
+static cgra_t               cgra;
+static uint8_t              cgra_slot;
+
+
+
+// CGRA input buffers (Aumentado a 8 debido al tamaño máximo de los vectores de configuración)
+#define CGRA_COL_INPUT_SIZE 8
+static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE]    __attribute__ ((aligned (4)));
+
+
+/****************************************************************************/
+/** **/
+/* LOCAL FUNCTIONS                               */
+/** **/
+/****************************************************************************/
+
+void main()
+{
+
+  // Initialize the CGRA
+  initCGRA();
+
+  // Enable and reset the CGRA performance counters
+  cgra_perf_cnt_enable(&cgra, 1);
+  cgra_perf_cnt_reset( &cgra );
+
+  // Nota: En MVT habitualmente se asume una matriz cuadrada N x N (M = N)
+  printf("Running mvt part1 for size N=%d...", N);
+  
+
+  // Prepare the input vector for the CGRA
+  // ----------------------
+  // Config values
+  // ----------------------
+  /*# Config vals
+    # &A[0][0]       &A[1][0]       &A[2][0]       &A[3][0]
+    # &A[4][0]       &A[5][0]       &A[6][0]       &A[7][0]
+    # &A[8][0]       &A[9][0]       &A[10][0]      &A[11][0]
+    # &A[12][0]      &A[13][0]      &A[14][0]      &A[15][0]
+    # -----------------------------------------------------
+    # N              &x1[1]         &y1[0]          
+    # loopJit                       N              &x1[7]
+    # &y1[0]         N              &x1[10]         
+    # &x1[12]                       loopIit        N
+*/
+
+  int loopIit = (N / 16) - 1;
+  int loopJit = N - 1;
+
+  // Map the pointers directly to memory variables defined in dataset.h para MVT
+  uint32_t first_addr_A  = (uint32_t)&A[0];
+  uint32_t first_addr_x1 = (uint32_t)&x1[0]; // Actúa como entrada y salida acumulada
+  uint32_t first_addr_y1 = (uint32_t)&y1[0]; 
+
+  // Col 0
+  cgra_input[0][0] = first_addr_A;
+  cgra_input[0][1] = first_addr_A + (4 * N * 4);
+  cgra_input[0][2] = first_addr_A + (8 * N * 4);
+  cgra_input[0][3] = first_addr_A + (12 * N * 4);
+  cgra_input[0][4] = N;
+  cgra_input[0][5] = loopJit;
+  cgra_input[0][6] = first_addr_y1;
+  cgra_input[0][7] = first_addr_x1 + (12 * 4);
+
+  // Col 1
+  cgra_input[1][0] = first_addr_A + (1 * N * 4);
+  cgra_input[1][1] = first_addr_A + (5 * N * 4);
+  cgra_input[1][2] = first_addr_A + (9 * N * 4);
+  cgra_input[1][3] = first_addr_A + (13 * N * 4);
+  cgra_input[1][4] = first_addr_x1 + (1 * 4);
+  cgra_input[1][5] = N;
+
+  // Col 2
+  cgra_input[2][0] = first_addr_A + (2 * N * 4);
+  cgra_input[2][1] = first_addr_A + (6 * N * 4);
+  cgra_input[2][2] = first_addr_A + (10 * N * 4);
+  cgra_input[2][3] = first_addr_A + (14 * N * 4);
+  cgra_input[2][4] = first_addr_y1;
+  cgra_input[2][5] = N;
+  cgra_input[2][6] = first_addr_x1 + (10 * 4);
+  cgra_input[2][7] = loopIit;
+
+  // Col 3
+  cgra_input[3][0] = first_addr_A + (3 * N * 4);
+  cgra_input[3][1] = first_addr_A + (7 * N * 4);
+  cgra_input[3][2] = first_addr_A + (11 * N * 4);
+  cgra_input[3][3] = first_addr_A + (15 * N * 4);
+  cgra_input[3][4] = first_addr_x1 + (7 * 4);
+  cgra_input[3][5] = N;
+
+  // Set CGRA kernel L/S pointers
+  for(int col_idx = 0 ; col_idx < CGRA_N_COLS ; col_idx++){
+    cgra_set_read_ptr ( &cgra, cgra_slot, (uint32_t) cgra_input[col_idx], col_idx );
+  }
+
+  // CGRA Execution
+  cgra_intr_flag = 0;
+  // Asegúrate de definir o cambiar el ID del Kernel al correspondiente de MVT P1 si aplica
+  cgra_set_kernel( &cgra, cgra_slot, MVT_P1_KERNEL_ID); 
+
+  // Wait until CGRA is done
+  while(cgra_intr_flag==0) {
+    wait_for_interrupt();
+  }
+
+  printMetrics();
+  check_errors();
+
+  return EXIT_SUCCESS;
+}
+
+void check_errors() {
+    int error = 0;
+    // En MVT Parte 1, la comprobación se realiza sobre el vector x1 modificado
+    for(int i = 0; i < N; i++) {
+        if(x1[i] != x1_expected[i]) {
+          error++;
+        }
+    }
+
+    if(error) {
+        printf("FAIL with %d errors!!!\n\r", error);
+    } else {
+        printf("SUCCESS!\n\r");
+    }
+}
+
+// Initialize the CGRA
+void initCGRA(){
+  // Init the PLIC
+  plic_Init();
+  plic_irq_set_priority(CGRA_INTR, 1);
+  plic_irq_set_enabled(CGRA_INTR, kPlicToggleEnabled);
+  plic_assign_external_irq_handler( CGRA_INTR, handler_irq_cgra);
+
+  // Enable interrupt on processor side
+  // Enable global interrupt for machine-level interrupts
+  CSR_SET_BITS(CSR_REG_MSTATUS, 0x8);
+  // Set mie.MEIE bit to one to enable machine-level external interrupts
+  const uint32_t mask = 1 << 11;//IRQ_EXT_ENABLE_OFFSET;
+  CSR_SET_BITS(CSR_REG_MIE, mask);
+  cgra_intr_flag = 0;
+
+  // Load kernel
+  cgra_cmem_init(cgra_imem_bitstream, cgra_kmem_bitstream);
+
+  cgra.base_addr = mmio_region_from_addr((uintptr_t)CGRA_PERIPH_START_ADDRESS);
+  // Select request slot of CGRA
+  cgra_slot = cgra_get_slot(&cgra);
+}
+
+// Print metrics
+void printMetrics(){
+  // Performance counter display
+  printf("CGRA kernel executed: %d\n\r", cgra_perf_cnt_get_kernel(&cgra));
+  int column_idx = 0;
+  printf("CGRA column %d active cycles: %d\n\r", column_idx, cgra_perf_cnt_get_col_active(&cgra, column_idx));
+  printf("CGRA column %d stall cycles : %d\n\r", column_idx, cgra_perf_cnt_get_col_stall(&cgra, column_idx));
+}
+
+// Interrupt controller variables
+void handler_irq_cgra(uint32_t id) {
+  cgra_intr_flag = 1;
+}
+
+/****************************************************************************/
+/** **/
+/* EOF                                      */
+/** **/
+/****************************************************************************/
