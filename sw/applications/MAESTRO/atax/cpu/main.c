@@ -134,17 +134,18 @@ void atax_cpu(int *A, int *x, int *tmp, int *y)
         y[j] = 0;
     }
 
-    /* Parte 1: tmp = A * x */
+    /* Cálculo combinado de ATAX (Fusión de bucles sobre el eje I) */
     for (int i = 0; i < M; i++) {
+        tmp[i] = 0;
+        
+        // Parte 1: Acumulación de la fila i para generar tmp[i]
         for (int j = 0; j < N; j++) {
-            tmp[i] += A[i * N + j] * x[j];
+            tmp[i] = tmp[i] + A[i * N + j] * x[j];
         }
-    }
-
-    /* Parte 2: y = A^T * tmp + y */
-    for (int j = 0; j < N; j++) {
-        for (int i = 0; i < M; i++) {
-            y[j] += A[i * N + j] * tmp[i];
+        
+        // Parte 2: Distribución inmediata del tmp[i] calculado a todo el vector y
+        for (int j = 0; j < N; j++) {
+            y[j] = y[j] + A[i * N + j] * tmp[i];
         }
     }
 }
