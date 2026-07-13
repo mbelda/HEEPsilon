@@ -39,7 +39,7 @@
 #endif
 
 #ifndef DEEPBINDI_MODEL
-#  define DEEPBINDI_MODEL 0
+#  define DEEPBINDI_MODEL 1
 #endif
 
 /* Include the correct model header */
@@ -52,19 +52,15 @@
 #include "arena.h"
 #include "test_input.h"
 
-#define FS_INITIAL      0x01
-#define PRINTF_IN_FPGA  1
-#define PRINTF_IN_SIM   0
+#define TARGET_SIM
 
-#if defined(TARGET_PC)
-#  define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
-#elif defined(TARGET_SIM) && PRINTF_IN_SIM
-#  define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
-#elif PRINTF_IN_FPGA && !defined(TARGET_SIM)
-#  define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
-#else
-#  define PRINTF(...)
-#endif
+#define FS_INITIAL      0x01
+#define PRINTF_IN_FPGA  0
+#define PRINTF_IN_SIM   1
+
+
+#define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
+
 
 /* Model name string for the header line */
 #if DEEPBINDI_MODEL == 2
@@ -98,30 +94,30 @@ int main(void)
     CSR_CLEAR_BITS(CSR_REG_MCOUNTINHIBIT, 0x1);
     CSR_WRITE(CSR_REG_MCYCLE, 0);
 
-    PRINTF("DeepBindi %s on X-HEEP (int32)\r\n", MODEL_NAME);
+    printf("DeepBindi %s on X-HEEP (int32)\r\n", MODEL_NAME);
 
     /* ---- Sample 0: NO_FEAR ------------------------------------------- */
 
-    CSR_WRITE(CSR_REG_MCYCLE, 0);
     PRINTF("--- Sample 0 (expected label=%d / NO_FEAR) ---\r\n",
            TEST_INPUT_LABEL_0);
 
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     out = run_model(test_input_0);
-
     CSR_READ(CSR_REG_MCYCLE, &cycles);
+
     PRINTF("Output : %d (%s)\r\n",
            (int)out->data[0], out->data[0] ? "FEAR" : "NO_FEAR");
     PRINTF("Cycles : %u\r\n", cycles);
 
     /* ---- Sample 1: FEAR ---------------------------------------------- */
 
-    CSR_WRITE(CSR_REG_MCYCLE, 0);
     PRINTF("--- Sample 1 (expected label=%d / FEAR) ---\r\n",
            TEST_INPUT_LABEL_1);
 
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     out = run_model(test_input_1);
-
     CSR_READ(CSR_REG_MCYCLE, &cycles);
+
     PRINTF("Output : %d (%s)\r\n",
            (int)out->data[0], out->data[0] ? "FEAR" : "NO_FEAR");
     PRINTF("Cycles : %u\r\n", cycles);
@@ -129,6 +125,8 @@ int main(void)
     /* ---- Arena stats -------------------------------------------------- */
 
     arena_stats();
+
+    PRINTF("End..\n");
 
     return 0;
 }
