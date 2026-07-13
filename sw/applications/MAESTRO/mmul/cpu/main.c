@@ -1,19 +1,19 @@
 /*
                               *******************
 ******************************* C SOURCE FILE *******************************
-**                            *******************                          **
-**                                                                         **
-** project  : ReLu                                                         **
-** author   : Maria Jose Belda (mbelda@ucm.e                               **
+** ******************* **
+** **
+** project  : MMUL CPU                                                     **
+** author   : Maria Jose Belda (mbelda@ucm.es)                             **
 ** filename : main.c                                                       **
-** version  : 1                                                            **
-** date     : 21/07/2025                                                   **
-**                                                                         **
+** version  : 2                                                            **
+** date     : 2026                                                         **
+** **
 *****************************************************************************
-**                                                                         **
+** **
 ** Copyright (c) UCM                                                       **
 ** All rights reserved.                                                    **
-**                                                                         **
+** **
 *****************************************************************************
 */
 
@@ -23,14 +23,14 @@
 /**
 * @file   main.c
 * @date   04/03/2025
-* @brief  An application to run a matrix multiplication.
+* @brief  An application to run a simple MMUL matrix multiplication on CPU.
 *
 */
 
 /****************************************************************************/
-/**                                                                        **/
-/*                             MODULES USED                                 */
-/**                                                                        **/
+/** **/
+/* MODULES USED                                 */
+/** **/
 /****************************************************************************/
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@
 #include "rv_plic_regs.h"
 #include "hart.h"
 
-// Dataset
+// Dataset (Debe contener NI, NK, NJ, A, B y C_expected)
 #include "dataset.h"
 
 // Counters
@@ -56,56 +56,61 @@
 
 
 /****************************************************************************/
-/**                                                                        **/
-/*                        DEFINITIONS AND MACROS                            */
-/**                                                                        **/
+/** **/
+/* DEFINITIONS AND MACROS                            */
+/** **/
 /****************************************************************************/
 
 
 
 /****************************************************************************/
-/**                                                                        **/
-/*                      PROTOTYPES OF LOCAL FUNCTIONS                       */
-/**                                                                        **/
+/** **/
+/* PROTOTYPES OF LOCAL FUNCTIONS                       */
+/** **/
 /****************************************************************************/
 
 // Check output
 void check_errors();
+// MMUL Reference function
+void mmul_cpu(int *A, int *B, int *C_out);
 
 /****************************************************************************/
-/**                                                                        **/
-/*                            GLOBAL VARIABLES                              */
-/**                                                                        **/
+/** **/
+/* GLOBAL VARIABLES                              */
+/** **/
 /****************************************************************************/
+
+// Output matrix
+int32_t C[NI*NJ];
 
 
 /****************************************************************************/
-/**                                                                        **/
-/*                            LOCAL FUNCTIONS                               */
-/**                                                                        **/
+/** **/
+/* LOCAL FUNCTIONS                               */
+/** **/
 /****************************************************************************/
 
-void main()
+int main()
 {
-
   init_csr_counters();
 
-  printf("Running gesummv for size %d...", N);
+  printf("Running MMUL for size %dx%dx%d...", NI, NK, NJ);
     
   reset_csr_counters();
-  gesummv_cpu(A, B, x, y);
+  mmul_cpu(A, B, C);
   read_csr_counters();
 
   check_errors();
-
 
   return EXIT_SUCCESS;
 }
 
 void check_errors() {
     int error = 0;
-    for(int i = 0; i < N; i++) {
-        if(y[i] != y_expected[i]) {
+    int total_elements = NI * NJ;
+
+    for(int i = 0; i < total_elements; i++) {
+        if(C[i] != C_expected[i]) {
           error++;
         }
     }
@@ -117,22 +122,24 @@ void check_errors() {
     }
 }
 
-
-void gesummv_cpu(int *A, int *B, int *x, int *y_out) {
-    for (int i = 0; i < N; i++) {
-        int s_tmp = 0;
-        int s_y = 0;
-        for (int j = 0; j < N; j++) {
-            s_tmp += A[i * N + j] * x[j];
-            s_y += B[i * N + j] * x[j];
+/**
+ * @brief Computes simple matrix multiplication: C_out = A * B
+ * Matrix dimensions: A (NI x NK), B (NK x NJ), C_out (NI x NJ)
+ */
+void mmul_cpu(int *A, int *B, int *C_out) {
+    for (int i = 0; i < NI; i++) {
+        for (int j = 0; j < NJ; j++) {
+            int sum_val = 0;
+            for (int k = 0; k < NK; k++) {
+                sum_val += A[i * NK + k] * B[k * NJ + j];
+            }
+            C_out[i * NJ + j] = sum_val;
         }
-        y_out[i] = ALPHA * s_tmp + BETA * s_y;
     }
 }
 
-
 /****************************************************************************/
-/**                                                                        **/
-/*                                 EOF                                      */
-/**                                                                        **/
+/** **/
+/* EOF                                      */
+/** **/
 /****************************************************************************/

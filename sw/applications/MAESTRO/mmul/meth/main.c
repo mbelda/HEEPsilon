@@ -84,7 +84,7 @@ static uint8_t              cgra_slot;
 static int32_t cgra_input[CGRA_N_COLS][CGRA_COL_INPUT_SIZE] __attribute__ ((aligned (4)));
 
 // Output matrix
-int32_t C[]; 
+int32_t C[NI*NJ]; 
 
 /****************************************************************************/
 /** **/
