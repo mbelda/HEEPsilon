@@ -126,17 +126,8 @@ void check_errors()
 
 void atax_cpu(int *A, int *x, int *tmp, int *y)
 {
-    // Inicialización explícita de los vectores de salida/acumulación
-    for (int i = 0; i < M; i++) {
-        tmp[i] = 0;
-    }
-    for (int j = 0; j < N; j++) {
-        y[j] = 0;
-    }
-
     /* Cálculo combinado de ATAX (Fusión de bucles sobre el eje I) */
     for (int i = 0; i < M; i++) {
-        tmp[i] = 0;
         
         // Parte 1: Acumulación de la fila i para generar tmp[i]
         for (int j = 0; j < N; j++) {
