@@ -1,266 +1,251 @@
 /**
- * nn_runtime.h  –  Minimal inference runtime for CNN models (DeepBindi / EPFL)
- *                  STATIC VERSION: no heap allocation (no malloc/free).
- *
- * This header is identical to the dynamic version's nn_runtime.h.
- * The difference is entirely in nn_runtime.c: tensor_create() and
- * layer_create() functions allocate from the static pools in arena.c
- * instead of calling malloc/calloc.  No API change is visible here,
- * which means cnn_models_c.c is also unchanged (except for one
- * act_arena_reset() call added at the start of each run_*() function).
- *
- * This header defines the data types and function prototypes that implement
- * the basic building blocks needed for forward-pass inference on the
- * architectures defined in cnn_models.py (translated from PyTorch / Keras to C).
+ * nn_runtime.h  --  Minimal int32 inference runtime for CNN_1D_v2 (DeepBindi).
+ *                   X-HEEP / STATIC VERSION: no heap, no float, no math.h.
  *
  * DATA LAYOUT
  * -----------
- * All tensors use the NCHW (batch × channels × height × width) layout, which is
- * the same convention used by PyTorch and matches the weight ordering in the
- * original Python code.  1-D signals are stored as (N, C, 1, W) tensors so that
- * the same Conv2D and MaxPool2D primitives handle both 1-D and 2-D cases.
+ * All tensors use NCHW layout (batch x channels x height x width).
+ * 1-D signals are stored as (N, C, 1, W); same conv2d_forward handles both.
+ * Index: data[((n*C + c)*H + h)*W + w]
  *
- * CGRA ACCELERATION NOTES
- * -----------------------
- * A Coarse-Grained Reconfigurable Array (CGRA) can accelerate the computation
- * by mapping the innermost loops of the compute-intensive operations onto its
- * functional-unit array.  The two most important entry points are:
+ * ARITHMETIC
+ * ----------
+ * All weights, activations, and layer parameters are int32_t.
+ * BatchNorm parameters are pre-folded at layer creation into:
+ *   scale[c]  Q7 fixed-point: scale[c] = round(gamma[c]/sqrt(var[c]+eps) * 128)
+ *   offset[c] = round(beta[c] - gamma[c]*mean[c]/sqrt(var[c]+eps))
+ * Forward pass: y = (int32_t)(((int64_t)x * scale[c]) >> 7) + offset[c]
+ * Sigmoid is replaced by a sign threshold: output = (x > 0) ? 1 : 0
+ * ReLU: output = (x < 0) ? 0 : x  (unchanged logic)
  *
- *   1.  conv2d_forward()   – see nn_runtime.c
- *       Five nested loops (n, oc, oh, ow, ic, kh, kw).  The innermost two
- *       (kh × kw) iterate over the kernel window and perform multiply-accumulate
- *       (MAC) operations.  These are the primary CGRA targets.
+ * STATIC MEMORY MODEL
+ * -------------------
+ * tensor_create()   allocates from g_act_arena (arena.c).
+ * tensor_free()     is a no-op; memory is reclaimed by act_arena_reset().
+ * *_layer_create()  allocates from g_weight_pool (arena.c).
+ * *_layer_free()    is a no-op; weights persist for the program lifetime.
  *
- *   2.  dense_forward()   – see nn_runtime.c
- *       A matrix-vector multiply: for each output neuron, a dot product over
- *       `in_features` elements.  Maps directly onto a MAC array.
- *
- *   3.  batchnorm_forward_inplace() – scale + shift per channel: easily fused
- *       with the previous conv2d kernel on a CGRA to avoid memory round-trips.
- *
- *   4.  maxpool2d_forward() – reduction over a small window; can be scheduled
- *       as a post-conv stage on the same CGRA configuration.
- *
- * To replace any primitive with a CGRA-accelerated version, implement the same
- * function signature declared below and link against your CGRA driver instead
- * of nn_runtime.c.
+ * CGRA ACCELERATION
+ * -----------------
+ * conv2d_forward()            PRIMARY target: innermost (kh, kw) MAC loops.
+ * dense_forward()             SECONDARY target: dot-product over in_features.
+ * batchnorm_forward_inplace() FUSIBLE with preceding conv output stage.
  */
 
 #ifndef NN_RUNTIME_H
 #define NN_RUNTIME_H
 
-/* ── Tensor ─────────────────────────────────────────────────────────────────
- * Heap-allocated 4-D array in NCHW order.
- * data[((n*C + c)*H + h)*W + w]
- */
+#include <stdint.h>
+
+/* ---- Tensor ------------------------------------------------------------ */
+
 typedef struct {
-    int n;       /* batch size */
-    int c;       /* number of channels */
-    int h;       /* spatial height (1 for 1-D signals) */
-    int w;       /* spatial width  (sequence length for 1-D signals) */
-    float *data; /* contiguous float array of size n*c*h*w */
+    int      n;     /* batch size                               */
+    int      c;     /* number of channels                       */
+    int      h;     /* spatial height (1 for 1-D signals)       */
+    int      w;     /* spatial width  (sequence length for 1-D) */
+    int32_t *data;  /* contiguous int32_t[n*c*h*w] in NCHW order */
 } Tensor;
 
-/* ── Conv2DLayer ─────────────────────────────────────────────────────────────
- * Parameters for a 2-D convolution (also used for 1-D convolutions modelled
- * as (1×kernel_w) convolutions, matching the TFLite deployment approach).
- * When groups == in_channels == out_channels the layer is depthwise-separable,
- * as used in the MobileNetV3 bottleneck blocks.
- *
- * CGRA note: the weight tensor layout mirrors PyTorch:
- *   weights[oc][ic][kh][kw]  with ic = in_channels / groups
- */
+/* ---- Conv2DLayer ------------------------------------------------------- */
+
 typedef struct {
-    int in_channels;
-    int out_channels;
-    int kernel_h;
-    int kernel_w;
-    int stride_h;
-    int stride_w;
-    int pad_h;
-    int pad_w;
-    int groups;  /* 1 = standard conv; in_channels = depthwise conv */
-    float *weights;
-    float *bias;
+    int      in_channels;
+    int      out_channels;
+    int      kernel_h;
+    int      kernel_w;
+    int      stride_h;
+    int      stride_w;
+    int      pad_h;
+    int      pad_w;
+    int      groups;     /* 1 = standard; in_channels = depthwise */
+    int32_t *weights;    /* [out_ch][in_ch/groups][kh][kw], row-major */
+    int32_t *bias;       /* [out_ch] */
 } Conv2DLayer;
 
-/* ── BatchNormLayer ─────────────────────────────────────────────────────────
- * Inference-mode batch normalisation: output = gamma*(x - mean)/sqrt(var+eps) + beta
- * gamma, beta, mean and var are all per-channel vectors of length num_features.
- *
- * CGRA note: this is a cheap element-wise operation that can be fused with the
- * preceding convolution into a single pass over the output tensor.
+/* ---- BatchNormLayer ---------------------------------------------------- */
+/*
+ * Parameters are pre-folded at layer creation:
+ *   scale[c]  = round(gamma[c] / sqrt(var[c] + eps) * 128)   Q7 fixed-point
+ *   offset[c] = round(beta[c]  - gamma[c]*mean[c]/sqrt(var[c]+eps))
+ * Forward: y = (int32_t)(((int64_t)x * scale[c]) >> 7) + offset[c]
+ * Dummy values: scale=128 (identity), offset=0.
  */
 typedef struct {
-    int num_features;
-    float eps;    /* small constant added to variance for numerical stability */
-    float *gamma; /* learnable scale */
-    float *beta;  /* learnable shift */
-    float *mean;  /* running mean  (frozen at inference time) */
-    float *var;   /* running variance (frozen at inference time) */
+    int      num_features;
+    int32_t *scale;   /* Q7: 128 = 1.0 */
+    int32_t *offset;  /* additive shift after the Q7 multiply */
 } BatchNormLayer;
 
-/* ── DenseLayer ─────────────────────────────────────────────────────────────
- * Fully-connected (linear) layer: output = input @ weights^T + bias
- * weights layout: [out_features][in_features]  (row-major)
- *
- * CGRA note: this is a matrix-vector multiply; maps directly onto a MAC array.
- */
+/* ---- DenseLayer -------------------------------------------------------- */
+
 typedef struct {
-    int in_features;
-    int out_features;
-    float *weights; /* [out_features × in_features], row-major */
-    float *bias;    /* [out_features] */
+    int      in_features;
+    int      out_features;
+    int32_t *weights; /* [out_features][in_features], row-major */
+    int32_t *bias;    /* [out_features] */
 } DenseLayer;
 
-/* ── Tensor helpers ─────────────────────────────────────────────────────── */
+/* ---- Tensor helpers ---------------------------------------------------- */
 
-/** Allocate a zero-initialised tensor of shape (n, c, h, w). */
-Tensor *tensor_create(int n, int c, int h, int w);
+Tensor  *tensor_create(int n, int c, int h, int w);
+Tensor  *tensor_clone(const Tensor *src);
+void     tensor_free(Tensor *tensor);       /* no-op in static port */
+int      tensor_numel(const Tensor *tensor);
+void     tensor_fill_dummy(Tensor *tensor, int32_t scale, int seed);
+int32_t  tensor_checksum(const Tensor *tensor);
 
-/** Deep-copy a tensor into a new allocation. */
-Tensor *tensor_clone(const Tensor *src);
-
-/** Free tensor data and the Tensor struct itself. */
-void tensor_free(Tensor *tensor);
-
-/** Return the total number of scalar elements (n*c*h*w). */
-int tensor_numel(const Tensor *tensor);
-
-/** Fill tensor with deterministic pseudo-random values (for dummy inputs / weights). */
-void tensor_fill_dummy(Tensor *tensor, float scale, int seed);
-
-/** Compute a weighted checksum of all elements (useful for quick output comparison). */
-float tensor_checksum(const Tensor *tensor);
-
-/** Print shape, checksum and up to max_values individual elements. */
+/** Print shape + checksum + first max_values elements as integers. */
 void tensor_print_values(const char *name, const Tensor *tensor, int max_values);
 
-/* ── Layer constructors / destructors ───────────────────────────────────── */
+/* ---- Layer constructors (dummy / seeded) -------------------------------- */
 
-/**
- * Allocate a Conv2DLayer and populate weights + bias with deterministic
- * dummy values derived from 'seed'.  Replace with real weight loading for
- * actual inference.
- */
 Conv2DLayer conv2d_layer_create(
-    int in_channels,
-    int out_channels,
-    int kernel_h,
-    int kernel_w,
-    int stride_h,
-    int stride_w,
-    int pad_h,
-    int pad_w,
-    int groups,
-    int seed
-);
+    int in_channels, int out_channels,
+    int kernel_h, int kernel_w,
+    int stride_h, int stride_w,
+    int pad_h, int pad_w,
+    int groups, int seed);
 void conv2d_layer_free(Conv2DLayer *layer);
 
-/** Allocate a BatchNormLayer with deterministic dummy parameters. */
-BatchNormLayer batchnorm_layer_create(int num_features, float eps, int seed);
+BatchNormLayer batchnorm_layer_create(int num_features, int seed);
 void batchnorm_layer_free(BatchNormLayer *layer);
 
-/** Allocate a DenseLayer with deterministic dummy parameters. */
 DenseLayer dense_layer_create(int in_features, int out_features, int seed);
 void dense_layer_free(DenseLayer *layer);
 
-/* ── Forward-pass primitives ────────────────────────────────────────────── */
-
-/**
- * conv2d_forward  *** PRIMARY CGRA TARGET ***
+/* ---- Layer constructors (real weights from const ROM) ------------------- */
+/*
+ * These variants set the weight/bias pointers directly to caller-supplied
+ * const arrays -- no pool allocation occurs.  Use when trained weights are
+ * available as const int32_t arrays in flash (.rodata).
  *
- * 2-D (or 1-D) convolution with padding and optional groups (depthwise).
- * Output shape: (N, out_channels, out_h, out_w) where
- *   out_h = (in_h + 2*pad_h - kernel_h) / stride_h + 1
- *   out_w = (in_w + 2*pad_w - kernel_w) / stride_w + 1
- *
- * Caller takes ownership of the returned tensor.
+ * The caller must guarantee that the arrays remain valid for the lifetime of
+ * the returned layer struct (trivially true for static const arrays).
+ * Cast from const to non-const is intentional and safe: the forward-pass
+ * code never writes through these pointers.
  */
+
+Conv2DLayer conv2d_layer_from_weights(
+    int in_channels, int out_channels,
+    int kernel_h, int kernel_w,
+    int stride_h, int stride_w,
+    int pad_h, int pad_w,
+    int groups,
+    const int32_t *w, const int32_t *b);
+
+BatchNormLayer batchnorm_layer_from_params(
+    int num_features,
+    const int32_t *scale, const int32_t *offset);
+
+DenseLayer dense_layer_from_weights(
+    int in_features, int out_features,
+    const int32_t *w, const int32_t *b);
+
+/* ---- Forward-pass primitives ------------------------------------------ */
+
+/** PRIMARY CGRA TARGET: 2-D (or 1-D) convolution with zero-padding. */
 Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer);
 
-/**
- * batchnorm_forward_inplace
- *
- * Applies inference-mode batch norm to every element of 'input' in-place.
- * Per-channel parameters (gamma, beta, mean, var) are read from 'layer'.
- */
+/** Apply inference-mode batch norm in-place (CGRA fusion target). */
 void batchnorm_forward_inplace(Tensor *input, const BatchNormLayer *layer);
 
 /**
- * maxpool2d_forward
+ * batchnorm_rshift_inplace  --  BN + post-shift fused in a single int64 pass.
  *
- * 2-D max pooling with given kernel and stride (no padding).
- * Caller takes ownership of the returned tensor.
+ * Equivalent to batchnorm_forward_inplace() followed by tensor_rshift_inplace(),
+ * but avoids intermediate int32_t overflow when the raw BN output exceeds INT32_MAX.
+ *
+ * Formula: y = (((int64_t)x * scale[c]) >> 7 + offset[c]) >> post_shift
+ *
+ * The int64_t accumulator is held throughout; only the final right-shifted
+ * result is cast to int32_t.  Use this for BN layers in MobileCNN models
+ * where large BN scales (> ~300) can push the intermediate BN output above
+ * INT32_MAX before the shift -- in particular BN_PW1 of both mobile models.
+ *
+ * In CNN_1D_v2 the BN intermediate stays below INT32_MAX, so the existing
+ * two-step (batchnorm_forward_inplace + tensor_rshift_inplace) is fine there.
  */
-Tensor *maxpool2d_forward(const Tensor *input, int kernel_h, int kernel_w, int stride_h, int stride_w);
+void batchnorm_rshift_inplace(Tensor *input, const BatchNormLayer *layer, int post_shift);
 
 /**
- * adaptive_avg_pool2d_forward
+ * batchnorm_rshift_perchannel  --  BN + per-channel post-shift.
  *
- * Global (or partial) average pooling that outputs a spatial map of size
- * (out_h, out_w).  Used after the last conv block of MobileNetV3.
- * Caller takes ownership of the returned tensor.
+ * Same as batchnorm_rshift_inplace() but the post-shift amount is specified
+ * per output channel via shifts[c].  This is critical for depthwise BN layers
+ * whose Q7 scale factors vary widely across channels (e.g. 308 to 1574): a
+ * global shift calibrated for the worst channel destroys signal in all others.
+ * Per-channel shifts let each channel use the minimum shift required to keep
+ * its output in int32_t range while maximising retained dynamic range.
+ *
+ * Formula: y[c] = (((int64_t)x[c] * scale[c]) >> 7 + offset[c]) >> shifts[c]
  */
-Tensor *adaptive_avg_pool2d_forward(const Tensor *input, int out_h, int out_w);
+void batchnorm_rshift_perchannel(Tensor *input, const BatchNormLayer *layer,
+                                  const int32_t *shifts);
 
-/** Flatten spatial dimensions: output shape is (N, C*H*W, 1, 1). */
+/** 2-D max pooling (no padding). */
+Tensor *maxpool2d_forward(const Tensor *input,
+                           int kernel_h, int kernel_w,
+                           int stride_h, int stride_w);
+
+/** Reshape (N,C,H,W) -> (N, C*H*W, 1, 1). */
 Tensor *flatten_forward(const Tensor *input);
 
-/**
- * dense_forward  *** SECONDARY CGRA TARGET ***
- *
- * Fully-connected layer: y = x @ W^T + b
- * Input is assumed to have been flattened to (N, in_features, 1, 1).
- * Output shape is (N, out_features, 1, 1).
- * Caller takes ownership of the returned tensor.
- */
+/** SECONDARY CGRA TARGET: fully-connected layer y = x @ W^T + b. */
 Tensor *dense_forward(const Tensor *input, const DenseLayer *layer);
 
-/**
- * concat_height
- *
- * Concatenate two tensors along the H dimension (torch.cat([a,b], dim=2)).
- * Tensors must share the same N, C and W dimensions.
- * Used in CNN_2D_v2 and CNN_2D_v3 to merge parallel conv branches.
- * Caller takes ownership of the returned tensor.
- */
-Tensor *concat_height(const Tensor *a, const Tensor *b);
+/* ---- Activation functions (in-place) ---------------------------------- */
 
-/**
- * add_forward
- *
- * Element-wise addition of two same-shape tensors.
- * Used for residual connections in MobileNetV3 bottleneck blocks.
- * Caller takes ownership of the returned tensor.
- */
-Tensor *add_forward(const Tensor *a, const Tensor *b);
-
-/**
- * channel_scale_forward
- *
- * Multiply each channel of 'input' by the corresponding scalar in 'scale'
- * (shape N×C×1×1).  Used in the Squeeze-and-Excitation (SE) blocks of
- * MobileNetV3 to re-weight channels based on global context.
- * Caller takes ownership of the returned tensor.
- */
-Tensor *channel_scale_forward(const Tensor *input, const Tensor *scale);
-
-/* ── Activation functions (all in-place) ───────────────────────────────── */
-
-/** ReLU: max(0, x) */
+/** ReLU: clamp negative values to zero. */
 void relu_inplace(Tensor *input);
 
-/** Sigmoid: 1 / (1 + exp(-x)) – binary classification output */
+/** Sigmoid replacement for binary classification: output = (x > 0) ? 1 : 0.
+ *  Avoids expf() entirely; valid because final layer has one output neuron. */
 void sigmoid_inplace(Tensor *input);
 
-/** Softmax: stable exp-normalised distribution – multi-class output */
-void softmax_inplace(Tensor *input);
+/**
+ * tensor_rshift_inplace  --  arithmetic right-shift every element by `shift` bits.
+ *
+ * Used after BatchNorm in the real-weights path to prevent accumulator overflow
+ * in the next convolution layer.  The shift preserves the sign (arithmetic >>).
+ *
+ *   REAL-WEIGHTS overflow analysis (input in int8 range, Q7 BN scales):
+ *     After BN1 (scale ≤ 377, input ≤ 128, conv1 285 MACs): max ≈ 13.6M
+ *       -> right-shift 9:  13.6M >> 9 ≈ 26.6K  (Conv2 max acc ≈ 540M OK)
+ *     After BN2 (scale ≤ 334, conv2 160 MACs):  max ≈ 1.41B
+ *       -> right-shift 14: 1.41B >> 14 ≈ 86K    (FC1  max acc ≈ 699M OK)
+ *
+ * In the dummy-weight path no overflow occurs (scale=128, tiny weights),
+ * so this function is only called from the DEEPBINDI_REAL_WEIGHTS code path.
+ */
+void tensor_rshift_inplace(Tensor *input, int shift);
 
-/** Hard-Sigmoid: clip((x+3)/6, 0, 1) – used in SE blocks */
-void hardsigmoid_inplace(Tensor *input);
+/* ---- SE (Squeeze-and-Excitation) primitives --------------------------------
+ *
+ * Used by MobileCNN-SE-1D (DEEPBINDI_MODEL == 2).
+ * All three functions below are available regardless of model selection;
+ * the linker discards them if not called.
+ */
 
-/** Hard-Swish: x * clip((x+3)/6, 0, 1) – used in MobileNetV3 activations */
-void hardswish_inplace(Tensor *input);
+/**
+ * globalavgpool_forward  --  global average pooling over spatial dims H and W.
+ * Output: (N, C, 1, 1).  Uses int64_t accumulator to prevent overflow.
+ */
+Tensor *globalavgpool_forward(const Tensor *input);
 
-#endif
+/**
+ * hardsigmoid_se_inplace  --  integer hard-sigmoid for SE excitation weights.
+ * Maps x -> clip((x >> shift) + 64, 0, 128)  where 128 = 1.0 in Q7.
+ * shift is calibrated at export time so max(|x|) >> shift <= 64.
+ */
+void hardsigmoid_se_inplace(Tensor *input, int shift);
+
+/**
+ * se_channel_scale_inplace  --  SE feature recalibration.
+ * For each channel c: feat[c,h,w] = ((int64_t)feat[c,h,w] * se[c]) >> 7
+ * feat:       (N, C, H, W) -- feature map
+ * se_weights: (N, C, 1, 1) -- Q7 excitation weights from hardsigmoid_se_inplace
+ */
+void se_channel_scale_inplace(Tensor *feat, const Tensor *se_weights);
+
+#endif /* NN_RUNTIME_H */

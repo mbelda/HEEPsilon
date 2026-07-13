@@ -1,92 +1,134 @@
+// Copyright 2024 DeepBindi / EPFL / UPM
+// SPDX-License-Identifier: Apache-2.0
+
 /**
- * main.c  –  Demo driver for the static CNN inference port.
- *            STATIC VERSION: no malloc/free anywhere in the program.
+ * main.c  --  DeepBindi CNN inference on X-HEEP (int32 variant).
  *
- * This driver:
- *   1. Runs all 10 model forward passes sequentially.
- *   2. Prints output shape, checksum, and first values for each model
- *      (same format as c_port/main.c – checksums must match).
- *   3. After all models, prints memory usage statistics so you can
- *      right-size the static pools for a single-model CGRA deployment.
+ * Supports three models selected at compile time via -DDEEPBINDI_MODEL=N:
+ *   0 (default): CNN_1D_v2     -- baseline, standard 1D convolutions
+ *   1:           MobileCNN-1D  -- depthwise-separable convolutions (Option A)
+ *   2:           MobileCNN-SE  -- DW+PW + SE channel attention (Option B)
  *
- * Memory model
- * ────────────
- * The program has exactly three static regions (no heap):
+ * All models:
+ *   - Input  : (1, 57, 1, 10)  -- 57 features x 10 time frames (WEMAC)
+ *   - Output : 0 (NO_FEAR) or 1 (FEAR)
+ *   - Binary : no float, no FPU, no heap, no math.h
  *
- *   g_weight_pool  [2 000 000 × 4 B = 7.6 MB]  weights for all 10 models
- *   g_act_arena    [  500 000 × 4 B = 1.9 MB]  activation scratch (per model)
- *   g_tensor_pool  [      128 × ~24 B ≈ 3 kB]  Tensor descriptors (per model)
+ * Build targets (see Makefile):
+ *   make                  -> CNN_1D_v2     dummy
+ *   make run-real         -> CNN_1D_v2     real weights
+ *   make mobile1d         -> MobileCNN-1D  dummy
+ *   make mobile1d-real    -> MobileCNN-1D  real weights
+ *   make mobile_se        -> MobileCNN-SE  dummy
+ *   make mobile_se-real   -> MobileCNN-SE  real weights
  *
- * For a single-model CGRA deployment, read the "Arena usage" table printed
- * at the end and reduce WEIGHT_POOL_FLOATS / ACT_ARENA_FLOATS accordingly.
- * For example, deploying only CNN_1D_v1 (PYD) needs < 100 kB of static RAM.
- *
- * Validation
- * ──────────
- * The checksums printed here must match those from c_port/deepbindi_c_demo.
- * Use this as the software reference when validating a CGRA implementation:
- *   make run > static_out.txt
- *   cd ../c_port && make run > dyn_out.txt
- *   diff static_out.txt dyn_out.txt   # should be identical
+ * Real weights require:
+ *   - python train_mobilecnn_1d.py --model mobile1d   (for models 1, 2)
+ *   - python export_mobile_weights.py --model mobile1d (model 1)
+ *   - python export_mobile_weights.py --model mobile_se (model 2)
+ *   - python export_pytorch_weights.py  (model 0)
+ *   - python extract_test_inputs.py     (for test_input.h, all models)
  */
 
-#include "deepbindi_config.h"  /* logging + fatal error macros – include first */
-#include "cnn_models_c.h"
+#include <stdio.h>
+#include "deepbindi_config.h"
+
+#ifndef TARGET_PC
+#  include "csr.h"
+#  include "x-heep.h"
+#endif
+
+#ifndef DEEPBINDI_MODEL
+#  define DEEPBINDI_MODEL 0
+#endif
+
+/* Include the correct model header */
+#if DEEPBINDI_MODEL == 1 || DEEPBINDI_MODEL == 2
+#  include "mobile_models_c.h"
+#else
+#  include "cnn_models_c.h"
+#endif
+
 #include "arena.h"
-#include "csr.h"
+#include "test_input.h"
 
-int main(void) {
-    Tensor *out;
+#define FS_INITIAL      0x01
+#define PRINTF_IN_FPGA  1
+#define PRINTF_IN_SIM   0
 
-    // Enable cycle counting
+#if defined(TARGET_PC)
+#  define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
+#elif defined(TARGET_SIM) && PRINTF_IN_SIM
+#  define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
+#elif PRINTF_IN_FPGA && !defined(TARGET_SIM)
+#  define PRINTF(fmt, ...)    printf(fmt, ## __VA_ARGS__)
+#else
+#  define PRINTF(...)
+#endif
+
+/* Model name string for the header line */
+#if DEEPBINDI_MODEL == 2
+#  define MODEL_NAME "MobileCNN-SE-1D"
+#elif DEEPBINDI_MODEL == 1
+#  define MODEL_NAME "MobileCNN-1D"
+#else
+#  define MODEL_NAME "CNN_1D_v2"
+#endif
+
+/* Forward-pass dispatch */
+static Tensor *run_model(const int32_t *input_data) {
+#if DEEPBINDI_MODEL == 2
+    return run_mobilecnn_se_1d(input_data);
+#elif DEEPBINDI_MODEL == 1
+    return run_mobilecnn_1d(input_data);
+#else
+    return run_cnn_1d_v2(input_data);
+#endif
+}
+
+int main(void)
+{
+    Tensor      *out;
+    unsigned int cycles;
+
+#ifdef DEEPBINDI_ENABLE_FPU
+    CSR_SET_BITS(CSR_REG_MSTATUS, (FS_INITIAL << 13));
+#endif
+
     CSR_CLEAR_BITS(CSR_REG_MCOUNTINHIBIT, 0x1);
-    // Reset cycle counter
     CSR_WRITE(CSR_REG_MCYCLE, 0);
 
-    DEEPBINDI_PRINTF("DeepBindi static CNN inference demo (no malloc)\n");
-    DEEPBINDI_PRINTF("================================================\n");
+    PRINTF("DeepBindi %s on X-HEEP (int32)\r\n", MODEL_NAME);
 
-    /* Each run_*() begins with act_arena_reset() internally, so the order
-     * of calls does not matter for correctness. */
-/*
-    out = run_cnn_2d_v1();
-    tensor_print_values("CNN_2D_v1              ", out, 4);
+    /* ---- Sample 0: NO_FEAR ------------------------------------------- */
 
-    out = run_cnn_2d_v2();
-    tensor_print_values("CNN_2D_v2              ", out, 4);
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
+    PRINTF("--- Sample 0 (expected label=%d / NO_FEAR) ---\r\n",
+           TEST_INPUT_LABEL_0);
 
-    out = run_cnn_2d_v3();
-    tensor_print_values("CNN_2D_v3              ", out, 4);
-*/
-    out = run_cnn_1d_v1();
-    tensor_print_values("CNN_1D_v1              ", out, 4);
-/*
-    out = run_cnn_1d_v2();
-    tensor_print_values("CNN_1D_v2              ", out, 4);
+    out = run_model(test_input_0);
 
-    out = run_cnn_1d_v3();
-    tensor_print_values("CNN_1D_v3              ", out, 4);
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+    PRINTF("Output : %d (%s)\r\n",
+           (int)out->data[0], out->data[0] ? "FEAR" : "NO_FEAR");
+    PRINTF("Cycles : %u\r\n", cycles);
 
-    out = run_mobilenet_v3_custom();
-    tensor_print_values("MobileNetV3Custom      ", out, 4);
+    /* ---- Sample 1: FEAR ---------------------------------------------- */
 
-    out = run_cnn_1d_tensorflow_sigmoid();
-    tensor_print_values("CNN_1d_tf_sigmoid      ", out, 4);
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
+    PRINTF("--- Sample 1 (expected label=%d / FEAR) ---\r\n",
+           TEST_INPUT_LABEL_1);
 
-    out = run_cnn_1d_tensorflow_softmax();
-    tensor_print_values("CNN_1d_tf_softmax      ", out, 4);
+    out = run_model(test_input_1);
 
-    out = run_cnn_2d_tensorflow_softmax();
-    tensor_print_values("CNN_2d_tf_softmax      ", out, 4);
-    */
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+    PRINTF("Output : %d (%s)\r\n",
+           (int)out->data[0], out->data[0] ? "FEAR" : "NO_FEAR");
+    PRINTF("Cycles : %u\r\n", cycles);
 
-    DEEPBINDI_PRINTF("\n");
-    /* Print pool usage so users can right-size for deployment */
+    /* ---- Arena stats -------------------------------------------------- */
+
     arena_stats();
-    DEEPBINDI_PRINTF("\nNote: act arena and tensor pool are reused between models.\n");
-    DEEPBINDI_PRINTF("      The weight pool accumulates across all 10 model runs.\n");
-    DEEPBINDI_PRINTF("      For single-model deployment, only that model's weight\n");
-    DEEPBINDI_PRINTF("      count and its act arena high-water mark are needed.\n");
 
     return 0;
 }

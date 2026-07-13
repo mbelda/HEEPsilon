@@ -1,86 +1,65 @@
 /**
- * deepbindi_config.h  –  Compile-time configuration for DeepBindi CNN inference.
+ * deepbindi_config.h  --  X-HEEP / PC adaptation of the DeepBindi compile-time config.
  *
- * This header is the single place to adapt the library to a target platform.
- * Include it first in every translation unit that uses logging or error handling.
+ * Key points:
+ *   - DEEPBINDI_PRINTF maps to printf (UART on X-HEEP, stdout on PC).
+ *   - All values in this port are int32_t; no %f anywhere.
+ *   - DEEPBINDI_FATAL: spins forever on bare metal; calls exit(1) on PC.
  *
- * ── Logging ──────────────────────────────────────────────────────────────────
+ * FPU control (X-HEEP only):
+ *   This int32 port does NOT require the FPU.  Define DEEPBINDI_ENABLE_FPU
+ *   (e.g. -DDEEPBINDI_ENABLE_FPU) only if you add floating-point code and
+ *   need to enable mstatus.FS before the first FP instruction.
  *
- *   Define DEEPBINDI_ENABLE_LOGGING before including this header (or pass
- *   -DDEEPBINDI_ENABLE_LOGGING to the compiler) to enable all printf/fprintf
- *   output.  Leave it undefined for a fully silent embedded deployment.
- *
- *   Example (Makefile):
- *     CFLAGS += -DDEEPBINDI_ENABLE_LOGGING     # host / debug build
- *   or leave it absent for a production embedded build.
- *
- * ── Fatal error handler ───────────────────────────────────────────────────────
- *
- *   DEEPBINDI_FATAL(msg) is called on unrecoverable errors (shape mismatches,
- *   pool overflow).  It must not return.
- *
- *   Default behaviour:
- *     - With logging enabled  → print message + exit(1)   (host)
- *     - Without logging       → infinite loop              (embedded trap / WDT reset)
- *
- *   Override for your target by defining DEEPBINDI_FATAL before including this
- *   header.  Examples:
- *
- *     // ARM Cortex-M: trigger a breakpoint / hard-fault
- *     #define DEEPBINDI_FATAL(msg)  do { __BKPT(0); for(;;){} } while(0)
- *
- *     // RISC-V: illegal instruction trap
- *     #define DEEPBINDI_FATAL(msg)  do { __asm__("unimp"); for(;;){} } while(0)
- *
- *     // Custom UART logger + reset
- *     #define DEEPBINDI_FATAL(msg)  do { uart_puts(msg); system_reset(); } while(0)
- *
- * ── Embedded portability notes ────────────────────────────────────────────────
- *
- *   • int size: on 16-bit MCUs (AVR, MSP430) int is 16-bit.  Tensor shape
- *     fields (n*c*h*w) can exceed 32 767 for the larger 2-D models.  Use a
- *     32-bit toolchain or change Tensor shape fields to int32_t / uint32_t.
- *
- *   • float vs double: all arithmetic uses float throughout.  No implicit
- *     promotion to double occurs in the compute kernels.  printf("%f") does
- *     promote to double on some hosts; this only matters when logging is on.
- *
- *   • memset to zero for float: relies on IEEE-754 (all-zero bits == 0.0f).
- *     This holds on every Cortex-M, RISC-V, and x86 target in common use.
- *
- *   • %zu format specifier: not supported by newlib-nano (--specs=nano.specs).
- *     This header avoids %zu; arena_stats() uses explicit (unsigned) casts.
+ * PC testing:
+ *   Build with -DTARGET_PC to stub all CSR macros and use stdlib exit().
+ *   The Makefile sets this automatically.
  */
 
 #ifndef DEEPBINDI_CONFIG_H
 #define DEEPBINDI_CONFIG_H
 
-/* ── Logging macros ─────────────────────────────────────────────────────── */
+#include <stdio.h>
 
-#ifdef DEEPBINDI_ENABLE_LOGGING
-#  include <stdio.h>
-   /** Print an informational message (stdout). */
-#  define DEEPBINDI_PRINTF(...)       printf(__VA_ARGS__)
-   /** Print an error message (stderr on host; redirected on embedded). */
-#  define DEEPBINDI_LOG_ERROR(...)    fprintf(stderr, __VA_ARGS__)
+/* Verbose layer / arena trace.
+ * Define -DDEEPBINDI_TRACE_LAYERS at build time to enable per-layer tensor
+ * shape+checksum prints (nn_runtime.c) and arena usage stats (arena.c).
+ * The final result output in main.c (label, cycles) is always printed. */
+#ifdef DEEPBINDI_TRACE_LAYERS
+#  define DEEPBINDI_PRINTF(...)     printf(__VA_ARGS__)
+#  define DEEPBINDI_LOG_ERROR(...)  printf(__VA_ARGS__)
 #else
-#  define DEEPBINDI_PRINTF(...)       ((void)0)
-#  define DEEPBINDI_LOG_ERROR(...)    ((void)0)
+#  define DEEPBINDI_PRINTF(...)     ((void)0)
+#  define DEEPBINDI_LOG_ERROR(...)  ((void)0)
 #endif
 
-/* ── Fatal error handler ────────────────────────────────────────────────── */
+#ifdef DEEPBINDI_TRACE_LAYERS
+#  define DEEPBINDI_TRACE(...)      printf(__VA_ARGS__)
+#else
+#  define DEEPBINDI_TRACE(...)
+#endif
 
-#ifndef DEEPBINDI_FATAL
-#  ifdef DEEPBINDI_ENABLE_LOGGING
-#    include <stdlib.h>
-     /** Log msg and terminate (host behaviour). */
-#    define DEEPBINDI_FATAL(msg) \
-         do { DEEPBINDI_LOG_ERROR("FATAL: %s\n", (msg)); exit(1); } while(0)
-#  else
-     /** Spin forever – triggers watchdog reset on most embedded targets. */
-#    define DEEPBINDI_FATAL(msg) \
-         do { for(;;){} } while(0)
+/* Fatal: spin forever on bare metal; exit(1) on PC. */
+#ifdef TARGET_PC
+#  include <stdlib.h>
+#  ifndef DEEPBINDI_FATAL
+#    define DEEPBINDI_FATAL(msg)  do { printf("FATAL: %s\r\n", (msg)); exit(1); } while(0)
 #  endif
+#else
+#  ifndef DEEPBINDI_FATAL
+#    define DEEPBINDI_FATAL(msg)  do { printf("FATAL: %s\r\n", (msg)); for(;;){} } while(0)
+#  endif
+#endif
+
+/* CSR stubs for PC testing (no RISC-V CSRs on the host). */
+#ifdef TARGET_PC
+#  define CSR_SET_BITS(reg, val)    ((void)0)
+#  define CSR_CLEAR_BITS(reg, val)  ((void)0)
+#  define CSR_WRITE(reg, val)       ((void)0)
+#  define CSR_READ(reg, ptr)        (*(ptr) = 0u)
+#  define CSR_REG_MSTATUS           0
+#  define CSR_REG_MCOUNTINHIBIT     0
+#  define CSR_REG_MCYCLE            0
 #endif
 
 #endif /* DEEPBINDI_CONFIG_H */

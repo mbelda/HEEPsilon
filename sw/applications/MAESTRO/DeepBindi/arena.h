@@ -1,120 +1,117 @@
 /**
- * arena.h  –  Static memory pools for the no-malloc CNN inference port.
+ * arena.h  --  Static memory pools for DeepBindi CNN inference on X-HEEP.
+ *              int32_t variant: no floating-point, no math.h.
  *
  * Two global pools replace all heap allocations:
  *
- *   g_weight_pool[]   Holds every layer's weights, biases, and BatchNorm
- *                     parameters for all 10 models run sequentially.
- *                     Allocated once during the model forward pass; never freed.
- *                     In a real deployment you would compile only ONE model,
- *                     dramatically reducing this size.
+ *   g_weight_pool[]  Dummy weights for benchmarking (seeded generation).
+ *                    Unused in real-weights build (weights live in .rodata).
  *
- *   g_act_arena[]     Scratch buffer for intermediate activation tensors.
- *                     Allocated with a bump allocator; reset at the start of
- *                     each model's forward pass (act_arena_reset()).
+ *   g_act_arena[]    Scratch buffer for intermediate activation tensors.
+ *                    Bump-allocated; reset by act_arena_reset() at the start
+ *                    of each forward pass.  tensor_free() is a no-op.
  *
- *   g_tensor_pool[]   Pool of Tensor descriptor structs (n,c,h,w,*data).
- *                     Pointers into this pool replace heap-allocated structs.
- *                     Reset together with g_act_arena.
+ *   g_tensor_pool[]  Pool of Tensor descriptor structs (n,c,h,w,*data).
  *
- * CGRA note
- * ---------
- * This layout gives the accelerator exactly the memory model it needs:
- *  • Weights  → read-only region, can be pre-loaded into CGRA local memory.
- *  • Activations → double-buffer or ping-pong from g_act_arena; the arena
- *    base address and stride are fixed at compile time.
- *  • No pointer chasing, no TLB misses caused by malloc scatter.
+ * Model selection: compile with -DDEEPBINDI_MODEL=N
+ *   0 (default): CNN_1D_v2    (baseline, 19713 weight words, 1211 act words)
+ *   1:           MobileCNN-1D (DW+PW,    ~4937 weight words, 1731 act words)
+ *   2:           MobileCNN-SE (DW+PW+SE, ~5489 weight words, 1803 act words)
  *
- * Sizing (all 10 models run once sequentially, worst-case per forward pass):
- *  WEIGHT_POOL_FLOATS = 2 000 000   ≈ 7.6 MB  (dominated by FC layers in PYB)
- *  ACT_ARENA_FLOATS   =   500 000   ≈ 1.9 MB  (dominated by PYB parallel branches)
- *  MAX_LIVE_TENSORS   =       128             (peak: MobileNetV3 ≈ 82 tensors)
+ * Weight pool (dummy build, worst-case per model):
+ *
+ *   CNN_1D_v2 (MODEL 0):
+ *     Conv1(57*32*5)+bias+BN : 9120+32+64    =  9 216
+ *     Conv2(32*64*5)+bias+BN : 10240+64+128  = 10 432
+ *     FC(64)+bias             : 64+1          =     65
+ *     Total                                    19 713  --> 24 000 words
+ *
+ *   MobileCNN-1D (MODEL 1):
+ *     DW1(57*5)+bias+BN(57)   :  285+57+114  =    456
+ *     PW1(57*32)+bias+BN(32)  : 1824+32+64   =  1 920
+ *     DW2(32*5)+bias+BN(32)   :  160+32+64   =    256
+ *     PW2(32*64)+bias+BN(64)  : 2048+64+128  =  2 240
+ *     FC(64)+bias              :   64+1       =     65
+ *     Total                                     4 937  -->  6 000 words
+ *
+ *   MobileCNN-SE-1D (MODEL 2):
+ *     Same as MODEL 1, plus:
+ *     SE_Dense1(32*8)+bias     :  256+8       =    264
+ *     SE_Dense2(8*32)+bias     :  256+32      =    288
+ *     Total                                     5 489  -->  6 000 words
+ *
+ * Activation arena (all models, int32_t elements):
+ *   CNN_1D_v2:       1211 words peak
+ *   MobileCNN-1D:    1731 words peak
+ *   MobileCNN-SE-1D: 1803 words peak
+ *   --> ACT_ARENA_WORDS = 2048  (covers all models)
+ *
+ * Tensor pool: max 12 simultaneous descriptors (MobileCNN-SE-1D)
+ *   --> MAX_LIVE_TENSORS = 16  (covers all models)
+ *
+ * Total SRAM footprint (dummy build, largest model CNN_1D_v2):
+ *   Weight pool  : 24 000 * 4 B =  93.75 KB  (move to flash for production)
+ *   Act arena    :  2 048 * 4 B =   8.00 KB
+ *   Tensor pool  :     16 * 24 B =  0.38 KB
+ *   Total                         ~102 KB
  */
 
 #ifndef ARENA_H
 #define ARENA_H
 
+#include <stdint.h>
 #include "nn_runtime.h"
 
-/* ── Pool sizing ─────────────────────────────────────────────────────────── */
+/* ---- Pool sizing  (model-aware) ---------------------------------------- */
 
-/* Weight pool: holds weights for all 10 models run once each.
- * For a single-model deployment reduce to the model's actual weight count. */
-//#define WEIGHT_POOL_FLOATS 2000000
-//#define WEIGHT_POOL_FLOATS 333121 // CNN_2D_v1
-#define WEIGHT_POOL_FLOATS 18817 // CNN_1D_v1
+#ifndef DEEPBINDI_MODEL
+#  define DEEPBINDI_MODEL 0   /* default: CNN_1D_v2 */
+#endif
 
-/* Activation arena: worst case is CNN_2D_v2 with parallel branches (~368 k).
- * Increase if you add larger models; decrease for single-model deployments. */
-//#define ACT_ARENA_FLOATS 500000
-//#define ACT_ARENA_FLOATS 137810 // CNN_2D_v1
-#define ACT_ARENA_FLOATS 1595 // CNN_1D_v1
+/* Real-weights build: weight pool is unused (weights in .rodata).
+ * A 1-word stub avoids a zero-size array (C99 UB). */
+#if defined(DEEPBINDI_REAL_WEIGHTS)
+#  define WEIGHT_POOL_WORDS   1
+#elif DEEPBINDI_MODEL == 1 || DEEPBINDI_MODEL == 2
+#  define WEIGHT_POOL_WORDS   6000   /* MobileCNN-1D / SE (max ~5489 dummy words) */
+#else
+#  define WEIGHT_POOL_WORDS   24000  /* CNN_1D_v2 baseline (max ~19713 dummy words) */
+#endif
 
-/* Maximum number of live Tensor descriptors during any single forward pass.
- * MobileNetV3 with all SE blocks live simultaneously needs ≈ 82 structs. */
-//#define MAX_LIVE_TENSORS 128
-#define MAX_LIVE_TENSORS 8 // CNN_2D_v1
-#define MAX_LIVE_TENSORS 5 // CNN_1D_v1
+#define ACT_ARENA_WORDS     2048   /* covers all models (max 1803 words for SE) */
+#define MAX_LIVE_TENSORS    16     /* covers all models (max 12 for SE model) */
 
-/* ── Global pool declarations ────────────────────────────────────────────── */
+/* ---- Global pool declarations ----------------------------------------- */
 
-/** Weight pool: layer parameters (weights, biases, BN params).
- *  Defined in arena.c.  Point-of-view of CGRA: treat as ROM after init. */
-extern float g_weight_pool[WEIGHT_POOL_FLOATS];
+extern int32_t g_weight_pool[WEIGHT_POOL_WORDS];
+extern int     g_weight_top;
 
-/** Current allocation index into g_weight_pool (bump allocator). */
-extern int   g_weight_top;
+extern int32_t g_act_arena[ACT_ARENA_WORDS];
+extern int     g_act_top;
 
-/** Activation arena: intermediate feature-map storage. */
-extern float g_act_arena[ACT_ARENA_FLOATS];
+extern Tensor  g_tensor_pool[MAX_LIVE_TENSORS];
+extern int     g_tensor_top;
 
-/** Current allocation index into g_act_arena. */
-extern int   g_act_top;
+/* ---- Allocator functions ----------------------------------------------- */
 
-/** Pool of Tensor descriptors (struct { n,c,h,w,*data }).
- *  data pointers inside each struct point into g_act_arena. */
-extern Tensor g_tensor_pool[MAX_LIVE_TENSORS];
+/** Bump-allocate n int32_t slots from the weight pool (never freed in production). */
+int32_t *weight_alloc(int n);
 
-/** Current allocation index into g_tensor_pool. */
-extern int    g_tensor_top;
+/** Bump-allocate n int32_t slots from the activation arena. */
+int32_t *act_alloc(int n);
 
-/* ── Allocator functions ─────────────────────────────────────────────────── */
-
-/**
- * weight_alloc  –  Bump-allocate n floats from the weight pool.
- *
- * Called by layer_create functions (conv2d_layer_create, etc.) to obtain
- * storage for weights, biases, and BN parameters.  Never freed; the weight
- * pool is reset implicitly by a full program restart.
- *
- * Aborts with an error message if the pool is exhausted.
- */
-float *weight_alloc(int n);
-
-/**
- * act_alloc  –  Bump-allocate n floats from the activation arena.
- *
- * Called by tensor_create() to obtain the data buffer for a new activation
- * tensor.  Not freed individually; call act_arena_reset() between models.
- */
-float *act_alloc(int n);
-
-/**
- * act_arena_reset  –  Reset the activation arena and tensor-struct pool.
- *
- * Call this at the start of each model's forward pass.  All Tensor pointers
- * from previous calls become invalid after this call.
- *
- * Note: g_weight_pool is NOT reset; weights accumulate for the entire run.
- */
+/** Reset the activation arena and tensor-struct pool between forward passes. */
 void act_arena_reset(void);
 
 /**
- * arena_stats  –  Print current pool usage to stdout.
- *
- * Useful for verifying that pool sizes are sufficient and for right-sizing
- * them before a CGRA deployment.
+ * Reset the weight pool to allow re-loading dummy weights on the next forward pass.
+ * Only valid when dummy weights are used (seeded deterministic generation).
+ * NOT safe to call if real trained weights have been loaded from const arrays,
+ * because those weights live outside the pool and are not regenerated.
  */
+void weight_arena_reset(void);
+
+/** Print current pool usage (no %f). */
 void arena_stats(void);
 
 #endif /* ARENA_H */
