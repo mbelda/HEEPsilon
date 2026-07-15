@@ -146,6 +146,7 @@ DenseLayer dense_layer_from_weights(
 
 /** PRIMARY CGRA TARGET: 2-D (or 1-D) convolution with zero-padding. */
 Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer);
+Tensor *conv2d_forward_oe_cgra(const Tensor *input, const Conv2DLayer *layer);
 
 /** Apply inference-mode batch norm in-place (CGRA fusion target). */
 void batchnorm_forward_inplace(Tensor *input, const BatchNormLayer *layer);

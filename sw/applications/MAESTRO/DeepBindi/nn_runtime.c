@@ -275,9 +275,9 @@ Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer) {
     Tensor *output = tensor_create(input->n, layer->out_channels, out_h, out_w);
 
     DEEPBINDI_TRACE(
-        "DBG: conv dims n=%d ic=%d oc=%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d\r\n",
+        "DBG: conv dims n=%d ic=%d oc=%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d strideh=%d stridew=%d\r\n",
         input->n, layer->in_channels, layer->out_channels,
-        input->h, input->w, out_h, out_w, layer->kernel_h, layer->kernel_w);
+        input->h, input->w, out_h, out_w, layer->kernel_h, layer->kernel_w, layer->stride_h, layer->stride_w);
 
     for (n = 0; n < input->n; ++n) {
         for (oc = 0; oc < layer->out_channels; ++oc) {
@@ -317,6 +317,199 @@ Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer) {
     }
     return output;
 }
+
+// ============================================================================
+// CODIGO PARA EL CGRA
+// ============================================================================
+
+int32_t conv2d_acumular_remanente_cpu(
+    const Tensor *input,
+    const Conv2DLayer *layer,
+    int n, int oc, int oh, int ow, int in_start, int in_per_group
+) {
+    // 1. El cálculo en la CPU comienza cargando el bias de este canal de salida
+    int32_t sum_remanente = layer->bias[oc];
+
+    // 2. Determinamos dónde se quedó el CGRA (el mayor múltiplo de 16)
+    int icg_start = (in_per_group / 16) * 16;
+    
+    // 3. Procesamos los canales que quedan sueltos
+    for (int icg = icg_start; icg < in_per_group; ++icg) {
+        int ic = in_start + icg;
+        
+        for (int kh = 0; kh < layer->kernel_h; ++kh) {
+            for (int kw = 0; kw < layer->kernel_w; ++kw) {
+                
+                int ih = oh * layer->stride_h + kh - layer->pad_h;
+                int iw = ow * layer->stride_w + kw - layer->pad_w;
+
+                // Al estar en la CPU, verificamos los límites para el padding de ceros
+                if (ih < 0 || ih >= input->h || iw < 0 || iw >= input->w) {
+                    continue; 
+                }
+
+                int weight_idx = ((oc * in_per_group + icg) * layer->kernel_h + kh) 
+                                 * layer->kernel_w + kw;
+                
+                sum_remanente += input->data[tensor_index(input, n, ic, ih, iw)] 
+                                 * layer->weights[weight_idx];
+            }
+        }
+    }
+
+    return sum_remanente;
+}
+
+int32_t cgra_kernel_3loops(
+    const int32_t *ptr_in_lider,
+    const int32_t *ptr_w,
+    int channels_per_group,  // Múltiplos de 16 gestionados en paralelo
+    int kernel_h,
+    int kernel_w,
+    int input_w,             // Ancho real de la imagen de entrada (sin padding)
+    int tam_canal_input      // Tamaño real de un canal de entrada (input_h * input_w)
+) {
+    // La matriz empieza su acumulación limpia en 0 (el bias lo pone la CPU)
+    int32_t sum = 0;
+
+    // PRECALCULO DE CONSTANTES DE SALTO
+    // salto_fila_filtro: Al terminar una fila del filtro (kw), cuántos píxeles reales 
+    // hay que saltar en la entrada para empezar la siguiente fila justo abajo.
+    int salto_fila_filtro = input_w - kernel_w;
+
+    // salto_siguiente_canal: Al terminar el filtro 2D (kh y kw), cuántos píxeles saltamos
+    // para posicionarnos en el mismo origen espacial (oh, ow) pero del siguiente canal de entrada.
+    int salto_siguiente_canal = tam_canal_input - (kernel_h * input_w);
+
+    // --- LOS 3 BUCLES EJECUTADOS POR LOS PEs ---
+    for (int c = 0; c < channels_per_group; ++c) {
+        for (int kh = 0; kh < kernel_h; ++kh) {
+            for (int kw = 0; kw < kernel_w; ++kw) {
+
+                // Multiplicación y acumulación interna en los PEs de datos
+                sum += (*ptr_in_lider) * (*ptr_w);
+
+                // Modificación explícita de las direcciones físicas de memoria (+4 bytes)
+                ptr_in_lider = (int32_t *)((int32_t)ptr_in_lider + (int32_t)4);
+                ptr_w        = (int32_t *)((int32_t)ptr_w        + (int32_t)4);
+            }
+            // Fin kw: Salto de línea en el filtro sumando el offset en bytes
+            ptr_in_lider = (int32_t *)((int32_t)ptr_in_lider + (int32_t)salto_fila_filtro * 4);
+        }
+        // Fin kh: Salto al siguiente canal sumando el offset en bytes
+        ptr_in_lider = (int32_t *)((int32_t)ptr_in_lider + (int32_t)salto_siguiente_canal * 4);
+    }
+
+    return sum; 
+}
+
+Tensor *conv2d_forward_oe_cgra(const Tensor *input, const Conv2DLayer *layer) {
+    int out_h = (input->h + 2 * layer->pad_h - layer->kernel_h) / layer->stride_h + 1;
+    int out_w = (input->w + 2 * layer->pad_w - layer->kernel_w) / layer->stride_w + 1;
+    int in_per_group  = layer->in_channels  / layer->groups;
+    int out_per_group = layer->out_channels / layer->groups;
+    int n, oc, oh, ow, icg, kh, kw;
+    Tensor *output = tensor_create(input->n, layer->out_channels, out_h, out_w);
+
+    DEEPBINDI_TRACE(
+        "DBG: conv dims n=%d ic=%d oc=%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d strideh=%d stridew=%d\r\n",
+        input->n, layer->in_channels, layer->out_channels,
+        input->h, input->w, out_h, out_w, layer->kernel_h, layer->kernel_w, layer->stride_h, layer->stride_w);
+
+    for (n = 0; n < input->n; ++n) {
+        for (oc = 0; oc < layer->out_channels; ++oc) {
+            int group    = oc / out_per_group;
+            int in_start = group * in_per_group;
+
+            // ====================================================================
+            // 1. CÁLCULO ESTRICTO DE LÍMITES SEGUROS
+            // ====================================================================
+            int oh_seguro_inicio = (layer->pad_h + layer->stride_h - 1) / layer->stride_h;
+            int oh_seguro_fin = (input->h + layer->pad_h - layer->kernel_h) / layer->stride_h + 1;
+            if (oh_seguro_fin < oh_seguro_inicio) oh_seguro_fin = oh_seguro_inicio;
+
+            int ow_seguro_inicio = (layer->pad_w + layer->stride_w - 1) / layer->stride_w;
+            int ow_seguro_fin = (input->w + layer->pad_w - layer->kernel_w) / layer->stride_w + 1;
+            if (ow_seguro_fin < ow_seguro_inicio) ow_seguro_fin = ow_seguro_inicio;
+
+            // ====================================================================
+            // 2. RECORRIDO DE LA IMAGEN DE SALIDA
+            // ====================================================================
+            for (oh = 0; oh < out_h; ++oh) {
+                for (ow = 0; ow < out_w; ++ow) {
+
+                    // ¿Estamos en la zona segura (dentro de la imagen)?
+                    if (oh >= oh_seguro_inicio && oh < oh_seguro_fin &&
+                        ow >= ow_seguro_inicio && ow < ow_seguro_fin) {
+                        
+                        // --------------------------------------------------------
+                        // ZONA CGRA: Cálculo del centro en paralelo por canales
+                        // --------------------------------------------------------
+                        int32_t *ptr_in_base = input->data 
+                                            + (n * layer->in_channels * input->h * input->w)
+                                            + (in_start * input->h * input->w)
+                                            + (oh * layer->stride_h * input->w)
+                                            + (ow * layer->stride_w);
+
+                        int tam_filtro_3d = in_per_group * layer->kernel_h * layer->kernel_w;
+                        const int32_t *ptr_w_base = &(layer->weights[oc * tam_filtro_3d]);
+
+                        // Filtramos para que el CGRA ejecute SOLO los múltiplos de 16
+                        int canales_cgra = (in_per_group / 16) * 16;
+                        int32_t resultado_cgra = 0;
+
+                        if (canales_cgra > 0) {
+                            resultado_cgra = cgra_kernel_3loops(
+                                ptr_in_base, ptr_w_base,
+                                canales_cgra, layer->kernel_h, layer->kernel_w,
+                                input->w, (input->h * input->w)
+                            );
+                        }
+
+                        // La CPU calcula el sobrante (canales restantes) y añade el bias
+                        int32_t resultado_remanente_cpu = conv2d_acumular_remanente_cpu(
+                            input, layer, n, oc, oh, ow, in_start, in_per_group
+                        );
+
+                        // Fusión final: Se suma el cómputo del CGRA con el de la CPU
+                        output->data[tensor_index(output, n, oc, oh, ow)] = resultado_cgra + resultado_remanente_cpu;
+
+                    } else {
+                        
+                        // --------------------------------------------------------
+                        // ZONA CPU: Cómputo secuencial tradicional para los bordes
+                        // --------------------------------------------------------
+                        int32_t sum = layer->bias[oc];
+                        for (icg = 0; icg < in_per_group; ++icg) {
+                            int ic = in_start + icg;
+                            for (kh = 0; kh < layer->kernel_h; ++kh) {
+                                for (kw = 0; kw < layer->kernel_w; ++kw) {
+                                    int ih = oh * layer->stride_h + kh - layer->pad_h;
+                                    int iw = ow * layer->stride_w + kw - layer->pad_w;
+
+                                    if (ih < 0 || ih >= input->h || iw < 0 || iw >= input->w) {
+                                        continue; 
+                                    }
+                                    int weight_idx = ((oc * in_per_group + icg) * layer->kernel_h + kh) * layer->kernel_w + kw;
+                                    sum += input->data[tensor_index(input, n, ic, ih, iw)] * layer->weights[weight_idx];
+                                }
+                            }
+                        }
+                        output->data[tensor_index(output, n, oc, oh, ow)] = sum;
+                    }
+
+                }
+            }
+        }
+    }
+    return output;
+}
+
+// ============================================================================
+// END -------------- CODIGO PARA EL CGRA
+// ============================================================================
+
+
 
 /*
  * batchnorm_forward_inplace

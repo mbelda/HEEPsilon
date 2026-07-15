@@ -31,6 +31,7 @@
 #include "deepbindi_config.h"
 
 /* ---- Real weights (optional) ------------------------------------------- */
+#define DEEPBINDI_REAL_WEIGHTS
 
 #ifdef DEEPBINDI_REAL_WEIGHTS
 #  include "weights_cnn_1d_v2.h"
@@ -85,7 +86,7 @@ static Tensor *apply_conv_bn_act(
         pad_h, pad_w,
         groups, seed);
     BatchNormLayer bn   = batchnorm_layer_create(out_channels, seed + 1);
-    Tensor *output = conv2d_forward(input, &conv);
+    Tensor *output = conv2d_forward_oe_cgra(input, &conv);
     batchnorm_forward_inplace(output, &bn);
     apply_activation(output, activation);
     conv2d_layer_free(&conv);
@@ -163,6 +164,7 @@ Tensor *run_cnn_1d_v2(const int32_t *input_data) {
     } else {
         input = make_dummy_input_1d(57, 10, 5);
     }
+
 
 #ifdef DEEPBINDI_REAL_WEIGHTS
     /* ============================================================

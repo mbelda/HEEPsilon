@@ -187,7 +187,7 @@ Tensor *run_mobilecnn_1d(const int32_t *input_data) {
         BatchNormLayer bn_dw1 = batchnorm_layer_from_params(
             57, mobile_bn_dw1_scale, mobile_bn_dw1_offset);
 
-        dw1_out = conv2d_forward(input, &dw1_l);
+        dw1_out = conv2d_forward_oe_cgra(input, &dw1_l);
         batchnorm_rshift_inplace(dw1_out, &bn_dw1, MOBILE_SHIFT_DW1);
         relu_inplace(dw1_out);
         tensor_free(input);
@@ -197,7 +197,7 @@ Tensor *run_mobilecnn_1d(const int32_t *input_data) {
         BatchNormLayer bn_pw1 = batchnorm_layer_from_params(
             32, mobile_bn_pw1_scale, mobile_bn_pw1_offset);
 
-        pw1_out = conv2d_forward(dw1_out, &pw1_l);
+        pw1_out = conv2d_forward_oe_cgra(dw1_out, &pw1_l);
         batchnorm_rshift_inplace(pw1_out, &bn_pw1, MOBILE_SHIFT_PW1);
         relu_inplace(pw1_out);
         tensor_free(dw1_out);
@@ -210,7 +210,7 @@ Tensor *run_mobilecnn_1d(const int32_t *input_data) {
         BatchNormLayer bn_dw2 = batchnorm_layer_from_params(
             32, mobile_bn_dw2_scale, mobile_bn_dw2_offset);
 
-        dw2_out = conv2d_forward(pool1, &dw2_l);
+        dw2_out = conv2d_forward_oe_cgra(pool1, &dw2_l);
         batchnorm_rshift_perchannel(dw2_out, &bn_dw2, mobile_bn_dw2_shift);
         relu_inplace(dw2_out);
         tensor_free(pool1);
@@ -220,7 +220,7 @@ Tensor *run_mobilecnn_1d(const int32_t *input_data) {
         BatchNormLayer bn_pw2 = batchnorm_layer_from_params(
             64, mobile_bn_pw2_scale, mobile_bn_pw2_offset);
 
-        pw2_out = conv2d_forward(dw2_out, &pw2_l);
+        pw2_out = conv2d_forward_oe_cgra(dw2_out, &pw2_l);
         batchnorm_rshift_inplace(pw2_out, &bn_pw2, MOBILE_SHIFT_PW2);
         relu_inplace(pw2_out);
         tensor_free(dw2_out);
@@ -301,7 +301,7 @@ Tensor *run_mobilecnn_se_1d(const int32_t *input_data) {
         BatchNormLayer bn_dw1 = batchnorm_layer_from_params(
             57, mobile_bn_dw1_scale, mobile_bn_dw1_offset);
 
-        dw1_out = conv2d_forward(input, &dw1_l);
+        dw1_out = conv2d_forward_oe_cgra(input, &dw1_l);
         batchnorm_rshift_inplace(dw1_out, &bn_dw1, MOBILE_SHIFT_DW1);
         relu_inplace(dw1_out);
         tensor_free(input);
@@ -311,7 +311,7 @@ Tensor *run_mobilecnn_se_1d(const int32_t *input_data) {
         BatchNormLayer bn_pw1 = batchnorm_layer_from_params(
             32, mobile_bn_pw1_scale, mobile_bn_pw1_offset);
 
-        pw1_out = conv2d_forward(dw1_out, &pw1_l);
+        pw1_out = conv2d_forward_oe_cgra(dw1_out, &pw1_l);
         batchnorm_rshift_inplace(pw1_out, &bn_pw1, MOBILE_SHIFT_PW1);
         relu_inplace(pw1_out);
         tensor_free(dw1_out);
@@ -349,7 +349,7 @@ Tensor *run_mobilecnn_se_1d(const int32_t *input_data) {
         BatchNormLayer bn_dw2 = batchnorm_layer_from_params(
             32, mobile_bn_dw2_scale, mobile_bn_dw2_offset);
 
-        dw2_out = conv2d_forward(pool1, &dw2_l);
+        dw2_out = conv2d_forward_oe_cgra(pool1, &dw2_l);
         batchnorm_rshift_perchannel(dw2_out, &bn_dw2, mobile_bn_dw2_shift);
         relu_inplace(dw2_out);
         tensor_free(pool1);
@@ -359,7 +359,7 @@ Tensor *run_mobilecnn_se_1d(const int32_t *input_data) {
         BatchNormLayer bn_pw2 = batchnorm_layer_from_params(
             64, mobile_bn_pw2_scale, mobile_bn_pw2_offset);
 
-        pw2_out = conv2d_forward(dw2_out, &pw2_l);
+        pw2_out = conv2d_forward_oe_cgra(dw2_out, &pw2_l);
         batchnorm_rshift_inplace(pw2_out, &bn_pw2, MOBILE_SHIFT_PW2);
         relu_inplace(pw2_out);
         tensor_free(dw2_out);

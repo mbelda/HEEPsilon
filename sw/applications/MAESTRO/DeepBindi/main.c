@@ -38,8 +38,10 @@
 #  include "x-heep.h"
 #endif
 
+# define DEEPBINDI_REAL_WEIGHTS 1
+
 #ifndef DEEPBINDI_MODEL
-#  define DEEPBINDI_MODEL 1
+#  define DEEPBINDI_MODEL 0
 #endif
 
 /* Include the correct model header */
