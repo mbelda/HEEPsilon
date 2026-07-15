@@ -23,6 +23,8 @@
 #include "deepbindi_config.h"
 #include "nn_runtime.h"
 #include "arena.h"
+// Metrics
+#  include "csr.h"
 
 /* ---- Internal helpers -------------------------------------------------- */
 
@@ -274,10 +276,8 @@ Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer) {
     int n, oc, oh, ow, icg, kh, kw;
     Tensor *output = tensor_create(input->n, layer->out_channels, out_h, out_w);
 
-    DEEPBINDI_TRACE(
-        "DBG: conv dims n=%d ic=%d oc=%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d strideh=%d stridew=%d\r\n",
-        input->n, layer->in_channels, layer->out_channels,
-        input->h, input->w, out_h, out_w, layer->kernel_h, layer->kernel_w, layer->stride_h, layer->stride_w);
+    unsigned int cycles;
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
 
     for (n = 0; n < input->n; ++n) {
         for (oc = 0; oc < layer->out_channels; ++oc) {
@@ -315,6 +315,13 @@ Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer) {
 #endif
         }
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+    DEEPBINDI_TRACE(
+        "DBG: conv dims n=%d ic=%d oc=%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d strideh=%d stridew=%d\r\nCycles: %u\r\n",
+        input->n, layer->in_channels, layer->out_channels,
+        input->h, input->w, out_h, out_w, layer->kernel_h, layer->kernel_w, layer->stride_h, layer->stride_w,
+        cycles);
+
     return output;
 }
 
@@ -521,6 +528,8 @@ Tensor *conv2d_forward_oe_cgra(const Tensor *input, const Conv2DLayer *layer) {
  */
 void batchnorm_forward_inplace(Tensor *input, const BatchNormLayer *layer) {
     int n, c, h, w;
+    unsigned int cycles;
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (n = 0; n < input->n; ++n) {
         for (c = 0; c < input->c; ++c) {
             int32_t scale  = layer->scale[c];
@@ -535,6 +544,10 @@ void batchnorm_forward_inplace(Tensor *input, const BatchNormLayer *layer) {
             }
         }
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+    DEEPBINDI_TRACE(
+        "DBG: norm dims n=%d c=%d h=%d w=%d\r\nCycles: %u\r\n",
+        input->n, input->c, input->h, input->w, cycles);
 }
 
 /*
@@ -604,7 +617,9 @@ Tensor *maxpool2d_forward(const Tensor *input,
     Tensor *output = tensor_create(input->n, input->c, out_h, out_w);
     /* INT32_MIN without limits.h */
     const int32_t INT32_MIN_VAL = (int32_t)(-2147483647 - 1);
+    unsigned int cycles;
 
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (n = 0; n < input->n; ++n) {
         for (c = 0; c < input->c; ++c) {
             for (oh = 0; oh < out_h; ++oh) {
@@ -625,6 +640,15 @@ Tensor *maxpool2d_forward(const Tensor *input,
             }
         }
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+
+    DEEPBINDI_TRACE(
+        "DBG: maxpool kernel=[%dx%d] stride=[%dx%d] in_dims n=%d c=%d h=%d w=%d out_dims n=%d c=%d h=%d w=%d\r\nCycles: %u\r\n",
+        kernel_h, kernel_w, stride_h, stride_w,
+        input->n, input->c, input->h, input->w,
+        output->n, output->c, output->h, output->w,
+        cycles);
+
     return output;
 }
 
@@ -636,9 +660,21 @@ Tensor *flatten_forward(const Tensor *input) {
     int i;
     int total = tensor_numel(input);
     Tensor *output = tensor_create(input->n, total / input->n, 1, 1);
+    unsigned int cycles;
+
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (i = 0; i < total; ++i) {
         output->data[i] = input->data[i];
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+
+    DEEPBINDI_TRACE(
+        "DBG: flatten total=%d in_dims n=%d c=%d h=%d w=%d out_dims n=%d c=%d h=%d w=%d\r\nCycles: %u\r\n",
+        total,
+        input->n, input->c, input->h, input->w,
+        output->n, output->c, output->h, output->w,
+        cycles);
+
     return output;
 }
 
@@ -652,6 +688,7 @@ Tensor *dense_forward(const Tensor *input, const DenseLayer *layer) {
     int features = tensor_numel(input) / input->n;
     int n, out, in;
     Tensor *output = tensor_create(input->n, layer->out_features, 1, 1);
+    unsigned int cycles;
 
     if (features != layer->in_features) {
         DEEPBINDI_LOG_ERROR("dense_forward: shape mismatch (expected %d, got %d)\r\n",
@@ -659,6 +696,7 @@ Tensor *dense_forward(const Tensor *input, const DenseLayer *layer) {
         DEEPBINDI_FATAL("dense_forward shape mismatch");
     }
 
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (n = 0; n < input->n; ++n) {
         const int32_t *src = input->data + n * layer->in_features;
         for (out = 0; out < layer->out_features; ++out) {
@@ -669,19 +707,34 @@ Tensor *dense_forward(const Tensor *input, const DenseLayer *layer) {
             output->data[n * layer->out_features + out] = sum;
         }
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+
+    DEEPBINDI_TRACE(
+        "DBG: dense in_features=%d out_features=%d batch_n=%d dims n=%d c=%d h=%d w=%d\r\nCycles: %u\r\n",
+        layer->in_features, layer->out_features, input->n,
+        output->n, output->c, output->h, output->w,
+        cycles);
+
     return output;
 }
-
 /* ---- Activations (in-place) ------------------------------------------- */
 
 void relu_inplace(Tensor *input) {
     int i;
     int total = tensor_numel(input);
+    unsigned int cycles;
+
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (i = 0; i < total; ++i) {
         if (input->data[i] < 0) {
             input->data[i] = 0;
         }
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+
+    DEEPBINDI_TRACE(
+        "DBG: relu dim=%d\r\nCycles: %u\r\n",
+        total, cycles);
 }
 
 /*
@@ -695,9 +748,17 @@ void relu_inplace(Tensor *input) {
 void sigmoid_inplace(Tensor *input) {
     int i;
     int total = tensor_numel(input);
+    unsigned int cycles;
+
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (i = 0; i < total; ++i) {
         input->data[i] = (input->data[i] > 0) ? 1 : 0;
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+
+    DEEPBINDI_TRACE(
+        "DBG: sigmoid total=%d dims n=%d c=%d h=%d w=%d\r\nCycles: %u\r\n",
+        total, input->n, input->c, input->h, input->w, cycles);
 }
 
 /*
@@ -711,9 +772,17 @@ void sigmoid_inplace(Tensor *input) {
 void tensor_rshift_inplace(Tensor *input, int shift) {
     int i;
     int total = tensor_numel(input);
+    unsigned int cycles;
+
+    CSR_WRITE(CSR_REG_MCYCLE, 0);
     for (i = 0; i < total; ++i) {
         input->data[i] >>= shift;
     }
+    CSR_READ(CSR_REG_MCYCLE, &cycles);
+
+    DEEPBINDI_TRACE(
+        "DBG: rshift total=%d\r\nCycles: %u\r\n",
+        total, cycles);
 }
 
 /* ---- SE (Squeeze-and-Excitation) primitives ------------------------------- */

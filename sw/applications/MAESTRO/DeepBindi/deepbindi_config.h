@@ -33,7 +33,7 @@
 #  define DEEPBINDI_LOG_ERROR(...)  ((void)0)
 #endif
 
-# define DEEPBINDI_TRACE_LAYERS
+# define DEEPBINDI_TRACE_LAYERS 1
 
 #ifdef DEEPBINDI_TRACE_LAYERS
 #  define DEEPBINDI_TRACE(...)      printf(__VA_ARGS__)
