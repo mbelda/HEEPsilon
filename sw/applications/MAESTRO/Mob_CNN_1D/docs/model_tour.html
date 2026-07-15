@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepBindi — Model Architecture Tour</title>
+<style>
+:root {
+  --bg:   #ffffff; --bg2:  #f5f5f0; --bg3:  #eceae4;
+  --tx:   #1a1a1a; --tx2:  #555550; --tx3:  #888880;
+  --bd:   rgba(0,0,0,0.12); --bd2: rgba(0,0,0,0.22);
+  --rad:  8px; --rad-lg: 12px;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "Courier New", Courier, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:  #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+    --tx:  #f2f2f7; --tx2: #aeaeb2; --tx3: #636366;
+    --bd:  rgba(255,255,255,0.12); --bd2: rgba(255,255,255,0.22);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);font-size:14px;color:var(--tx);background:var(--bg);padding:24px 16px 48px}
+.page{max-width:860px;margin:0 auto}
+h1{font-size:20px;font-weight:500;margin-bottom:4px}
+.sub{font-size:13px;color:var(--tx2);margin-bottom:20px}
+.t-tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:14px}
+.t-tab{flex:1;padding:10px 6px;background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:400;color:var(--tx2);transition:color .15s}
+.t-tab:hover{color:var(--tx);background:var(--bg2)}
+.t-tab.on{font-weight:500;color:var(--tx)}
+.t-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.t-stat{background:var(--bg2);border-radius:var(--rad);padding:10px 12px}
+.t-stat-v{font-size:17px;font-weight:500}
+.t-stat-l{font-size:11px;color:var(--tx3);margin-top:2px}
+.t-nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.t-nav-btn{padding:5px 12px;background:none;border:1px solid var(--bd2);border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--tx2);font-family:var(--sans)}
+.t-nav-btn:hover{background:var(--bg2)}
+.t-nav-btn:disabled{opacity:.3;cursor:default}
+.t-nav-label{flex:1;text-align:center;font-size:13px;font-weight:500;color:var(--tx)}
+.t-detail{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rad-lg);padding:16px;margin-bottom:14px;min-height:280px}
+.t-dh{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.t-dn{font-size:15px;font-weight:500}
+.t-chip{font-size:11px;padding:2px 8px;border-radius:var(--rad);font-weight:500;white-space:nowrap}
+.t-shapes{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.t-shape{font-family:var(--mono);font-size:12px;background:var(--bg2);padding:3px 8px;border-radius:var(--rad)}
+.t-arr{color:var(--tx3);font-size:13px}
+.t-el{margin-left:auto;font-size:11px;color:var(--tx3);font-family:var(--mono)}
+.t-formula{background:var(--bg2);border-radius:var(--rad);padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--tx2);white-space:pre-wrap;margin-bottom:10px;line-height:1.65}
+.t-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.t-metric{text-align:center;padding:8px 4px;background:var(--bg2);border-radius:var(--rad)}
+.t-metric-v{font-size:14px;font-weight:500}
+.t-metric-l{font-size:10px;color:var(--tx3);margin-top:2px}
+.t-desc{font-size:12px;color:var(--tx2);line-height:1.6}
+.t-pipe{overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.t-pipe-inner{display:flex;align-items:center;gap:3px;min-width:max-content;padding:2px}
+.t-pbox{cursor:pointer;border:1.5px solid transparent;border-radius:var(--rad);padding:4px 7px;font-size:10px;font-family:var(--sans);white-space:nowrap;font-weight:400}
+.t-pbox:hover{opacity:.8}
+.t-pbox.sel{font-weight:500}
+.t-parr{font-size:9px;color:var(--tx3)}
+.t-arena-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-bottom:5px}
+.t-arena-lbl span:last-child{font-weight:500;color:var(--tx2)}
+.t-arena-track{height:10px;background:var(--bg2);border-radius:5px;overflow:hidden}
+.t-arena-fill{height:100%;border-radius:5px;transition:width .25s ease}
+.t-arena-note{font-size:11px;color:var(--tx3);margin-top:4px}
+footer{margin-top:32px;font-size:11px;color:var(--tx3);border-top:1px solid var(--bd);padding-top:12px}
+@media(max-width:540px){
+  .t-stats{grid-template-columns:repeat(2,1fr)}
+  .t-metrics{grid-template-columns:repeat(2,1fr)}
+  .t-el{display:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<h1>DeepBindi — model architecture tour</h1>
+<p class="sub">Step through every layer of the three int32 bare-metal CNN models. Click any box in the pipeline strip or use ← → to navigate.</p>
+
+<div class="t-tabs" id="ttabs"></div>
+<div class="t-stats" id="tstats"></div>
+<div class="t-nav">
+  <button class="t-nav-btn" id="tbprev">← prev</button>
+  <div class="t-nav-label" id="tnlabel"></div>
+  <button class="t-nav-btn" id="tbnext">next →</button>
+</div>
+<div class="t-detail" id="tdetail"></div>
+<div class="t-pipe" id="tpipe"></div>
+<div id="tarena"></div>
+
+<footer>
+  DeepBindi_PortC &mdash; X-HEEP int32 inference port &mdash; WEMAC fold-0 weights &mdash;
+  source: <code>deepbindi_cnn_x_heep/</code>
+</footer>
+</div>
+
+<script>
+const MODELS=[
+{id:0,name:'CNN_1D_v2',mc:'#534AB7',mcb:'#EEEDFE',mct:'#534AB7',rom:19713,ram:1147,macs:93504,amax:2048,
+layers:[
+{name:'Input',t:'input',si:'—',so:'(1,57,1,10)',el:570,w:0,ops:0,da:570,ca:570,
+f:'x[ch][t] = round(x_float × 12)\n→ clip(x, −128, 127)  stored as int32',
+d:'57 biosignal channels × 10 time frames. Each value in int8 range, widened to int32 for 32-bit arithmetic. Layout: data[ch×10 + t].'},
+{name:'Conv1',t:'conv',si:'(1,57,1,10)',so:'(1,32,1,8)',el:256,w:9152,ops:72960,da:256,ca:826,
+f:'out[c][t] = Σ_{i=0}^{56} Σ_{k=0}^{4} w[c][i][k] × x[i][t+k] + b[c]\nkernel=5, pad=1 → W_out = (10+2−5)+1 = 8\n9,120 weights + 32 biases = 9,152 int32 = 36.6 KB',
+d:'Full 57→32 channel mixing at each of 8 time positions. Largest single layer by weight count. Each of 32 output channels sees all 57 input channels through a size-5 kernel.'},
+{name:'BN1 + ReLU + >>9',t:'bn',si:'(1,32,1,8)',so:'(1,32,1,8)',el:256,w:64,ops:512,da:0,ca:826,
+f:'scale[c] = round(γ_c / √(var_c+ε) × 128)  [Q7, pre-folded at export]\noffset[c] = round(β_c − γ_c × mean_c / √(var_c+ε))\ny[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 9',
+d:'BN pre-folded to Q7 integer scale — no division at inference time. >>9 applied after ReLU. Without it: Conv2 accumulates 160 MACs of ~13.6M values → 276B >> INT32_MAX. After >>9: max ~26.6K; Conv2 peak ~540M ✓. 64 BN params. In-place, no arena allocation.'},
+{name:'MaxPool1',t:'pool',si:'(1,32,1,8)',so:'(1,32,1,4)',el:128,w:0,ops:0,da:128,ca:954,
+f:'out[c][t] = max(x[c][2t], x[c][2t+1])   kernel=2, stride=2',
+d:'Halves temporal resolution 8→4. No learnable parameters. Picks the stronger activation across each pair of adjacent timesteps.'},
+{name:'Conv2',t:'conv',si:'(1,32,1,4)',so:'(1,64,1,2)',el:128,w:10304,ops:20480,da:128,ca:1082,
+f:'out[c][t] = Σ_{i=0}^{31} Σ_{k=0}^{4} w[c][i][k] × x[i][t+k] + b[c]\nkernel=5, pad=1 → W_out = (4+2−5)+1 = 2\n10,240 weights + 64 biases = 10,304 int32 = 41.2 KB',
+d:'32→64 channel expansion. Fewer MACs than Conv1 despite more output channels — time width is now 2 instead of 8. More weights but less work per forward pass.'},
+{name:'BN2 + ReLU + >>14',t:'bn',si:'(1,64,1,2)',so:'(1,64,1,2)',el:128,w:128,ops:256,da:0,ca:1082,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 14\nAfter BN2 (scale ≤ 334): max activation ~1.41B\nFC has 64 inputs: 64 × 127 × 1.41B ~11.5T >> INT32_MAX\nAfter >>14: 1.41B → 86K; FC peak ~699M ✓',
+d:'Large >>14 shift because FC accumulates 64 inputs with no intermediate tensor. The shift eats 14 bits of dynamic range but relative ordering of feature channels is preserved. 128 BN params. In-place.'},
+{name:'MaxPool2',t:'pool',si:'(1,64,1,2)',so:'(1,64,1,1)',el:64,w:0,ops:0,da:64,ca:1146,
+f:'out[c][0] = max(x[c][0], x[c][1])',
+d:'Width 2→1. Produces a 64-element feature vector, one value per channel. Passed directly to the classifier.'},
+{name:'Flatten',t:'rsh',si:'(1,64,1,1)',so:'(64,)',el:64,w:0,ops:0,da:64,ca:1147,
+f:'flat[i] = x[i]   (new Tensor struct, data copied, arena bump)',
+d:'Shape reshape for FC input. Creates a new Tensor allocation on the arena even though data layout is unchanged.'},
+{name:'FC + threshold',t:'fc',si:'(64,)',so:'(1,)',el:1,w:65,ops:64,da:1,ca:1148,
+f:'logit = Σ_{i=0}^{63} w[i] × flat[i] + b\nlabel = (logit > 0) ? 1 (FEAR) : 0 (NO_FEAR)',
+d:'Dense 64→1. Sign threshold replaces sigmoid: avoids float and expf(). 64 weights + 1 bias = 65 int32 = 260 bytes. Shared head design across all three models.'},
+]},
+{id:1,name:'MobileCNN-1D',mc:'#0F6E56',mcb:'#E1F5EE',mct:'#0F6E56',rom:4969,ram:1731,macs:21352,amax:2048,
+layers:[
+{name:'Input',t:'input',si:'—',so:'(1,57,1,10)',el:570,w:0,ops:0,da:570,ca:570,
+f:'x[ch][t] = round(x_float × 12) → clip(x, −128, 127)',
+d:'Same input format as CNN_1D_v2. 570 int32 values, layout data[ch×10 + t].'},
+{name:'DWConv1',t:'dw',si:'(1,57,1,10)',so:'(1,57,1,8)',el:456,w:342,ops:2280,da:456,ca:1026,
+f:'out[c][t] = Σ_{k=0}^{4} w[c][k] × x[c][t+k] + b[c]   groups=57\nEach channel has its own 1×5 kernel — no cross-channel mixing\nW_out = (10 + 2×1 − 5) + 1 = 8\n57×5 = 285 weights + 57 biases = 342 int32 = 1.3 KB',
+d:'Depthwise conv: groups=57 enforces per-channel independence. Compare to a full Conv1d(57,57,k=5): would need 57×57×5 = 16,245 weights — 47× more! Captures temporal patterns within each biosignal independently.'},
+{name:'BN_DW1 + ReLU + >>1',t:'bn',si:'(1,57,1,8)',so:'(1,57,1,8)',el:456,w:114,ops:912,da:0,ca:1026,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 1\nMOBILE_SHIFT_DW1 = 1  (DW response bounded by single-channel kernel)',
+d:'After DW, activations are bounded by one channel\'s kernel response — no accumulation across 57 channels. >>1 is a minimal safety margin. 57 scale + 57 offset = 114 BN params. In-place.'},
+{name:'PWConv1',t:'pw',si:'(1,57,1,8)',so:'(1,32,1,8)',el:256,w:1856,ops:14592,da:256,ca:1282,
+f:'out[c][t] = Σ_{i=0}^{56} w[c][i] × x[i][t] + b[c]   kernel=1×1\nCross-channel projection: 57 → 32 channels, width unchanged\n32×57 = 1,824 weights + 32 biases = 1,856 int32 = 7.4 KB',
+d:'Pointwise (1×1) conv performs the cross-channel mixing that DW1 deliberately skipped. Together DW1+PW1 replace a single Conv(57,32,k=5) that would need 9,120 weights — at 4.9× fewer parameters.'},
+{name:'BN_PW1 + ReLU + >>10',t:'bn',si:'(1,32,1,8)',so:'(1,32,1,8)',el:256,w:64,ops:512,da:0,ca:1282,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 10\nCRITICAL: PW1 accumulates 57 inputs × ±127 weights\n→ int32 intermediate can reach 2.7B > INT32_MAX\nbatchnorm_rshift_inplace() uses int64 before the >>7 cast',
+d:'PW1 accumulates 57 inputs — int32 intermediate before the >>7 BN shift can exceed INT32_MAX (2.7B). batchnorm_rshift_inplace() handles this in a single int64_t pass. 64 BN params. In-place.'},
+{name:'MaxPool1',t:'pool',si:'(1,32,1,8)',so:'(1,32,1,4)',el:128,w:0,ops:0,da:128,ca:1410,
+f:'out[c][t] = max(x[c][2t], x[c][2t+1])  stride=2',
+d:'Width 8→4. Output is also used during weight export to calibrate DW2 per-channel shifts via data-driven int32 simulation.'},
+{name:'DWConv2',t:'dw',si:'(1,32,1,4)',so:'(1,32,1,2)',el:64,w:192,ops:320,da:64,ca:1474,
+f:'out[c][t] = Σ_{k=0}^{4} w[c][k] × x[c][t+k] + b[c]   groups=32\nW_out = (4 + 2×1 − 5) + 1 = 2\n32×5 = 160 weights + 32 biases = 192 int32 = 768 bytes',
+d:'Per-channel temporal filtering on the 32 pool1 channels. Very compact — all heavy lifting done in Block 1.'},
+{name:'BN_DW2 + ReLU + per-ch >>',t:'bnc',si:'(1,32,1,2)',so:'(1,32,1,2)',el:64,w:96,ops:128,da:0,ca:1474,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> shifts[c]\nshifts[c] ∈ {7..10}  — per-channel, data-driven calibration\n32 scale + 32 offset + 32 shifts = 96 params',
+d:'KEY DESIGN: BN_DW2 Q7 scales vary 5× across channels (308–1574). A global shift sized for scale=1574 wastes 3 bits on channels with scale=308. Per-channel shifts from batchnorm_rshift_perchannel(). Shifts calibrated from actual test sample simulation — not theoretical worst-case (which gives [13..16] → signal collapse).'},
+{name:'PWConv2',t:'pw',si:'(1,32,1,2)',so:'(1,64,1,2)',el:128,w:2112,ops:4096,da:128,ca:1602,
+f:'out[c][t] = Σ_{i=0}^{31} w[c][i] × x[i][t] + b[c]   kernel=1×1\nChannel expansion: 32 → 64\n64×32 = 2,048 weights + 64 biases = 2,112 int32 = 8.4 KB',
+d:'Cross-channel projection 32→64. Largest weight layer in MobileCNN-1D.'},
+{name:'BN_PW2 + ReLU + >>15',t:'bn',si:'(1,64,1,2)',so:'(1,64,1,2)',el:128,w:128,ops:256,da:0,ca:1602,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 15\nMOBILE_SHIFT_PW2 = 15  (large: FC next accumulates 64 inputs)',
+d:'Large >>15 because the FC head accumulates 64 inputs with no intermediate tensor. 64 scale + 64 offset = 128 BN params. In-place.'},
+{name:'MaxPool2',t:'pool',si:'(1,64,1,2)',so:'(1,64,1,1)',el:64,w:0,ops:0,da:64,ca:1666,
+f:'out[c][0] = max(x[c][0], x[c][1])',
+d:'Width 2→1. Produces the 64-element feature vector fed to the classifier.'},
+{name:'Flatten',t:'rsh',si:'(1,64,1,1)',so:'(64,)',el:64,w:0,ops:0,da:64,ca:1730,
+f:'flat[i] = pool2[i]  (new Tensor struct, arena bump)',
+d:'Shape reshape. Creates new Tensor struct allocation.'},
+{name:'FC + threshold',t:'fc',si:'(64,)',so:'(1,)',el:1,w:65,ops:64,da:1,ca:1731,
+f:'logit = Σ_{i=0}^{63} w[i] × flat[i] + b\nlabel = (logit > 0) ? 1 (FEAR) : 0 (NO_FEAR)',
+d:'Shared head across all three models. 65 int32 params = 260 bytes.'},
+]},
+{id:2,name:'MobileCNN-SE-1D',mc:'#993C1D',mcb:'#FAECE7',mct:'#993C1D',rom:5521,ram:1803,macs:21992,amax:2048,
+layers:[
+{name:'Input',t:'input',si:'—',so:'(1,57,1,10)',el:570,w:0,ops:0,da:570,ca:570,
+f:'x[ch][t] = round(x_float × 12) → clip(x, −128, 127)',
+d:'Identical input to MobileCNN-1D. 570 int32 values.'},
+{name:'DWConv1',t:'dw',si:'(1,57,1,10)',so:'(1,57,1,8)',el:456,w:342,ops:2280,da:456,ca:1026,
+f:'out[c][t] = Σ_{k=0}^{4} w[c][k] × x[c][t+k] + b[c]   groups=57',
+d:'Identical to MobileCNN-1D DWConv1. 342 weight params.'},
+{name:'BN_DW1 + ReLU + >>1',t:'bn',si:'(1,57,1,8)',so:'(1,57,1,8)',el:456,w:114,ops:912,da:0,ca:1026,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 1\nMOBILE_SHIFT_DW1 = 1',
+d:'Identical to MobileCNN-1D. 114 BN params. In-place.'},
+{name:'PWConv1',t:'pw',si:'(1,57,1,8)',so:'(1,32,1,8)',el:256,w:1856,ops:14592,da:256,ca:1282,
+f:'out[c][t] = Σ_{i=0}^{56} w[c][i] × x[i][t] + b[c]   kernel=1×1',
+d:'Cross-channel projection 57→32. 1,856 weight params.'},
+{name:'BN_PW1 + ReLU + >>11',t:'bn',si:'(1,32,1,8)',so:'(1,32,1,8)',el:256,w:64,ops:512,da:0,ca:1282,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 11\nMOBILE_SHIFT_PW1 = 11  (1 more bit than mobile1d — fold-specific weight distribution)',
+d:'Slightly larger shift than MobileCNN-1D due to weight distribution of this trained fold. 64 BN params. In-place.'},
+{name:'MaxPool1',t:'pool',si:'(1,32,1,8)',so:'(1,32,1,4)',el:128,w:0,ops:0,da:128,ca:1410,
+f:'out[c][t] = max(x[c][2t], x[c][2t+1])  stride=2',
+d:'Width 8→4. The SE block is applied to this output before Block 2 processes it.'},
+{name:'SE: global avg pool',t:'se',si:'(1,32,1,4)',so:'(1,32,1,1)',el:32,w:0,ops:128,da:32,ca:1442,
+f:'se_avg[c] = (1/4) × Σ_{t=0}^{3} pool1[c][t]   (integer, per-channel)\n"Squeeze": collapse spatial dimension into per-channel scalar',
+d:'GlobalAvgPool across the 4 timesteps. Each of 32 channels reduced to its mean activation. The squeeze step: summarizes which features are active across time with no learnable parameters.'},
+{name:'SE: Dense(32→8) + ReLU + >>13',t:'se',si:'(1,32,1,1)',so:'(1,8,1,1)',el:8,w:264,ops:256,da:8,ca:1450,
+f:'se_d1[j] = max(0, Σ_{i=0}^{31} w1[j][i] × se_avg[i] + b1[j]) >> 13\nSE_SHIFT_D1 = 13  (shift before Dense(8→32) to prevent overflow)\n32×8 + 8 = 264 params',
+d:'Bottleneck Dense 32→8 (reduction ratio r=4). Learns which channel combinations co-activate. >>13 prevents overflow in the expansion Dense. 264 weight params.'},
+{name:'SE: Dense(8→32) + hardsigmoid',t:'se',si:'(1,8,1,1)',so:'(1,32,1,1)',el:32,w:288,ops:288,da:32,ca:1482,
+f:'se_d2[i] = Σ_{j=0}^{7} w2[i][j] × se_d1[j] + b2[i]   (8×32+32 = 288 params)\nattn[i] = clip((se_d2[i] >> SE_SHIFT_HS) + 64, 0, 128)\nSE_SHIFT_HS = 25     128 = 1.0 in Q7 representation',
+d:'Expand bottleneck 8→32, then integer HardSigmoid. Approximates sigmoid as clip(0.5 + x/6, 0, 1). In Q7 where 128=1.0, 64=0.5. Avoids float and expf(). Attention range [0, 128]. 288 weight params.'},
+{name:'SE: channel scale (in-place)',t:'se',si:'(1,32,1,4) ⊗ attn',so:'(1,32,1,4)',el:128,w:0,ops:128,da:0,ca:1482,
+f:'pool1[c][t] = (pool1[c][t] × attn[c]) >> 7   for each t ∈ {0..3}\nattn[c]=128 → identity pass-through\nattn[c]=0   → channel fully suppressed',
+d:'Excitation: re-weights pool1 in-place by the learned per-channel attention scores. Channels the network finds uninformative for fear classification are attenuated. In-place modification — no extra arena allocation.'},
+{name:'DWConv2',t:'dw',si:'(1,32,1,4)',so:'(1,32,1,2)',el:64,w:192,ops:320,da:64,ca:1546,
+f:'out[c][t] = Σ_{k=0}^{4} w[c][k] × x[c][t+k] + b[c]   groups=32',
+d:'Receives SE-weighted channel activations. Per-channel temporal filtering. 192 weight params.'},
+{name:'BN_DW2 + ReLU + per-ch >>',t:'bnc',si:'(1,32,1,2)',so:'(1,32,1,2)',el:64,w:96,ops:128,da:0,ca:1546,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> shifts[c]\nshifts[c] ∈ {6..10}  (mobile_se calibration: actual_pool1_max = 2,199)',
+d:'Same per-channel mechanism as MobileCNN-1D but separately calibrated. mobile_se uses actual_pool1_max=2,199 vs 4,464 for mobile1d — different trained weights. 96 params.'},
+{name:'PWConv2',t:'pw',si:'(1,32,1,2)',so:'(1,64,1,2)',el:128,w:2112,ops:4096,da:128,ca:1674,
+f:'out[c][t] = Σ_{i=0}^{31} w[c][i] × x[i][t] + b[c]   kernel=1×1',
+d:'Cross-channel expansion 32→64. 2,112 weight params.'},
+{name:'BN_PW2 + ReLU + >>15',t:'bn',si:'(1,64,1,2)',so:'(1,64,1,2)',el:128,w:128,ops:256,da:0,ca:1674,
+f:'y[c][t] = max(0, (((int64)x × scale[c]) >> 7) + offset[c]) >> 15\nMOBILE_SHIFT_PW2 = 15',
+d:'Same as MobileCNN-1D. 128 BN params. In-place.'},
+{name:'MaxPool2',t:'pool',si:'(1,64,1,2)',so:'(1,64,1,1)',el:64,w:0,ops:0,da:64,ca:1738,
+f:'out[c][0] = max(x[c][0], x[c][1])',
+d:'Width 2→1. Final 64-element feature vector.'},
+{name:'Flatten',t:'rsh',si:'(1,64,1,1)',so:'(64,)',el:64,w:0,ops:0,da:64,ca:1802,
+f:'flat[i] = pool2[i]  (new Tensor struct, arena bump)',
+d:'Shape reshape.'},
+{name:'FC + threshold',t:'fc',si:'(64,)',so:'(1,)',el:1,w:65,ops:64,da:1,ca:1803,
+f:'logit = Σ_{i=0}^{63} w[i] × flat[i] + b\nlabel = (logit > 0) ? 1 (FEAR) : 0 (NO_FEAR)',
+d:'Same head as both other models. 65 int32 params.'},
+]},
+];
+
+const TLABEL={input:'input',conv:'Conv1d',dw:'DWConv1d',pw:'PWConv1d',bn:'BN+ReLU+rshift',bnc:'BN+ReLU+rshift/ch',pool:'MaxPool1d',rsh:'flatten',fc:'Dense+thresh',se:'SE block'};
+
+function chip(t,m){
+  const s={
+    input:'background:#e8e8e4;color:#555550',
+    conv:`background:${m.mcb};color:${m.mct}`,dw:`background:${m.mcb};color:${m.mct}`,
+    pw:`background:${m.mcb};color:${m.mct}`,fc:`background:${m.mcb};color:${m.mct}`,
+    bn:'background:#EAF3DE;color:#3B6D11',bnc:'background:#EAF3DE;color:#27500A',
+    pool:'background:#FAEEDA;color:#854F0B',rsh:'background:#e8e8e4;color:#555550',
+    se:'background:#EEEDFE;color:#534AB7'
+  };
+  return s[t]||'';
+}
+
+function fmt(n){return n>=10000?(n/1000).toFixed(1)+'K':n>=1000?n.toLocaleString():String(n)}
+
+let cm=0,cl=0;
+
+function render(){
+  const m=MODELS[cm],ly=m.layers[cl];
+  const romKB=Math.round(m.rom*4/1024);
+
+  document.getElementById('ttabs').innerHTML=MODELS.map((mod,i)=>`
+    <button class="t-tab${i===cm?' on':''}"
+      style="border-bottom-color:${i===cm?mod.mc:'transparent'}"
+      onclick="swM(${i})">${mod.name}</button>`).join('');
+
+  document.getElementById('tstats').innerHTML=`
+    <div class="t-stat"><div class="t-stat-v" style="color:${m.mc}">${romKB} KB</div><div class="t-stat-l">ROM — weights</div></div>
+    <div class="t-stat"><div class="t-stat-v" style="color:${m.mc}">${m.ram}</div><div class="t-stat-l">peak arena (words)</div></div>
+    <div class="t-stat"><div class="t-stat-v" style="color:${m.mc}">${fmt(m.macs)}</div><div class="t-stat-l">total MACs</div></div>
+    <div class="t-stat"><div class="t-stat-v" style="color:${m.mc}">${m.layers.length}</div><div class="t-stat-l">layers</div></div>`;
+
+  document.getElementById('tbprev').disabled=cl===0;
+  document.getElementById('tbnext').disabled=cl===m.layers.length-1;
+  document.getElementById('tnlabel').textContent=`${cl+1} / ${m.layers.length}  ·  ${ly.name}`;
+
+  const pct=Math.round(ly.ca/m.amax*100);
+  document.getElementById('tdetail').innerHTML=`
+    <div class="t-dh">
+      <div class="t-dn">${ly.name}</div>
+      <span class="t-chip" style="${chip(ly.t,m)}">${TLABEL[ly.t]||ly.t}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--tx3)">layer ${cl+1} of ${m.layers.length}</span>
+    </div>
+    <div class="t-shapes">
+      <div class="t-shape">${ly.si}</div>
+      <div class="t-arr">→</div>
+      <div class="t-shape">${ly.so}</div>
+      <div class="t-el">${ly.el} int32 · ${ly.el*4} bytes</div>
+    </div>
+    <pre class="t-formula">${ly.f}</pre>
+    <div class="t-metrics">
+      <div class="t-metric">
+        <div class="t-metric-v" style="color:${m.mc}">${ly.w>0?fmt(ly.w):'—'}</div>
+        <div class="t-metric-l">weight params</div>
+      </div>
+      <div class="t-metric">
+        <div class="t-metric-v" style="color:${m.mc}">${ly.ops>0?fmt(ly.ops):'—'}</div>
+        <div class="t-metric-l">ops (MACs / adds)</div>
+      </div>
+      <div class="t-metric">
+        <div class="t-metric-v" style="color:${m.mc}">${ly.ca} / ${m.amax}</div>
+        <div class="t-metric-l">arena after (words)</div>
+      </div>
+    </div>
+    <div class="t-desc">${ly.d}</div>`;
+
+  document.getElementById('tpipe').innerHTML='<div class="t-pipe-inner">'+
+    m.layers.map((l,i)=>`<span class="t-pbox${i===cl?' sel':''}" style="${chip(l.t,m)};${i===cl?`border-color:${m.mc};`:''}" onclick="swL(${i})">${l.name}</span>`+
+    (i<m.layers.length-1?'<span class="t-parr">›</span>':'')).join('')+'</div>';
+
+  document.getElementById('tarena').innerHTML=`
+    <div class="t-arena-lbl"><span>activation arena usage after this step</span><span>${ly.ca} / ${m.amax} words (${pct}%)</span></div>
+    <div class="t-arena-track"><div class="t-arena-fill" style="width:${pct}%;background:${m.mc}"></div></div>
+    <div class="t-arena-note">${ly.da>0?`+${ly.da} words allocated at this step (bump allocator, never freed until inference reset)`:'in-place operation — no arena allocation at this step'}</div>`;
+}
+
+function swM(i){cm=i;cl=0;render();}
+function swL(i){cl=i;render();}
+
+document.getElementById('tbprev').addEventListener('click',()=>{if(cl>0){cl--;render();}});
+document.getElementById('tbnext').addEventListener('click',()=>{if(cl<MODELS[cm].layers.length-1){cl++;render();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'&&cl>0){cl--;render();}
+  else if(e.key==='ArrowRight'&&cl<MODELS[cm].layers.length-1){cl++;render();}
+});
+
+render();
+</script>
+</body>
+</html>
