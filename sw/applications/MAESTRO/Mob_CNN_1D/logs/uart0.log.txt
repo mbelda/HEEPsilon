@@ -1,0 +1,76 @@
+DeepBindi MobileCNN-1D on X-HEEP (int32)
+--- Sample 0 (expected label=0 / NO_FEAR) ---
+DBG: conv dims n=1 ic=57 oc=57 ih=1 iw=10 oh=1 ow=8 kh=1 kw=5 strideh=1 stridew=1
+Cycles: 117046
+DBG: norm_rshift post_shift=1 dims n=1 c=57 h=1 w=8
+Cycles: 24816
+DBG: relu dim=456
+Cycles: 6147
+DBG: conv dims n=1 ic=57 oc=32 ih=1 iw=8 oh=1 ow=8 kh=1 kw=1 strideh=1 stridew=1
+Cycles: 999545
+DBG: norm_rshift post_shift=10 dims n=1 c=32 h=1 w=8
+Cycles: 13941
+DBG: relu dim=256
+Cycles: 3432
+DBG: maxpool kernel=[1x2] stride=[1x2] in_dims n=1 c=32 h=1 w=8 out_dims n=1 c=32 h=1 w=4
+Cycles: 5887
+DBG: conv dims n=1 ic=32 oc=32 ih=1 iw=4 oh=1 ow=2 kh=1 kw=5 strideh=1 stridew=1
+Cycles: 16953
+DBG: norm_rshift_perchannel dims n=1 c=32 h=1 w=2
+Cycles: 4764
+DBG: relu dim=64
+Cycles: 865
+DBG: conv dims n=1 ic=32 oc=64 ih=1 iw=2 oh=1 ow=2 kh=1 kw=1 strideh=1 stridew=1
+Cycles: 284569
+DBG: norm_rshift post_shift=15 dims n=1 c=64 h=1 w=2
+Cycles: 8661
+DBG: relu dim=128
+Cycles: 1733
+DBG: maxpool kernel=[1x2] stride=[1x2] in_dims n=1 c=64 h=1 w=2 out_dims n=1 c=64 h=1 w=1
+Cycles: 3955
+DBG: flatten total=64 in_dims n=1 c=64 h=1 w=1 out_dims n=1 c=64 h=1 w=1
+Cycles: 900
+DBG: dense in_features=64 out_features=1 batch_n=1 dims n=1 c=1 h=1 w=1
+Cycles: 729
+DBG: sigmoid total=1 dims n=1 c=1 h=1 w=1
+Cycles: 18
+Output : 0 (NO_FEAR)
+Cycles : 221575
+--- Sample 1 (expected label=1 / FEAR) ---
+DBG: conv dims n=1 ic=57 oc=57 ih=1 iw=10 oh=1 ow=8 kh=1 kw=5 strideh=1 stridew=1
+Cycles: 117046
+DBG: norm_rshift post_shift=1 dims n=1 c=57 h=1 w=8
+Cycles: 24816
+DBG: relu dim=456
+Cycles: 6183
+DBG: conv dims n=1 ic=57 oc=32 ih=1 iw=8 oh=1 ow=8 kh=1 kw=1 strideh=1 stridew=1
+Cycles: 999545
+DBG: norm_rshift post_shift=10 dims n=1 c=32 h=1 w=8
+Cycles: 13941
+DBG: relu dim=256
+Cycles: 3465
+DBG: maxpool kernel=[1x2] stride=[1x2] in_dims n=1 c=32 h=1 w=8 out_dims n=1 c=32 h=1 w=4
+Cycles: 5863
+DBG: conv dims n=1 ic=32 oc=32 ih=1 iw=4 oh=1 ow=2 kh=1 kw=5 strideh=1 stridew=1
+Cycles: 16953
+DBG: norm_rshift_perchannel dims n=1 c=32 h=1 w=2
+Cycles: 4764
+DBG: relu dim=64
+Cycles: 873
+DBG: conv dims n=1 ic=32 oc=64 ih=1 iw=2 oh=1 ow=2 kh=1 kw=1 strideh=1 stridew=1
+Cycles: 284569
+DBG: norm_rshift post_shift=15 dims n=1 c=64 h=1 w=2
+Cycles: 8661
+DBG: relu dim=128
+Cycles: 1736
+DBG: maxpool kernel=[1x2] stride=[1x2] in_dims n=1 c=64 h=1 w=2 out_dims n=1 c=64 h=1 w=1
+Cycles: 3957
+DBG: flatten total=64 in_dims n=1 c=64 h=1 w=1 out_dims n=1 c=64 h=1 w=1
+Cycles: 900
+DBG: dense in_features=64 out_features=1 batch_n=1 dims n=1 c=1 h=1 w=1
+Cycles: 729
+DBG: sigmoid total=1 dims n=1 c=1 h=1 w=1
+Cycles: 18
+Output : 1 (FEAR)
+Cycles : 221576
+End..
