@@ -32,12 +32,12 @@ void read_csr_counters(){
     CSR_READ(CSR_REG_MHPMCOUNTER4, &stores);
     CSR_READ(CSR_REG_MHPMCOUNTER5, &ldstall);
     CSR_READ(CSR_REG_MHPMCOUNTER6, &pipestall);
-    printf("-----------------------\n");
+    /*printf("-----------------------\n");
     printf("Cc: %lu\n", cycles);
     printf("Instr: %lu\n", inst);
     printf("Lds: %lu\n", loads);
     printf("Str: %lu\n", stores);
     printf("Ld Stalls: %lu\n", ldstall);
     printf("Pipe stalls: %lu\n", pipestall);
-    printf("-----------------------\n");
+    printf("-----------------------\n");*/
 }
