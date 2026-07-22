@@ -317,9 +317,10 @@ Tensor *conv2d_forward(const Tensor *input, const Conv2DLayer *layer) {
     }
     CSR_READ(CSR_REG_MCYCLE, &cycles);
     DEEPBINDI_TRACE(
-        "DBG: conv dims n=%d ic=%d oc=%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d strideh=%d stridew=%d\r\nCycles: %u\r\n",
-        input->n, layer->in_channels, layer->out_channels,
+        "DBG: conv dims n=%d ic=%d oc=%d lg:%d ih=%d iw=%d oh=%d ow=%d kh=%d kw=%d strideh=%d stridew=%d padh=%d, padw=%d\r\nCycles: %u\r\n",
+        input->n, layer->in_channels, layer->out_channels, layer->groups,
         input->h, input->w, out_h, out_w, layer->kernel_h, layer->kernel_w, layer->stride_h, layer->stride_w,
+        layer->pad_h, layer->pad_w,  
         cycles);
 
     return output;
